@@ -111,9 +111,6 @@ const LoginPage = () => {
   });
 
 
-console.log('====================================');
-console.log("process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID",process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID);
-console.log('====================================');
 // inside LoginPage component
 const handleLinkedInLogin = () => {
   const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
