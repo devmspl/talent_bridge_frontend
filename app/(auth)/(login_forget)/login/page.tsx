@@ -111,7 +111,6 @@ const LoginPage = () => {
   });
 
 
-// inside LoginPage component
 const handleLinkedInLogin = () => {
   const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
   const redirectUri = encodeURIComponent("http://localhost:3000/linkedin");
