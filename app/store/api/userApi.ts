@@ -4,7 +4,7 @@ import { BaseUrl } from '../BaseUrl';
 
 export const userApi = createApi({
   reducerPath: 'userApi',
-  baseQuery: fetchBaseQuery({ 
+  baseQuery: fetchBaseQuery({
     baseUrl: BaseUrl,
   }),
   endpoints: (builder) => ({
@@ -19,8 +19,8 @@ export const userApi = createApi({
           password: userData.password,
           dob: userData.dob,
           industryType: Array.isArray(userData.industry) ? userData.industry : [userData.industry],
-        employmentType: Array.isArray(userData.employmentType) ? userData.employmentType : [userData.employmentType],
-        openForWork: !!userData.selfEmployed,
+          employmentType: Array.isArray(userData.employmentType) ? userData.employmentType : [userData.employmentType],
+          openForWork: !!userData.selfEmployed,
           // profile_image: userData.profileImage,
         };
         return {
@@ -69,18 +69,37 @@ export const userApi = createApi({
       transformResponse: (response: any) => response?.data || response,
     }),
     // in userApi endpoints
-  linkedinSignin: builder.mutation<any, { code?: string; token?: string; redirect_uri?: string }>({
-  query: (payload) => ({
-    url: 'User/login/linkedin',
+    linkedinSignin: builder.mutation<any, { token: string }>({
+      query: ({ token }) => ({
+        url: 'User/login/linkedin',
+        method: 'POST',
+        body: { token },
+      }),
+      transformResponse: (response: any) => response?.data || response,
+    }),
+  googleSignUp: builder.mutation<any, { token: string }>({
+      query: ({ token }) => ({
+        url: 'User/login/google',
+        method: 'POST',
+        body: { token },
+      }),
+      transformResponse: (response: any) => response?.data || response,
+    }),
+    facebookRegister: builder.mutation<any, { accessToken: string }>({
+  query: ({ accessToken }) => ({
+    url: 'User/register/facebook',
     method: 'POST',
-    body: payload,
+    body: { accessToken },
   }),
   transformResponse: (response: any) => response?.data || response,
 }),
 
 
 
+
   }),
 });
 
-export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useUploadProfileMutation, useGoogleSigninMutation, useLinkedinSigninMutation  } = userApi; 
+export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useUploadProfileMutation, useGoogleSigninMutation,
+   useLinkedinSigninMutation, useGoogleSignUpMutation,useFacebookRegisterMutation
+    } = userApi; 

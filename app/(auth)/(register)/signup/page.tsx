@@ -9,12 +9,16 @@ import { signupValidationSchema } from "@/app/utils/validation";
 import logo from "@/public/assets/Icon.png"
 import google from "@/public/assets/media/google.png"
 import facebook from "@/public/assets/media/Icon (1).png"
+import { useGoogleLogin } from "@react-oauth/google";
+import { toast } from "react-toastify";
+import { useGoogleSignUpMutation } from "@/app/store/api/userApi";
 
 export default function Signup() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.user);
   const [errors, setErrors] = useState<Record<string, string>>({});
+   const [googleSignup, { isLoading: isGoogleSigning }] = useGoogleSignUpMutation();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,6 +51,42 @@ export default function Signup() {
       router.push("/step-2");
     }
   };
+
+
+    const sendTokenToBackend = async (token: string) => {
+      try {
+        const res = await googleSignup({ token }).unwrap();
+        if (res?.token) {
+          localStorage.setItem("tb_token", res.token);
+          localStorage.setItem("user", JSON.stringify(res));
+          toast.success("Logged in successfully", { toastId: "login-success" });
+          router.push("/dashboard");
+        } else {
+          toast.error("Google login failed");
+        }
+      } catch (err: any) {
+        console.error("google-signin error:", err);
+        toast.error("Google login error");
+      }
+    };
+
+    const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse: any) => {
+      const token = tokenResponse?.access_token ?? tokenResponse?.credential;
+      if (!token) {
+        toast.error("Google did not return a token");
+        return;
+      }
+      await sendTokenToBackend(token);
+    },
+    onError: () => {
+      toast.error("Google sign-in failed (popup closed or blocked)");
+    },
+    scope: "openid profile email",
+    flow: "implicit", 
+  });
+
+
 
   return (
     <>
@@ -232,7 +272,9 @@ export default function Signup() {
 
           {/* Social Login */}
           <div className="flex gap-3">
-            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer">
+            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
+              onClick={() => loginWithGoogle()}
+            >
               <Image src={google} alt="google icon" width={24} />
             </button>
             <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer">

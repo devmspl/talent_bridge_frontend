@@ -115,12 +115,13 @@ const handleLinkedInLogin = () => {
   const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
   const redirectUri = encodeURIComponent("http://localhost:3000/linkedin");
   const state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem("linkedin_oauth_state", state); // store state to verify later
-  const scope = encodeURIComponent("r_liteprofile r_emailaddress"); // basic profile + email
+  sessionStorage.setItem("linkedin_oauth_state", state);
 
-  const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
-  window.location.href = url;
+  const scope = encodeURIComponent("r_liteprofile r_emailaddress");
+
+  window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
 };
+
 
 
 
