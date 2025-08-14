@@ -11,7 +11,8 @@ import google from "@/public/assets/media/google.png"
 import facebook from "@/public/assets/media/Icon (1).png"
 import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
-import { useGoogleSignUpMutation } from "@/app/store/api/userApi";
+import { useFacebookRegisterMutation, useGoogleSignUpMutation } from "@/app/store/api/userApi";
+import { useFacebookSDK } from "@/app/hooks/useFacebookSDK";
 
 export default function Signup() {
   const dispatch = useDispatch();
@@ -19,6 +20,9 @@ export default function Signup() {
   const { user } = useSelector((state: RootState) => state.user);
   const [errors, setErrors] = useState<Record<string, string>>({});
    const [googleSignup, { isLoading: isGoogleSigning }] = useGoogleSignUpMutation();
+  const [facebookRegister, { isLoading: isFacebookSigning }] = useFacebookRegisterMutation();
+
+  const fbReady = useFacebookSDK();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -85,6 +89,41 @@ export default function Signup() {
     scope: "openid profile email",
     flow: "implicit", 
   });
+
+const loginWithFacebook = () => {
+  if (!fbReady) {
+    toast.info("Facebook is still loading, please try again.");
+    return;
+  }
+
+  window.FB.login(
+    async (response: any) => {
+      const token = response?.authResponse?.accessToken;
+      if (!token) {
+        toast.error("Facebook login cancelled or failed");
+        return;
+      }
+
+      try {
+        const res = await facebookRegister({ accessToken: token }).unwrap();
+
+        if (res?.token) {
+          localStorage.setItem("tb_token", res.token);
+          localStorage.setItem("user", JSON.stringify(res));
+          toast.success("Logged in successfully");
+          router.push("/dashboard");
+        } else {
+          toast.error("Facebook login failed");
+        }
+      } catch (err) {
+        console.error("facebook-signin error:", err);
+        toast.error("Facebook login error");
+      }
+    },
+    { scope: "public_profile,email" }
+  );
+};
+
 
 
 
@@ -277,7 +316,9 @@ export default function Signup() {
             >
               <Image src={google} alt="google icon" width={24} />
             </button>
-            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer">
+            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
+             onClick={loginWithFacebook}
+            >
               <Image src={facebook} alt="facebook icon" width={24} />
             </button>
           </div>

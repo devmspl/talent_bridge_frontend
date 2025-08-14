@@ -86,14 +86,20 @@ export const userApi = createApi({
       transformResponse: (response: any) => response?.data || response,
     }),
     facebookRegister: builder.mutation<any, { accessToken: string }>({
-  query: ({ accessToken }) => ({
+    query: ({ accessToken }) => ({
     url: 'User/register/facebook',
     method: 'POST',
     body: { accessToken },
   }),
   transformResponse: (response: any) => response?.data || response,
 }),
-
+getAllUsers: builder.query<any, { page_no: number; page_size: number }>({
+  query: ({ page_no, page_size }) => ({
+    url: `User/getall?page_no=${page_no}&page_size=${page_size}`,
+    method: 'GET',
+  }),
+  transformResponse: (response: any) => response?.data || response,
+}),
 
 
 
@@ -101,5 +107,5 @@ export const userApi = createApi({
 });
 
 export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useUploadProfileMutation, useGoogleSigninMutation,
-   useLinkedinSigninMutation, useGoogleSignUpMutation,useFacebookRegisterMutation
+   useLinkedinSigninMutation, useGoogleSignUpMutation,useFacebookRegisterMutation,useGetAllUsersQuery
     } = userApi; 
