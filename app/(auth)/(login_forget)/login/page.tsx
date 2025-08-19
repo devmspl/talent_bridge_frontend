@@ -10,6 +10,7 @@ import { useGoogleSigninMutation, useLoginMutation } from '@/app/store/api/userA
 import { toast } from 'react-toastify';
 import { loginValidationSchema } from '@/app/utils/validation';
 import { useGoogleLogin } from '@react-oauth/google';
+import Cookies from "js-cookie";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -35,9 +36,13 @@ const LoginPage = () => {
 
     try {
       const res = await login({ email, password }).unwrap();
-      if (res?.token) {
-        localStorage.setItem('tb_token', res?.token);
-        localStorage.setItem('user',  JSON.stringify(res));
+      console.log("res",res);
+      
+      if (res?.token && res?._id) {
+        // localStorage.setItem('tb_token', res?.token);
+        // localStorage.setItem('user',  JSON.stringify(res));
+         Cookies.set("tb_token", res.token, { expires: 7 });
+        Cookies.set("tb_userId", res._id, { expires: 7 });
         toast.success('Logged in successfully', { toastId: 'login-success' });
         router.push('/dashboard');
       } else {
@@ -81,8 +86,7 @@ const LoginPage = () => {
     try {
       const res = await googleSignin({ token }).unwrap();
       if (res?.token) {
-        localStorage.setItem("tb_token", res.token);
-        localStorage.setItem("user", JSON.stringify(res));
+         Cookies.set("tb_token", res.token, { expires: 7 });
         toast.success("Logged in successfully", { toastId: "login-success" });
         router.push("/dashboard");
       } else {
@@ -96,6 +100,7 @@ const LoginPage = () => {
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse: any) => {
+      
       const token = tokenResponse?.access_token ?? tokenResponse?.credential;
       if (!token) {
         toast.error("Google did not return a token");

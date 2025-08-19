@@ -13,6 +13,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import { useFacebookRegisterMutation, useGoogleSignUpMutation } from "@/app/store/api/userApi";
 import { useFacebookSDK } from "@/app/hooks/useFacebookSDK";
+import Cookies from "js-cookie";
 
 export default function Signup() {
   const dispatch = useDispatch();
@@ -61,8 +62,7 @@ export default function Signup() {
       try {
         const res = await googleSignup({ token }).unwrap();
         if (res?.token) {
-          localStorage.setItem("tb_token", res.token);
-          localStorage.setItem("user", JSON.stringify(res));
+          Cookies.set("tb_token", res.token, { expires: 7 });
           toast.success("Logged in successfully", { toastId: "login-success" });
           router.push("/dashboard");
         } else {
@@ -108,8 +108,7 @@ const loginWithFacebook = () => {
         const res = await facebookRegister({ accessToken: token }).unwrap();
 
         if (res?.token) {
-          localStorage.setItem("tb_token", res.token);
-          localStorage.setItem("user", JSON.stringify(res));
+          Cookies.set("tb_token", res.token, { expires: 7 });
           toast.success("Logged in successfully");
           router.push("/dashboard");
         } else {

@@ -37,7 +37,7 @@ export default function DeleteAccount() {
           To proceed with account deletion, please confirm your action by clicking the button below.
         </p>
 
-        <button className="mt-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-md"
+        <button className="mt-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-md cursor-pointer"
         onClick={()=>setIsOpen(true)}
         >
           I want to delete my account

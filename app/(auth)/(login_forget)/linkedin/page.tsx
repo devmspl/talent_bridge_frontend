@@ -76,6 +76,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-toastify";
+import Cookies from "js-cookie";
 
 export default function LinkedInCallback() {
   const router = useRouter();
@@ -112,8 +113,7 @@ export default function LinkedInCallback() {
         });
 
         if (res.data?.token) {
-          localStorage.setItem("tb_token", res.data.token);
-          localStorage.setItem("user", JSON.stringify(res.data.user ?? res.data));
+          Cookies.set("tb_token", res.data.token, { expires: 7 });
           toast.success("Logged in successfully");
           router.push("/dashboard");
         } else {

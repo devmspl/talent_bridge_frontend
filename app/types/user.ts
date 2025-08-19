@@ -11,3 +11,15 @@ export interface UserData {
   selfEmployed?: boolean;
   profileImage?: string;
 } 
+// types.ts
+export interface FormData {
+  fullName: string;
+  phone: string;
+  email: string;
+  country: string;
+  city: string;
+  industry: string[];        // multiple industries
+  employmentType: string[];  // multiple employment types
+  dob?: string;              // optional (ISO string)
+  openForWork?: boolean;     // optional
+}

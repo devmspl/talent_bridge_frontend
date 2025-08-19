@@ -7,6 +7,7 @@ export const userApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: BaseUrl,
   }),
+  tagTypes: ["User"],
   endpoints: (builder) => ({
     createUser: builder.mutation<any, UserData>({
       query: (userData) => {
@@ -57,8 +58,10 @@ export const userApi = createApi({
           url: `User/uploadProfile/${encodeURIComponent(userKey)}`,
           method: 'PUT',
           body: form,
-        };
-      },
+        }},
+         invalidatesTags: (result, error, { userKey }) => [
+    { type: "User", id: userKey },
+  ],
     }),
     googleSignin: builder.mutation<any, { token: string }>({
       query: ({ token }) => ({
@@ -77,7 +80,7 @@ export const userApi = createApi({
       }),
       transformResponse: (response: any) => response?.data || response,
     }),
-  googleSignUp: builder.mutation<any, { token: string }>({
+    googleSignUp: builder.mutation<any, { token: string }>({
       query: ({ token }) => ({
         url: 'User/login/google',
         method: 'POST',
@@ -86,19 +89,73 @@ export const userApi = createApi({
       transformResponse: (response: any) => response?.data || response,
     }),
     facebookRegister: builder.mutation<any, { accessToken: string }>({
-    query: ({ accessToken }) => ({
-    url: 'User/register/facebook',
-    method: 'POST',
-    body: { accessToken },
+      query: ({ accessToken }) => ({
+        url: 'User/register/facebook',
+        method: 'POST',
+        body: { accessToken },
+      }),
+      transformResponse: (response: any) => response?.data || response,
+    }),
+    getAllUsers: builder.query<any, { page_no: number; page_size: number }>({
+      query: ({ page_no, page_size }) => ({
+        url: `User/getall?page_no=${page_no}&page_size=${page_size}`,
+        method: 'GET',
+      }),
+      transformResponse: (response: any) => response?.data || response,
+    }),
+    changePassword: builder.mutation<
+      any,
+      { userId: string; currentPassword: string; newPassword: string }
+    >({
+      query: ({ userId, currentPassword, newPassword }) => ({
+        url: `User/changePassword/${encodeURIComponent(userId)}`,
+        method: "POST",
+        body: {
+          oldPassword: currentPassword,
+          newPassword,
+        },
+      }),
+      transformResponse: (response: any) => response?.data || response,
+    }),
+
+    updateProfile: builder.mutation<
+      any,
+      {
+        userKey: string;
+        fullname: string;
+        contact_number: string;
+        email: string;
+        dob?: string;
+        industryType: string[];
+        employmentType: string[];
+        openForWork?: boolean;
+        country?: string;
+        city?: string;
+      }
+    >({
+      query: ({ userKey, ...rest }) => ({
+        url: `User/update/${encodeURIComponent(userKey)}`,
+        method: "PUT",
+        body: rest,
+      }),
+       invalidatesTags: (result, error, { userKey }) => [
+    { type: "User", id: userKey },
+  ],
+    }),
+
+    deleteAccount: builder.mutation<any, string>({
+      query: (userId) => ({
+        url: `User/remove/${encodeURIComponent(userId)}`,
+        method: "DELETE",
+      }),
+    }),
+   getUserById: builder.query<any, string>({
+  query: (userId) => ({
+    url: `User/getById/${encodeURIComponent(userId)}`,
+    method: "GET",
   }),
-  transformResponse: (response: any) => response?.data || response,
-}),
-getAllUsers: builder.query<any, { page_no: number; page_size: number }>({
-  query: ({ page_no, page_size }) => ({
-    url: `User/getall?page_no=${page_no}&page_size=${page_size}`,
-    method: 'GET',
-  }),
-  transformResponse: (response: any) => response?.data || response,
+  providesTags: (result, error, userId) => [{ type: "User", id: userId }],
+   transformResponse: (response: any) => response?.data?.[0] || null,
 }),
 
 
@@ -107,5 +164,6 @@ getAllUsers: builder.query<any, { page_no: number; page_size: number }>({
 });
 
 export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useUploadProfileMutation, useGoogleSigninMutation,
-   useLinkedinSigninMutation, useGoogleSignUpMutation,useFacebookRegisterMutation,useGetAllUsersQuery
-    } = userApi; 
+  useLinkedinSigninMutation, useGoogleSignUpMutation, useFacebookRegisterMutation, useGetAllUsersQuery, useChangePasswordMutation,
+  useUpdateProfileMutation, useDeleteAccountMutation,  useGetUserByIdQuery
+} = userApi; 

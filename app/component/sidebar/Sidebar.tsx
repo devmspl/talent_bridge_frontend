@@ -24,6 +24,8 @@ import notification from "@/public/assets/icons/setting.png";
 import log_in from "@/public/assets/icons/log-in-2.png";
 import stars from "@/public/assets/icons/Featured icon.png";
 import { toast } from "react-toastify";
+import { useGetUserByIdQuery } from "@/app/store/api/userApi";
+import Cookies from "js-cookie";
 
 const SidebarItem = ({
   icon,
@@ -56,13 +58,19 @@ const Sidebar: React.FC = () => {
 
   const handleLogout = () => {
     try {
-      localStorage.removeItem("tb_token");
-      localStorage.removeItem("user");
+      Cookies.remove("tb_token");
+      Cookies.remove("tb_userId");
       toast.success("Logged out");
     } catch {}
     routes.replace("/auth");
   };
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userId = Cookies.get("tb_userId");
+
+  const { data: user, isLoading } = useGetUserByIdQuery(userId!, {
+    skip: !userId,
+    pollingInterval: 10000,
+  });
+
 
   return (
     <aside className="w-64 min-h-screen bg-white border-r border-gray-200 flex flex-col justify-between p-4">
@@ -75,6 +83,8 @@ const Sidebar: React.FC = () => {
                   ? `http://38.242.230.126:5832/assets/images/${user.avatar}`
                   : Profile
               }
+              width={32}
+              height={32}
               alt="avatar"
               className="w-10 h-10 rounded-full"
             />

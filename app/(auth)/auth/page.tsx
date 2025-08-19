@@ -5,12 +5,14 @@ import auth_video from '@/public/assets/Frame 1707479571.png'
 import logo from '@/public/assets/Icon.png'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Cookies from "js-cookie";
 
 const Page = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('tb_token') : null;
+    const token = typeof window !== 'undefined' ? Cookies.get("tb_userId") : null;
+    
     if (token) router.replace('/dashboard');
   }, [router]);
 

@@ -57,3 +57,42 @@ export const loginValidationSchema = yup.object({
   email: yup.string().required('Email is required').email('Please enter a valid email'),
   password: yup.string().required('Password is required').min(6, 'Password must be at least 6 characters'),
 }); 
+
+// utils/passwordValidation.ts
+
+export type PasswordErrors = {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+};
+
+export const validatePasswordForm = (
+  currentPassword: string,
+  newPassword: string,
+  confirmPassword: string
+): PasswordErrors => {
+  const errors: PasswordErrors = {};
+
+  if (!currentPassword) {
+    errors.currentPassword = "Current password is required.";
+  }
+
+  if (!newPassword) {
+    errors.newPassword = "New password is required.";
+  } else {
+    // Regex: min 8 chars, 1 uppercase, 1 lowercase, 1 digit
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      errors.newPassword =
+        "Password must be at least 8 characters, include uppercase, lowercase, and a number.";
+    }
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Please confirm your password.";
+  } else if (newPassword !== confirmPassword) {
+    errors.confirmPassword = "Passwords do not match.";
+  }
+
+  return errors;
+};

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../component/sidebar/Sidebar";
+import Cookies from "js-cookie";
 
 export default function RootLayout({
   children,
@@ -12,7 +13,7 @@ export default function RootLayout({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('tb_token') : null;
+    const token = typeof window !== 'undefined' ? Cookies.get("tb_userId") : null;
     if (!token) {
       router.replace('/login');
     } else {
