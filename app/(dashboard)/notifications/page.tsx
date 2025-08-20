@@ -43,7 +43,6 @@ const notifications = [
 export default function NotificationPage() {
     const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
     const [showModal, setShowModal] = useState(false);
-    console.log("showModal",showModal);
     
 
     return (

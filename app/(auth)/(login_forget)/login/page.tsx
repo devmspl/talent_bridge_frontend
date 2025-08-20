@@ -36,8 +36,6 @@ const LoginPage = () => {
 
     try {
       const res = await login({ email, password }).unwrap();
-      console.log("res",res);
-      
       if (res?.token && res?._id) {
         // localStorage.setItem('tb_token', res?.token);
         // localStorage.setItem('user',  JSON.stringify(res));

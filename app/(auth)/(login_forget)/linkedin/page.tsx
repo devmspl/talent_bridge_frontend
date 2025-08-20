@@ -108,7 +108,7 @@ export default function LinkedInCallback() {
         }
 
         // Step 2: Tumhari API ko token bhejna
-        const res = await axios.post("http://38.242.230.126:5832/User/login/linkedin", {
+        const res = await axios.post("https://backend.webridgetalent.com/User/login/linkedin", {
           token: accessToken
         });
 

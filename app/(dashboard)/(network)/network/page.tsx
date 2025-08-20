@@ -22,6 +22,7 @@ import FilterModal from "@/app/component/modals/network/FilterModal";
 import { useRouter } from "next/navigation";
 import { useGetAllUsersQuery } from "@/app/store/api/userApi";
 import profile from "@/public/assets/profile/Avatar.png";
+import Cookies from "js-cookie";
 
 export default function RecruiterGrid() {
   const [showModal, setShowModal] = useState(false);
@@ -30,18 +31,23 @@ export default function RecruiterGrid() {
     page_size: 100,
   });
   const routes = useRouter();
+  const userId = Cookies.get("tb_userId");
+  
 
   if (isLoading) {
     return <div className="p-6">Loading users...</div>;
   }
-
   if (isError) {
     return <div className="p-6 text-red-500">Failed to load users.</div>;
   }
-
   if (!Array.isArray(users)) {
     return <div className="p-6 text-red-500">Failed to load users.</div>;
   }
+
+  const handleClick = (id : any) => {
+    routes.push(`/profile/${id}`); 
+  };
+
 
   return (
     <>
@@ -75,7 +81,7 @@ export default function RecruiterGrid() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {users.map((card: any, i: number) => (
+            {users.filter((card: any) => card._id !== userId).map((card: any, i: number) => (
               <div
                 key={i}
                 className="border border-gray-200 rounded-md shadow-sm p-4 bg-white hover:shadow-md transition"
@@ -101,7 +107,7 @@ export default function RecruiterGrid() {
                     <Image
                       src={
                         card.avatar
-                          ? `http://38.242.230.126:5832/assets/images/${card.avatar}`
+                          ? `https://backend.webridgetalent.com/assets/images/${card.avatar}`
                           : profile
                       }
                       alt={card.fullname}
@@ -140,11 +146,11 @@ export default function RecruiterGrid() {
                       {card.placements || "18"} Placements •{" "}
                       {card.responseRate || "90%"} response rate
                     </div>
-                  </div>
+                  </div>  
                 </div>
                 <button
                   className="w-full text-xs text-center py-1.5 border border-gray-300 rounded-md font-medium text-gray-800 hover:bg-gray-100 transition cursor-pointer"
-                  onClick={() => routes.push("/profile")}
+                 onClick={()=>handleClick(card._id)}
                 >
                   View Profile
                 </button>

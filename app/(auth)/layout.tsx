@@ -4,7 +4,8 @@ import { SessionProvider } from "next-auth/react";
 import React from "react";
 
 export default function GoogleProviders({ children }: { children: React.ReactNode }) {
-  const clientId ="922454428372-6monhp467thiv415r4ht7ifc6cbus463.apps.googleusercontent.com922454428372-6monhp467thiv415r4ht7ifc6cbus463.apps.googleusercontent.com ";
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "604677003417-g4pf3ok612t7u940kge1d1hj686m4uc9.apps.googleusercontent.com";
+  
   return (
     <GoogleOAuthProvider clientId={clientId}>
       <SessionProvider>

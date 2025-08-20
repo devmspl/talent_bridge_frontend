@@ -80,7 +80,7 @@ const Sidebar: React.FC = () => {
             <Image
               src={
                 user?.avatar
-                  ? `http://38.242.230.126:5832/assets/images/${user.avatar}`
+                  ? `https://backend.webridgetalent.com/assets/images/${user.avatar}`
                   : Profile
               }
               width={32}

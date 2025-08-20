@@ -32,7 +32,7 @@ app/
 
 ## API Endpoint
 
-The app hits directly: `http://38.242.230.126:5832/User/create`
+The app hits directly: `https://backend.webridgetalent.com/User/create`
 
 ## Why This is Better
 

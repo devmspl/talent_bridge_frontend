@@ -132,7 +132,7 @@ const Personal_info = () => {
           <Image
             src={
               storedUser?.avatar
-                ? `http://38.242.230.126:5832/assets/images/${storedUser.avatar}`
+                ? `https://backend.webridgetalent.com/assets/images/${storedUser.avatar}`
                 : logo
             }
             alt="Profile"
