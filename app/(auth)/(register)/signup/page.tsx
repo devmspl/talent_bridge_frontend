@@ -58,25 +58,27 @@ export default function Signup() {
   };
 
 
-    const sendTokenToBackend = async (token: string) => {
+    const sendTokenToBackend = async (idToken: string) => {
       try {
-        const res = await googleSignup({ token }).unwrap();
-        if (res?.token) {
+        const res = await googleSignup({ idToken }).unwrap();
+        if (res?.token && res?._id) {
           Cookies.set("tb_token", res.token, { expires: 7 });
+          Cookies.set("tb_userId", res._id, { expires: 7 });
           toast.success("Logged in successfully", { toastId: "login-success" });
           router.push("/dashboard");
         } else {
-          toast.error("Google login failed");
+          toast.error("Google signup failed");
         }
       } catch (err: any) {
-        console.error("google-signin error:", err);
-        toast.error("Google login error");
+        console.error("google-signup error:", err);
+        toast.error("Google signup error");
       }
     };
 
-    const loginWithGoogle = useGoogleLogin({
+    const registerWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse: any) => {
       const token = tokenResponse?.access_token ?? tokenResponse?.credential;
+      console.log("token", token);
       if (!token) {
         toast.error("Google did not return a token");
         return;
@@ -84,7 +86,7 @@ export default function Signup() {
       await sendTokenToBackend(token);
     },
     onError: () => {
-      toast.error("Google sign-in failed (popup closed or blocked)");
+      toast.error("Google sign-up failed (popup closed or blocked)");
     },
     scope: "openid profile email",
     flow: "implicit", 
@@ -311,7 +313,7 @@ const loginWithFacebook = () => {
           {/* Social Login */}
           <div className="flex gap-3">
             <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
-              onClick={() => loginWithGoogle()}
+              onClick={() => registerWithGoogle()}
             >
               <Image src={google} alt="google icon" width={24} />
             </button>

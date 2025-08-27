@@ -144,7 +144,7 @@ export default function page() {
           <div className="border border-gray-200 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex gap-2">
-                <Image src={user} alt="" width={24} />
+                <Image src={user} alt="" width={24} height={24} />
                 <p className="font-semibold text-sm ">Mike Zhang <span className="text-gray-400 font-normal">| Frontend Developer</span></p>
               </div>
               <div>

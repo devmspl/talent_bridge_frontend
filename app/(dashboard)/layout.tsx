@@ -11,6 +11,7 @@ export default function RootLayout({
 }) {
   const router = useRouter();
   const [isReady, setIsReady] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? Cookies.get("tb_userId") : null;
@@ -21,14 +22,29 @@ export default function RootLayout({
     }
   }, [router]);
 
-  if (!isReady) return null;
+
+
+   useEffect(() => {
+      const handleResize = () => {
+        if (window.innerWidth < 768) {
+          setIsCollapsed(true);
+        } else {
+          setIsCollapsed(false);
+        }
+      };
+      handleResize(); // call on mount
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    if (!isReady) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-    <aside className="fixed top-0 left-0 h-screen w-[250px] border-r bg-white z-50">
+   <aside className={`fixed top-0 left-0 h-screen  z-50 w-64  transition-all duration-300 ${isCollapsed ? "w-20" : "w-24"}`}>
       <Sidebar />
     </aside>
-    <main className="ml-[250px] flex-1 p-6">{children}</main>
+    <main className={`flex-1 p-6 ${isCollapsed ? "ml-20" : "ml-64"}`}>{children}</main>
   </div>
   );
 }

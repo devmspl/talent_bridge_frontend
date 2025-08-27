@@ -48,7 +48,6 @@ export default function RecruiterGrid() {
     routes.push(`/profile/${id}`); 
   };
 
-
   return (
     <>
       <div className="bg-white min-h-screen px-6 py-10">
@@ -61,7 +60,6 @@ export default function RecruiterGrid() {
               Connect with top recruiters in your industry
             </p>
           </div>
-
           {/* Search and Filter */}
           <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm mb-6">
             <div className="relative flex-grow">
@@ -157,7 +155,6 @@ export default function RecruiterGrid() {
               </div>
             ))}
           </div>
-
           <div className="border border-gray-200 mt-8 rounded-lg px-6 py-5  flex justify-between items-center text-xs text-gray-500 ">
             <p>Showing 1 to 5 of 20 results</p>
             <div className="flex gap-2">

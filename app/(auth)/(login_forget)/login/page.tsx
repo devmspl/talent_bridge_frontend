@@ -37,8 +37,6 @@ const LoginPage = () => {
     try {
       const res = await login({ email, password }).unwrap();
       if (res?.token && res?._id) {
-        // localStorage.setItem('tb_token', res?.token);
-        // localStorage.setItem('user',  JSON.stringify(res));
          Cookies.set("tb_token", res.token, { expires: 7 });
         Cookies.set("tb_userId", res._id, { expires: 7 });
         toast.success('Logged in successfully', { toastId: 'login-success' });
@@ -83,8 +81,9 @@ const LoginPage = () => {
   const sendTokenToBackend = async (token: string) => {
     try {
       const res = await googleSignin({ token }).unwrap();
-      if (res?.token) {
+      if (res?.token && res?._id) {
          Cookies.set("tb_token", res.token, { expires: 7 });
+         Cookies.set("tb_userId", res._id, { expires: 7 });
         toast.success("Logged in successfully", { toastId: "login-success" });
         router.push("/dashboard");
       } else {

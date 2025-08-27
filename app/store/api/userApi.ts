@@ -80,11 +80,11 @@ export const userApi = createApi({
       }),
       transformResponse: (response: any) => response?.data || response,
     }),
-    googleSignUp: builder.mutation<any, { token: string }>({
-      query: ({ token }) => ({
-        url: 'User/login/google',
+    googleSignUp: builder.mutation<any, { idToken: string }>({
+      query: ({ idToken }) => ({
+        url: 'User/register/google',
         method: 'POST',
-        body: { token },
+        body: { idToken },
       }),
       transformResponse: (response: any) => response?.data || response,
     }),
@@ -142,7 +142,7 @@ export const userApi = createApi({
     { type: "User", id: userKey },
   ],
     }),
-
+  
     deleteAccount: builder.mutation<any, string>({
       query: (userId) => ({
         url: `User/remove/${encodeURIComponent(userId)}`,
