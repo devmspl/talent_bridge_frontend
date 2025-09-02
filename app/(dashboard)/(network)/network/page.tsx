@@ -4,7 +4,7 @@ import { HiOutlineLocationMarker } from "react-icons/hi";
 import { BiSearch } from "react-icons/bi";
 import { FiFilter } from "react-icons/fi";
 import { RiBuildingLine } from "react-icons/ri";
-import Image from "next/image";
+import Image, { StaticImageData } from "next/image";
 import location from "@/public/assets/icons/map-pin.png";
 import bag from "@/public/assets/icons/briefcase-4.png";
 import building from "@/public/assets/icons/building-2.png";
@@ -46,6 +46,20 @@ export default function RecruiterGrid() {
 
   const handleClick = (id : any) => {
     routes.push(`/profile/${id}`); 
+  };
+
+  const getAvatar = (avatar?: string | null): string | StaticImageData => {
+    if (!avatar) return profile; // fallback image
+  
+    if (avatar.startsWith("https://lh3.googleusercontent.com/")) {
+      return avatar; // Google direct URL
+    }
+  
+    if (avatar.startsWith("http")) {
+      return avatar; // any other full URL
+    }
+  
+    return `https://backend.webridgetalent.com/assets/images/${avatar}`;
   };
 
   return (
@@ -103,11 +117,7 @@ export default function RecruiterGrid() {
                   </div>
                   <div className="flex items-center gap-3 border-b border-gray-200 p-2">
                     <Image
-                      src={
-                        card.avatar
-                          ? `https://backend.webridgetalent.com/assets/images/${card.avatar}`
-                          : profile
-                      }
+                      src={getAvatar( card.avatar)}
                       alt={card.fullname}
                       width={64}
                       height={64}

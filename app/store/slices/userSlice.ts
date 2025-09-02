@@ -1,14 +1,19 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { UserData } from '../../types/user';
+import Cookies from "js-cookie";
 
 export interface UserState {
   user: UserData | null;
   currentStep: number;
+  token: string | null;
+  userId: string | null;
 }
 
 const initialState: UserState = {
   user: null,
   currentStep: 1,
+  token: Cookies.get("tb_token") || null,
+  userId: Cookies.get("tb_userId") || null,
 };
 
 const userSlice = createSlice({
@@ -28,6 +33,10 @@ const userSlice = createSlice({
     clearUser: (state) => {
       state.user = null;
       state.currentStep = 1;
+      Cookies.remove("tb_token");
+      Cookies.remove("tb_userId");
+      state.token = null;
+      state.userId = null;
     },
   },
 });
