@@ -6,14 +6,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { updateUserData, setCurrentStep } from "@/app/store/slices/userSlice";
 import { signupValidationSchema } from "@/app/utils/validation";
-import logo from "@/public/assets/Icon.png"
-import google from "@/public/assets/media/google.png"
-import facebook from "@/public/assets/media/Icon (1).png"
+import logo from "@/public/assets/Icon1.svg"
+import google from "@/public/assets/media/Google.svg"
+import facebook from "@/public/assets/media/Facebook.svg"
 import { useGoogleLogin } from "@react-oauth/google";
 import { toast } from "react-toastify";
 import { useFacebookRegisterMutation, useGoogleSignUpMutation } from "@/app/store/api/userApi";
 import { useFacebookSDK } from "@/app/hooks/useFacebookSDK";
 import Cookies from "js-cookie";
+import Link from "next/link";
 
 export default function Signup() {
   const dispatch = useDispatch();
@@ -134,10 +135,10 @@ const loginWithFacebook = () => {
       <div className="relative w-full flex items-center justify-between px-6 py-4 border-b border-gray-200">
         {/* Left: Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-sm font-bold">
+          <div className="w-8 h-8 rounded-full icon flex items-center justify-center text-white text-sm font-bold">
             <Image src={logo} alt="" />
           </div>
-          <span className="text-base font-semibold text-gray-900">TalentBridge</span>
+        <Link href="/auth">  <span className="text-base font-semibold text-gray-900">TalentBridge</span></Link>
         </div>
 
         {/* Center: Stepper */}
@@ -191,7 +192,7 @@ const loginWithFacebook = () => {
                 placeholder="e.g John Doe"
                 value={user?.fullName || ''}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-teal-500 ${
+                className={`w-full px-3 py-2 border rounded-md  ${
                   errors.fullName ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -214,24 +215,42 @@ const loginWithFacebook = () => {
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="US (+1) 123456778899"
-                  value={user?.phone || ''}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
-              </div>
+             
+               <div className="flex-1">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      Phone number
+    </label>
+    <div className="flex">
+     <select
+  name="countryCode"
+  className="px-1 pr-0 py-2 border-gray-300 rounded-l-md border-t border-b border-l bg-white text-sm focus:outline-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22currentColor%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19 9l-7 7-7-7%22 /%3E%3C/svg%3E')] bg-no-repeat bg-right-1"
+>
+  <option value="+1">US +1</option>
+  <option value="+91">IN +91</option>
+  <option value="+44">GB +44</option>
+  <option value="+61">AU +61</option>
+</select>
+
+
+      <input
+        type="tel"
+        name="phone"
+        placeholder="1234567890"
+        value={user?.phone || ""}
+        onChange={handleChange}
+        className={`w-full px-3 py-2 border-t border-b border-r rounded-r-md ${
+          errors.phone ? "border-red-500" : "border-gray-300"
+        }`}
+      />
+    </div>
+    {errors.phone && (
+      <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+    )}
+  </div>
             </div>
 
             {/* DOB */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
               <input
                 type="date"
@@ -244,7 +263,7 @@ const loginWithFacebook = () => {
                 }`}
               />
               {errors.dob && <p className="text-red-500 text-xs mt-1">{errors.dob}</p>}
-            </div>
+            </div> */}
 
             {/* Country & City */}
             <div className="flex gap-3">
@@ -297,7 +316,7 @@ const loginWithFacebook = () => {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full bg-teal-500 text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
+              className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
             >
               Right this way
             </button>

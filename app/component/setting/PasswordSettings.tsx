@@ -112,7 +112,7 @@ export default function PasswordSettings() {
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer disabled:opacity-50"
+          className="px-6 py-2 review text-white rounded hover:bg-teal-600 cursor-pointer disabled:opacity-50"
         >
           {isLoading ? "Saving..." : "Save changes"}
         </button>

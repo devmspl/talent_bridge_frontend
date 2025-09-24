@@ -40,7 +40,7 @@ export default function RootLayout({
     if (!isReady) return null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-white">
    <aside className={`fixed top-0 left-0 h-screen  z-50 w-64  transition-all duration-300 ${isCollapsed ? "w-20" : "w-24"}`}>
       <Sidebar />
     </aside>

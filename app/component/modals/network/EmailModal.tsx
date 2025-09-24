@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import star from '@/public/assets/icons/sparkles.png'
 import userProfile from "@/public/assets/profile/user.png"
 import {
@@ -12,9 +12,16 @@ import Image from "next/image";
 
 export default function EmailModal({ onClose }: any) {
   const [emailBody, setEmailBody] = useState("");
+    useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto"; 
+    };
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-200/40 flex items-center justify-center border border-gray-200">
+    // <div className="fixed inset-0 z-50 bg-gray-200/40 flex items-center justify-center border border-gray-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-200/30 backdrop-blur-sm">
       <div className="max-w-3xl w-full mx-auto border border-gray-200 rounded-lg shadow  bg-white relative">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 p-6">
@@ -76,7 +83,7 @@ export default function EmailModal({ onClose }: any) {
   >
     Back
   </button>
-  <button className="px-4 py-2 w-1/2 bg-teal-600 text-white rounded-md hover:bg-teal-700 cursor-pointer">
+  <button className="px-4 py-2 w-1/2 review text-white rounded-md hover:bg-teal-700 cursor-pointer">
     Send Email
   </button>
 </div>

@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-import logo from '@/public/assets/Icon.png'; // adjust path as needed
+import logo from '@/public/assets/Icon1.svg'; // adjust path as needed
 import { useRouter } from 'next/navigation';
 
 const ResetPasswordPage = () => {
@@ -25,7 +25,7 @@ const ResetPasswordPage = () => {
       <div className="bg-white w-full max-w-md p-8 rounded-xl shadow-md text-center">
         {/* Logo & Brand */}
         <div className="flex flex-col items-center gap-2 mb-6">
-          <div className="bg-teal-500 rounded-full p-2">
+          <div className="review rounded-full p-2">
             <Image src={logo} alt="Logo" width={24} height={24} />
           </div>
           <h2 className="text-lg font-semibold text-gray-800">TalentBridge</h2>
@@ -69,7 +69,7 @@ const ResetPasswordPage = () => {
 
           <button
             type="submit"
-            className="w-full bg-teal-500 text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
+            className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
           >
             Create new password
           </button>

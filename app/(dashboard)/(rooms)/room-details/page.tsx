@@ -9,23 +9,27 @@ import {
   AiOutlineMessage,
   AiOutlineStar,
 } from "react-icons/ai";
-import Microsoft from "@/public/assets/media/microsoft.png"
-import google from "@/public/assets/media/google.png"
-import amazone from "@/public/assets/media/amazon.png"
-import angel from "@/public/assets/media/angel_list.png"
+import Microsoft from "@/public/assets/media/microsoft.svg"
+import google from "@/public/assets/media/Google.svg"
+import amazone from "@/public/assets/media/amazon.svg"
+import angel from "@/public/assets/media/angel_list.svg"
 import you from "@/public/assets/profile/Avatar.png"
-import user1 from "@/public/assets/profile/Avatar (1).png"
-import user2 from "@/public/assets/profile/Avatar (7).png"
-import user3 from "@/public/assets/profile/Avatar (2).png"
-import user4 from "@/public/assets/profile/Avatar (4).png"
-import user5 from "@/public/assets/profile/Avatar (5).png"
-import user6 from "@/public/assets/profile/Avatar (6).png"
+import user1 from "@/public/assets/profile/user1.svg"
+import user2 from "@/public/assets/profile/user2.svg"
+import user3 from "@/public/assets/profile/user3.svg"
+import user4 from "@/public/assets/profile/user4.svg"
+import user5 from "@/public/assets/profile/user5.svg"
+import user6 from "@/public/assets/profile/user6.svg"
+
 import { FcDeleteColumn, FcDeleteRow } from "react-icons/fc";
 import { MdOutlineDelete } from "react-icons/md";
 import { TbWorld } from "react-icons/tb";
 import DeleteShowcaseRoom from "@/app/component/modals/room/DeleteShowcaseRoom";
 import ShareRoom from "@/app/component/modals/room/ShareRoom";
 import ChangeVisibilityModal from "@/app/component/modals/room/ChangeVisibilityModal";
+import del from "@/public/assets/icons/delete.svg"
+import Link from "next/link";
+
 
 
 const Page = () => {
@@ -92,25 +96,25 @@ const Page = () => {
 
   return (
     <>
-    <div className="bg-[#f6f7fb] min-h-screen p-6 text-sm text-gray-800 font-sans">
+    <div className="bg-white min-h-screen p-6 text-sm text-gray-800 font-sans">
       <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
   <div>
-    Showcase rooms / <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
+ <Link href="/showcase-rooms">  Showcase rooms </Link>  / <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
   </div>
 
   <div className="flex gap-2">
-    <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm border h-9 hover:cursor-pointer">
+    <button className="bg-white text-gray-700 px-4 py-2 rounded-md text-sm border h-9 hover:cursor-pointer">
       Edit Room
     </button>
-    <button className="bg-gray-100 text-red-700 px-4 py-2 rounded-md text-sm border h-9 flex items-center justify-center hover:cursor-pointer"
+    <button className="bg-[#FEF2F2] text-red-700 px-3 py-2 rounded-md text-sm border h-9 flex items-center justify-center hover:cursor-pointer"
    onClick={() => setShowModal(true)}>
-      <MdOutlineDelete size={16} />
+      <Image src={del} alt=""></Image>
     </button>
   </div>
 </div>
 
       {/* Header */}
-      <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
+      <div className="bg-white rounded-xl p-6 mb-6 border border-[#E5E7EB]">
         <div className="flex justify-between items-start">
           <div>
           <h1 className="text-[20px] font-semibold flex items-center">
@@ -123,9 +127,9 @@ const Page = () => {
             <p className="text-sm text-gray-600 mt-1">John Doe</p>
           </div>
           <div className="flex gap-2">
-            <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md text-sm border hover:cursor-pointer"
+            <button className="bg-white border border-[#D1D5DB] text-gray-700 px-4 py-2 rounded-md text-sm  hover:cursor-pointer"
               onClick={() => setVisibility(true)}>Change Visibility</button>
-            <button className="bg-teal-600 text-white px-4 py-2 rounded-md text-sm hover:cursor-pointer"
+            <button className="review text-white px-4 py-2 rounded-md text-sm hover:cursor-pointer"
              onClick={() => setOpen(true)}>Share room</button>
           </div>
         </div>

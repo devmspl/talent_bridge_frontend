@@ -2,6 +2,7 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import logo from "@/public/assets/profile/Avatarlogo.png";
+import tick from "@/public/assets/tick.svg";
 import {
   useGetUserByIdQuery,
   useUpdateProfileMutation,
@@ -291,14 +292,26 @@ const Personal_info = () => {
 
           {/* Open for work */}
           <div className="col-span-2 flex items-center gap-2">
-            <input
+            {/* <input
               type="checkbox"
               name="openForWork"
               checked={formData.openForWork}
               onChange={handleInputChange}
               className="w-4 h-4"
             />
-            <label className="text-sm font-medium">Open for Work</label>
+            <label className="text-sm font-medium">Open for Work</label> */}
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer relative">
+              <input
+                type="checkbox"
+                className="peer h-4 w-4 rounded-[4px] border-2 border-gray-300 checked:border-[#02ABAC] checked:bg-[#E6F7F7] appearance-none"
+              />
+              <Image
+                src={tick}
+                alt="tick"
+                className="absolute left-1 top-1.5 hidden peer-checked:block h-2 w-2"
+              />
+              <span> Open for Work </span>
+            </label>
           </div>
         </form>
 
@@ -307,7 +320,7 @@ const Personal_info = () => {
           <button
             type="button"
             onClick={handleSave}
-            className="px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer"
+            className="px-6 py-2 review text-white rounded hover:bg-teal-600 cursor-pointer"
           >
             Save changes
           </button>

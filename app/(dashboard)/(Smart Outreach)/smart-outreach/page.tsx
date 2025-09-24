@@ -1,10 +1,10 @@
 "use client"
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import { HiOutlineMail } from "react-icons/hi";
-import mail from "@/public/assets/icons/mail.png";
-import edit from "@/public/assets/icons/pencil-3.png";
-import deleteI from "@/public/assets/icons/archive.png";
-import up_down from "@/public/assets/icons/swap-verticle.png";
+import mail from "@/public/assets/icons/Mail1.svg";
+import edit from "@/public/assets/icons/pencil.svg";
+import deleteI from "@/public/assets/icons/archive.svg";
+import up_down from "@/public/assets/icons/updown.svg";
 import Image from "next/image";
 import { useState } from "react";
 import EmailModal from "@/app/component/modals/network/EmailModal";
@@ -73,7 +73,7 @@ export default function page() {
           <h1 className="text-xl font-semibold">Smart Outreach</h1>
           <p className="text-sm text-gray-500">Manage your professional conversations</p>
         </div>
-        <button className="bg-teal-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 cursor-pointer"
+        <button className="review text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-700 cursor-pointer"
         onClick={()=>setShowEmail(true)}>
           <Image src={mail} alt="" width={20} />
           Compose
@@ -118,9 +118,10 @@ export default function page() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>  
         <div className="text-sm text-gray-500 mt-4">
           Showing 1 to 5 of 10 results
+          
         </div>
       </div>
     </div>

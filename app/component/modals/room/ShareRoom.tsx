@@ -65,7 +65,7 @@ const ShareRoom: React.FC<ShareRoomProps> = ({
 
         <button
           onClick={onClose}
-          className="w-full bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium py-2 rounded-lg hover:cursor-pointer"
+          className="w-full review hover:bg-teal-600 text-white text-sm font-medium py-2 rounded-lg hover:cursor-pointer"
         >
           Close
         </button>

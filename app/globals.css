@@ -15,3 +15,45 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+.bg-color{
+  background-color: #02ABAC;
+}
+
+
+.custom-checkbox {
+  accent-color: #E6F7F7; 
+  
+}
+.custom-checkbox:checked {
+  background-color: #E6F7F7; 
+  border-color: #02ABAC; 
+}
+.all{
+  background-color: #F9FAFB;
+}
+.toggle-all{
+  color: #111827;
+}
+.icon{
+  background-color: #00AAAA;
+}
+.cg{
+  color: #6B7280;
+}
+.button-bg{
+  background-color:#02ABAC;
+}
+.review{
+  /* background-color: #F9FAFB; */
+   background-color:#02ABAC;
+}
+.review-1{
+  background-color: #F9FAFB;
+}
+
+/* AUTH PAGE CSS */
+.bg_gradient img {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;  
+}

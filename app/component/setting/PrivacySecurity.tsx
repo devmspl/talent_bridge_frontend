@@ -25,7 +25,7 @@ export default function PrivacySecurity() {
           <label
             htmlFor="2fa-toggle"
             className={`relative inline-block w-11 h-6 rounded-full cursor-pointer ${
-              twoFactorEnabled ? "bg-green-500" : "bg-gray-300"
+              twoFactorEnabled ? "bg-[#029A9B]" : "bg-gray-300"
             }`}
           >
             <input

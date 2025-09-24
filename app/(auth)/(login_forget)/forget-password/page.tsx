@@ -1,10 +1,11 @@
 "use client"
 import React, { useState } from 'react';
 import Image from 'next/image';
-import logo from '@/public/assets/Icon.png';
+import logo from '@/public/assets/Icon1.svg';
 import { useRouter } from 'next/navigation';
 import { useForgotPasswordMutation } from '@/app/store/api/userApi';
 import { toast } from 'react-toastify';
+import bgShape from "@/public/Gradientbackground.svg";
 
 const Page = () => {
   const router = useRouter();
@@ -52,11 +53,26 @@ const Page = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="bg_gradient">
+              <Image
+                src={bgShape}
+                className="absolute top-0 right-0 pointer-events-none"
+                alt="Background Shape"
+                fill
+              />
+              <Image
+                src={bgShape}
+                className="absolute bottom-0 left-0 pointer-events-none "
+                alt="Background Shape"
+                fill
+              />
+              </div>
+
       <div className="bg-white rounded-xl shadow-md w-full max-w-md p-8">
         {/* Logo and Brand */}
         <div className="flex flex-col items-center gap-2 mb-6">
-          <div className="bg-teal-500 rounded-full p-2">
+          <div className="review rounded-full p-2">
             <Image src={logo} alt="Logo" width={24} height={24} />
           </div>
           <h2 className="text-lg font-semibold text-gray-800">TalentBridge</h2>
@@ -89,13 +105,29 @@ const Page = () => {
 
           <button
             type="submit"
-            className="w-full bg-teal-500 text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer disabled:opacity-60"
+            className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer disabled:opacity-60"
             disabled={isLoading}
           >
             {isLoading ? 'Sending...' : 'Continue'}
           </button>
         </form>
+        <div className="flex items-center my-4">
+          <div className="flex-grow h-px bg-gray-200" />
+          <span className="mx-2 text-sm text-gray-500">Or</span>
+          <div className="flex-grow h-px bg-gray-200" />
+        </div>
+         <p className="text-center text-sm text-gray-600 mt-6">
+          Don’t have an account?{" "}
+          <a
+            href="/signup"
+            className="text-teal-600 font-medium hover:underline"
+          >
+            Sign up
+          </a>
+        </p>
       </div>
+
+      
     </div>
   );
 };

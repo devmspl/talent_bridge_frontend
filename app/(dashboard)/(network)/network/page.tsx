@@ -1,38 +1,37 @@
+
 "use client";
 import { FaStar } from "react-icons/fa";
-import { HiOutlineLocationMarker } from "react-icons/hi";
 import { BiSearch } from "react-icons/bi";
-import { FiFilter } from "react-icons/fi";
-import { RiBuildingLine } from "react-icons/ri";
 import Image, { StaticImageData } from "next/image";
 import location from "@/public/assets/icons/map-pin.png";
 import bag from "@/public/assets/icons/briefcase-4.png";
 import building from "@/public/assets/icons/building-2.png";
-import search from "@/public/assets/icons/menu-search-2.png";
-import bitbuckit from "@/public/assets/media/bitbucket.png";
-import visa from "@/public/assets/media/visa.png";
-import go from "@/public/assets/media/go.png";
-import intercome from "@/public/assets/media/intercom.png";
-import bamboo from "@/public/assets/media/bamboo.png";
-import facebook from "@/public/assets/media/Facebook.png";
-import hubspot from "@/public/assets/media/hubspot.png";
+import search from "@/public/assets/icons/menu-search-2.svg";
 import amazone from "@/public/assets/media/amazon.png";
+import profile from "@/public/assets/profile/Avatar.png";
 import { useState } from "react";
 import FilterModal from "@/app/component/modals/network/FilterModal";
 import { useRouter } from "next/navigation";
 import { useGetAllUsersQuery } from "@/app/store/api/userApi";
-import profile from "@/public/assets/profile/Avatar.png";
+import left from "@/public/assets/icons/left icon.svg"
+import right from "@/public/assets/icons/right icon.svg"
 import Cookies from "js-cookie";
 
 export default function RecruiterGrid() {
   const [showModal, setShowModal] = useState(false);
+  const [filters, setFilters] = useState({
+    location: "",
+    industry: "",
+    companyName: "",
+    experience: "",
+  });
+
   const { data: users, isLoading, isError } = useGetAllUsersQuery({
     page_no: 1,
     page_size: 100,
   });
   const routes = useRouter();
   const userId = Cookies.get("tb_userId");
-  
 
   if (isLoading) {
     return <div className="p-6">Loading users...</div>;
@@ -44,23 +43,42 @@ export default function RecruiterGrid() {
     return <div className="p-6 text-red-500">Failed to load users.</div>;
   }
 
-  const handleClick = (id : any) => {
-    routes.push(`/profile/${id}`); 
+  const handleClick = (id: any) => {
+    routes.push(`/profile/${id}`);
   };
 
   const getAvatar = (avatar?: string | null): string | StaticImageData => {
-    if (!avatar) return profile; // fallback image
-  
-    if (avatar.startsWith("https://lh3.googleusercontent.com/")) {
-      return avatar; // Google direct URL
-    }
-  
-    if (avatar.startsWith("http")) {
-      return avatar; // any other full URL
-    }
-  
+    if (!avatar) return profile;
+    if (avatar.startsWith("https://lh3.googleusercontent.com/")) return avatar;
+    if (avatar.startsWith("http")) return avatar;
     return `https://backend.webridgetalent.com/assets/images/${avatar}`;
   };
+
+  const filteredUsers = users
+    .filter((card: any) => card._id !== userId)
+    .filter((card: any) => {
+      return (
+        (filters.location === "" ||
+          card.location
+            ?.toLowerCase()
+            .includes(filters.location.toLowerCase())) &&
+        (filters.industry === "" ||
+          card.industryType?.[0]
+            ?.toLowerCase()
+            .includes(filters.industry.toLowerCase())) &&
+        (filters.companyName === "" ||
+          card.company
+            ?.toLowerCase()
+            .includes(filters.companyName.toLowerCase())) &&
+        (filters.experience === "" ||
+          card.experienceLevel
+            ?.toLowerCase()
+            .includes(filters.experience.toLowerCase()))
+      );
+    });
+    const activeFiltersCount = Object.values(filters).filter(
+  (val) => val && val.trim() !== ""
+).length;
 
   return (
     <>
@@ -74,6 +92,7 @@ export default function RecruiterGrid() {
               Connect with top recruiters in your industry
             </p>
           </div>
+
           {/* Search and Filter */}
           <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm mb-6">
             <div className="relative flex-grow">
@@ -84,16 +103,29 @@ export default function RecruiterGrid() {
                 className="w-full border border-gray-300 rounded-md py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <button
-              className="flex items-center gap-1 bg-[#00b4aa] hover:bg-[#00a19a] text-white px-4 py-2 rounded-md text-sm font-medium hover:cursor-pointer"
-              onClick={() => setShowModal(true)}
-            >
-              <Image src={search} alt="" /> Filters
-            </button>
+           
+           <button
+  className="flex items-center gap-2 review hover:bg-[#00a19a] text-white px-4 py-2 rounded-md text-sm  font-medium hover:cursor-pointer"
+  onClick={() => setShowModal(true)}
+>
+  {activeFiltersCount === 0 ? (
+    <>
+      <Image src={search} alt="Filters" /> Filters
+    </>
+  ) : (
+    <div className="flex items-center gap-1">
+      <span className="bg-white text-[#02ABAC] rounded-full w-4 h-4 flex items-center justify-center text-xs font-inter font-semibold">
+        {activeFiltersCount}
+      </span>
+      Filters
+    </div>
+  )}
+</button>
           </div>
 
+          {/* Recruiter Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {users.filter((card: any) => card._id !== userId).map((card: any, i: number) => (
+            {filteredUsers.map((card: any, i: number) => (
               <div
                 key={i}
                 className="border border-gray-200 rounded-md shadow-sm p-4 bg-white hover:shadow-md transition"
@@ -101,10 +133,11 @@ export default function RecruiterGrid() {
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs mb-2">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium capitalize ${card.type === "Recruiter"
+                      className={`px-2 py-0.5 rounded-full font-medium capitalize ${
+                        card.type === "Recruiter"
                           ? "bg-gray-100 text-gray-700"
                           : "bg-pink-100 text-pink-700"
-                        }`}
+                      }`}
                     >
                       {card.type || "Industry Professional"}
                     </span>
@@ -115,22 +148,22 @@ export default function RecruiterGrid() {
                       </span>
                     </div>
                   </div>
+
                   <div className="flex items-center gap-3 border-b border-gray-200 p-2">
                     <Image
-                      src={getAvatar( card.avatar)}
+                      src={getAvatar(card.avatar)}
                       alt={card.fullname}
                       width={64}
                       height={64}
                       className="rounded-full object-cover"
                       style={{ width: "64px", height: "64px" }}
                     />
-
                     <div>
                       <p className="text-sm font-medium text-gray-900 leading-tight mb-1">
                         {card.fullname}
                       </p>
                       <p className="text-xs text-gray-500 leading-tight mb-1">
-                        {card.industryType[0] || "Technology"}
+                        {card.industryType?.[0] || "Technology"}
                       </p>
                       <p className="text-xs text-gray-400 leading-tight flex gap-1 mb-1">
                         <Image src={amazone} alt="" width={16} height={16} />{" "}
@@ -138,27 +171,26 @@ export default function RecruiterGrid() {
                       </p>
                     </div>
                   </div>
+
                   <div className="text-[12px] font-medium text-[#4B5563] mt-3 space-y-0.5">
                     <div className="flex items-center gap-1 mb-3">
                       <Image src={location} alt="" height={16} />
-                      {card.location || "London, UK"}
+                      {card.location || "UK"}
                     </div>
                     <div className="flex mb-3 gap-2 text-[12px] font-medium text-[#4B5563]">
-                      {" "}
                       <Image src={bag} alt=" " height={16} />
-
-                      {card.industryType[0] || "Technology"}
+                      {card.industryType?.[0] || "Tech"}
                     </div>
                     <div className="flex mb-3 text-[12px] font-medium text-[#4B5563]">
                       <Image src={building} alt="" height={16} />
                       {card.placements || "18"} Placements •{" "}
                       {card.responseRate || "90%"} response rate
                     </div>
-                  </div>  
+                  </div>
                 </div>
                 <button
                   className="w-full text-xs text-center py-1.5 border border-gray-300 rounded-md font-medium text-gray-800 hover:bg-gray-100 transition cursor-pointer"
-                 onClick={()=>handleClick(card._id)}
+                  onClick={() => handleClick(card._id)}
                 >
                   View Profile
                 </button>
@@ -166,22 +198,35 @@ export default function RecruiterGrid() {
             ))}
           </div>
           <div className="border border-gray-200 mt-8 rounded-lg px-6 py-5  flex justify-between items-center text-xs text-gray-500 ">
-            <p>Showing 1 to 5 of 20 results</p>
-            <div className="flex gap-2">
-              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100">
-                &lt;
+             <p>Showing 1 to 5 of 20 results</p>
+             <div className="flex gap-2">
+               <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                 <Image src={left} alt="" />
+               </button>
+               <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                 <Image src={right} alt="" />
               </button>
-              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100">
-                &gt;
-              </button>
-            </div>
-          </div>
+             </div>
+           </div>
         </div>
       </div>
-      {showModal && <FilterModal onClose={() => setShowModal(false)} />}
+
+      {/* Modal */}
+      {showModal && (
+        <FilterModal
+          filters={filters}
+          setFilters={setFilters}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   );
 }
+
+
+
+
+
 
 // const cards = [
 //   {

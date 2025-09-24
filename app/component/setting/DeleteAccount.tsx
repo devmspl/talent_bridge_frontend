@@ -23,7 +23,7 @@ export default function DeleteAccount() {
         </ul>
 
         {/* Warning box */}
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-md px-4 py-3 flex gap-2">
+        <div className="bg-[#FFFBEB] border border-yellow-200 text-[#B45309] rounded-md px-4 py-3 flex gap-2">
             <div>
           <p className="font-medium mb-1 flex gap-2"><ImInfo /></p>
             </div>
@@ -37,7 +37,7 @@ export default function DeleteAccount() {
           To proceed with account deletion, please confirm your action by clicking the button below.
         </p>
 
-        <button className="mt-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-md cursor-pointer"
+        <button className="mt-4 bg-[#DC2626] hover:bg-red-700 text-white text-sm font-semibold px-5 py-2 rounded-md cursor-pointer"
         onClick={()=>setIsOpen(true)}
         >
           I want to delete my account

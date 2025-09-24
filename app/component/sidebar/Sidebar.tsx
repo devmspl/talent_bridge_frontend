@@ -5,13 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
 import Profile from "@/public/assets/profile/Avatar.png";
-import DashboardIcon from "@/public/assets/icons/home-2.png";
-import showcase from "@/public/assets/icons/tv.png";
-import network from "@/public/assets/icons/users-plus.png";
-import message from "@/public/assets/icons/message-1.png";
+import DashboardIcon from "@/public/assets/icons/home-2.svg";
+import showcase from "@/public/assets/icons/tv.svg";
+import network from "@/public/assets/icons/users-plus.svg";
+import message from "@/public/assets/icons/Vector.svg";
 import bell from "@/public/assets/icons/bell-3 (1).png";
-import notification from "@/public/assets/icons/setting.png";
-import log_in from "@/public/assets/icons/log-in-2.png";
+import notification from "@/public/assets/icons/Setting.svg";
+import log_in from "@/public/assets/icons/log-in-2.svg";
 import stars from "@/public/assets/icons/Featured icon.png";
 import { toast } from "react-toastify";
 import { useGetUserByIdQuery } from "@/app/store/api/userApi";
@@ -123,7 +123,7 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
 
-          <FiMoreHorizontal className="hidden sm:block text-gray-500" />
+          {/* <FiMoreHorizontal className="hidden sm:block text-gray-500" /> */}
         </div>
 
         {!isCollapsed && (

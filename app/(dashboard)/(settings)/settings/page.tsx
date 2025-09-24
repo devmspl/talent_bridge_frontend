@@ -9,7 +9,7 @@ import profileIcon from "@/public/assets/icons/user.png";
 import lock from "@/public/assets/icons/lock.png";
 import bell from "@/public/assets/icons/bell-3.png";
 import finger_print from "@/public/assets/icons/fingerprint.png";
-import bin from "@/public/assets/icons/archive.png";
+import bin from "@/public/assets/icons/archive.svg";
 import Personal_info from "@/app/component/setting/Personal_info";
 import NotificationSettings from "@/app/component/setting/NotificationSettings";
 import PasswordSettings from "@/app/component/setting/PasswordSettings";

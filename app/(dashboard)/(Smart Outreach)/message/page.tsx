@@ -555,7 +555,7 @@ console.log("filteredContacts",filteredContacts);
                   <button 
                     onClick={handleSendMessage}
                     disabled={!messageText.trim()}
-                    className="text-white bg-teal-600 px-4 py-2 rounded-full hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1 text-sm"
+                    className="text-white review px-4 py-2 rounded-full hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-1 text-sm"
                   >
                     <FiSend size={16} />
                     Send

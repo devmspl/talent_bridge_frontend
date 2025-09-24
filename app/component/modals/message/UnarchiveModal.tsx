@@ -30,7 +30,7 @@ export default function UnarchiveModal({onClose } : any) {
               </button>
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-md bg-teal-600 text-white hover:bg-teal-700 cursor-pointer"
+                className="px-4 py-2 rounded-md review text-white hover:bg-teal-700 cursor-pointer"
               >
                 Yes, archive
               </button>

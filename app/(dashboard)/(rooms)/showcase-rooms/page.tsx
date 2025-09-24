@@ -31,22 +31,22 @@ const rooms = [
 const ShowcasePage = () => {
   const routes =useRouter()
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className="min-h-screen bg-white ">
     <div className="p-6">
       <div className="bg-white p-6 rounded-xl shadow mb-5 flex justify-between ">
         <div>
         <h2 className="text-xl font-semibold text-gray-900">Showcase Rooms</h2>
         <p className="text-sm text-gray-600">Manage your story and share your skills in the way you wish</p>
         </div>
-         <button className="bg-teal-500 text-white px-4 py-2 h-[40px] rounded-md flex items-center gap-2 hover:bg-teal-600 cursor-pointer"
+         <button className="review text-white px-4 py-2 h-[40px] rounded-md flex items-center gap-2 hover:bg-teal-600 cursor-pointer"
         onClick={()=>routes.push("/new-room")}>
           <FiPlus className="text-lg" />
           New Room
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <button className="bg-gray-200 text-gray-800 px-4 py-1 rounded-full font-medium">Active Rooms</button>
+      <div className="flex gap-2 mb-6 bg-[#F9FAFB] w-[320px] rounded-[20px]">
+        <button className="bg-[#FFFFFF] shadow-[#121A2B1A]  text-gray-800 px-4 py-1 rounded-full font-medium">Active Rooms</button>
         <button className="text-gray-600 px-4 py-1 rounded-full font-medium hover:text-black">Drafts</button>
         <button className="text-gray-600 px-4 py-1 rounded-full font-medium hover:text-black">Archived</button>
       </div>
@@ -69,7 +69,7 @@ const ShowcasePage = () => {
           {room.tags.map((tag, i) => (
             <span
               key={i}
-              className="bg-teal-50 text-teal-700 px-3 py-1 text-xs rounded-full"
+              className="bg-teal-50 text-teal-700 border border-[#99F6E4] px-3 py-1 text-xs rounded-full"
             >
               {tag}
             </span>

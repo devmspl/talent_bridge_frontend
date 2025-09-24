@@ -30,7 +30,7 @@ export default function page() {
               placeholder="Your future starts here - enter your email"
               className="px-4 py-2 border rounded-md w-full max-w-xs"
             />
-            <button className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700">
+            <button className="review text-white px-4 py-2 rounded-md hover:bg-teal-700">
               Own my Story
             </button>
           </div>

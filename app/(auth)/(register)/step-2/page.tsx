@@ -5,12 +5,16 @@ import Avtar from "@/public/assets/profile/Avatar.png"
 import Image from "next/image";
 import { BiCloset } from "react-icons/bi";
 import { CgClose } from "react-icons/cg";
-import logo from "@/public/assets/Icon.png";
+import logo from "@/public/assets/Icon1.svg";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { updateUserData, setCurrentStep } from "@/app/store/slices/userSlice";
 import { profileValidationSchema } from "@/app/utils/validation";
+import check from "@/public/assets/icons/Vector (1).svg"
+import Link from "next/link";
+import upload from "@/public/assets/icons/upload.svg"
+import tick from "@/public/assets/tick.svg";
 
 export default function ProfileSetup() {
   const dispatch = useDispatch();
@@ -92,10 +96,10 @@ export default function ProfileSetup() {
       <div className="w-full flex items-center justify-between px-6 py-4 border-b border-gray-200">
         {/* Left: Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-sm font-bold">
+          <div className="w-8 h-8 rounded-full icon flex items-center justify-center text-white text-sm font-bold">
             <Image src={logo} alt="" />
           </div>
-          <span className="font-semibold text-gray-900">TalentBridge</span>
+         <Link href="/auth"> <span className="text base font-semibold text-gray-900">TalentBridge</span> </Link>
         </div>
 
         {/* Center: Stepper */}
@@ -103,7 +107,7 @@ export default function ProfileSetup() {
           <div className="flex items-center gap-4 text-sm">
             {/* Step 1: Completed */}
             <div className="flex items-center gap-1 text-gray-500">
-              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">✓</div>
+              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center"><Image src={check} alt="" /> </div>
               <span>Account</span>
               <span className="text-gray-300">›</span>
             </div>
@@ -163,10 +167,10 @@ export default function ProfileSetup() {
                 />
               </label>
             </div>
-            <button className="text-teal-500 text-sm mt-2 flex items-center gap-1 hover:underline cursor-pointer"
+            <button className="text-[#02ABAC] text-sm mt-2 flex items-center gap-1 hover:underline cursor-pointer"
               onClick={(e) => { e.preventDefault(); fileInputRef.current?.click(); }}
             >
-              <FaUpload />Upload Photo
+             <Image className="h-[15px]" src={upload} alt=""></Image>  Upload Photo
             </button>
           </div>
 
@@ -192,57 +196,71 @@ export default function ProfileSetup() {
               {errors.industry && <p className="text-red-500 text-xs mt-1">{errors.industry}</p>}
             </div>
 
-            {/* Employment Type */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Preferred Employment Type</label>
-              <select 
-                className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
-                  errors.employmentType ? 'border-red-500' : 'border-gray-300'
-                }`}
-                value={user?.employmentType || ''}
-                onChange={handleEmploymentTypeChange}
-              >
-                <option value="">Select preferred job type</option>
-                <option value="Permanent">Permanent</option>
-                <option value="Contract">Contract</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Freelance">Freelance</option>
-              </select>
-              {errors.employmentType && <p className="text-red-500 text-xs mt-1">{errors.employmentType}</p>}
+           <div>
+  <label className="text-sm font-medium text-gray-700">Preferred Employment Type</label>
+  
+  <select
+    className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
+      errors.employmentType ? 'border-red-500' : 'border-gray-300'
+    }`}
+    value={user?.employmentType || ''}
+    onChange={(e) => {
+      handleEmploymentTypeChange(e);
+      if (!selectedTypes.includes(e.target.value) && e.target.value) {
+        setSelectedTypes([...selectedTypes, e.target.value]); 
+      }
+    }}
+  >
+    <option value="">Select preferred job type</option>
+    <option value="Permanent">Permanent</option>
+    <option value="Contract">Contract</option>
+    <option value="Part-time">Part-time</option>
+    <option value="Freelance">Freelance</option>
+  </select>
 
-              {/* Chips */}
-              <div className="flex flex-wrap gap-2 mt-2">
-                {selectedTypes.map((type) => (
-                  <span
-                    key={type}
-                    className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center gap-2"
-                  >
-                    {type}
-                    <button onClick={() => handleRemoveType(type)} className="text-gray-400 hover:text-gray-600">
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
+  {errors.employmentType && <p className="text-red-500 text-xs mt-1">{errors.employmentType}</p>}
 
-            {/* Checkbox */}
+  <div className="flex flex-wrap gap-2 mt-2">
+    {selectedTypes.map((type) => (
+      <span
+        key={type}
+        className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center gap-2"
+      >
+        {type}
+        <button
+          onClick={() => handleRemoveType(type)}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          ✕
+        </button>
+      </span>
+    ))}
+  </div>
+</div>
+
+
             <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="selfEmployed"
-                className="rounded border-gray-300 focus:ring-teal-500"
-                checked={selfEmployed}
-                onChange={(e) => handleSelfEmployedChange(e.target.checked)}
-              />
-              <label htmlFor="selfEmployed" className="text-sm text-gray-700">
-                I am open to self employed opportunities
-              </label>
+             
+               <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer relative">
+  <input
+    type="checkbox"
+    id="selfEmployed"
+    className="peer h-4 w-4 rounded-[4px] border-2 border-gray-300 checked:border-[#02ABAC] checked:bg-[#E6F7F7] appearance-none"
+    onChange={(e) => handleSelfEmployedChange(e.target.checked)}
+  />
+  <Image
+    src={tick}
+    alt="tick"
+    className="absolute left-1 top-1.5 hidden peer-checked:block h-2 w-2"
+  />
+  <span>I am open to self employed opportunities</span>
+</label>
+
             </div>
 
             {/* Button */}
             <button 
-              className="w-full mt-2 bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 rounded-md transition hover:cursor-pointer"
+              className="w-full mt-2 review hover:bg-teal-600 text-white font-semibold py-2 rounded-md transition hover:cursor-pointer"
               onClick={handleContinue}
             >
               Let's Continue

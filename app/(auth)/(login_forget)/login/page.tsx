@@ -1,16 +1,20 @@
-"use client"
-import React, { useState } from 'react';
-import Image from 'next/image';
-import logo from '@/public/assets/Icon.png';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import google from "@/public/assets/media/google.png"
-import linkedin from "@/public/assets/media/Icon.png"
-import { useGoogleSigninMutation, useLoginMutation } from '@/app/store/api/userApi';
-import { toast } from 'react-toastify';
-import { loginValidationSchema } from '@/app/utils/validation';
-import { useGoogleLogin } from '@react-oauth/google';
+"use client";
+import React, { useState } from "react";
+import Image from "next/image";
+import logo from "@/public/assets/Icon1.svg";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import google from "@/public/assets/media/Google.svg";
+import linkedin from "@/public/assets/media/Linkdin.svg";
+import {
+  useGoogleSigninMutation,
+  useLoginMutation,
+} from "@/app/store/api/userApi";
+import { toast } from "react-toastify";
+import { loginValidationSchema } from "@/app/utils/validation";
+import { useGoogleLogin } from "@react-oauth/google";
 import Cookies from "js-cookie";
+import tick from "@/public/assets/tick.svg";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -18,18 +22,25 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [login, { isLoading }] = useLoginMutation();
-  const [googleSignin, { isLoading: isGoogleSigning }] = useGoogleSigninMutation();
+  const [googleSignin, { isLoading: isGoogleSigning }] =
+    useGoogleSigninMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await loginValidationSchema.validate({ email, password }, { abortEarly: false });
+      await loginValidationSchema.validate(
+        { email, password },
+        { abortEarly: false }
+      );
       setErrors({});
     } catch (err: any) {
       const newErrors: Record<string, string> = {};
-      err?.inner?.forEach((e: any) => { if (e.path) newErrors[e.path] = e.message; });
+      err?.inner?.forEach((e: any) => {
+        if (e.path) newErrors[e.path] = e.message;
+      });
       setErrors(newErrors);
-      const msgs = Object.values(newErrors).join('\n') || 'Please fix the form errors';
+      const msgs =
+        Object.values(newErrors).join("\n") || "Please fix the form errors";
       // toast.error(msgs, { toastId: 'login-validation' });
       return;
     }
@@ -37,23 +48,22 @@ const LoginPage = () => {
     try {
       const res = await login({ email, password }).unwrap();
       if (res?.token && res?._id) {
-         Cookies.set("tb_token", res.token, { expires: 7 });
+        Cookies.set("tb_token", res.token, { expires: 7 });
         Cookies.set("tb_userId", res._id, { expires: 7 });
-        toast.success('Logged in successfully', { toastId: 'login-success' });
-        router.push('/dashboard');
+        toast.success("Logged in successfully", { toastId: "login-success" });
+        router.push("/dashboard");
       } else {
-        toast.error('Login failed')
+        toast.error("Login failed");
       }
-
     } catch (err: any) {
       const status = err?.status;
       const data = err?.data;
-      let message = 'Login failed';
+      let message = "Login failed";
       if (data) {
-        if (typeof data === 'string') {
+        if (typeof data === "string") {
           message = data;
         } else if (Array.isArray(data?.message)) {
-          message = data.message.join('\n');
+          message = data.message.join("\n");
         } else if (data?.message) {
           message = String(data.message);
         } else if (data?.error) {
@@ -65,25 +75,25 @@ const LoginPage = () => {
         message = String(err.error);
       }
       if (status) message = `${status} - ${message}`;
-      toast.error(message, { toastId: 'login-api' });
+      toast.error(message, { toastId: "login-api" });
     }
   };
 
   const onEmailChange = (v: string) => {
     setEmail(v);
-    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+    if (errors.email) setErrors((prev) => ({ ...prev, email: "" }));
   };
   const onPasswordChange = (v: string) => {
     setPassword(v);
-    if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+    if (errors.password) setErrors((prev) => ({ ...prev, password: "" }));
   };
 
   const sendTokenToBackend = async (token: string) => {
     try {
       const res = await googleSignin({ token }).unwrap();
       if (res?.token && res?._id) {
-         Cookies.set("tb_token", res.token, { expires: 7 });
-         Cookies.set("tb_userId", res._id, { expires: 7 });
+        Cookies.set("tb_token", res.token, { expires: 7 });
+        Cookies.set("tb_userId", res._id, { expires: 7 });
         toast.success("Logged in successfully", { toastId: "login-success" });
         router.push("/dashboard");
       } else {
@@ -97,7 +107,6 @@ const LoginPage = () => {
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse: any) => {
-      
       const token = tokenResponse?.access_token ?? tokenResponse?.credential;
       if (!token) {
         toast.error("Google did not return a token");
@@ -109,32 +118,26 @@ const LoginPage = () => {
       toast.error("Google sign-in failed (popup closed or blocked)");
     },
     scope: "openid profile email",
-    flow: "implicit", 
+    flow: "implicit",
   });
 
+  const handleLinkedInLogin = () => {
+    const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
+    const redirectUri = encodeURIComponent("http://localhost:3000/linkedin");
+    const state = Math.random().toString(36).slice(2);
+    sessionStorage.setItem("linkedin_oauth_state", state);
 
-const handleLinkedInLogin = () => {
-  const clientId = process.env.NEXT_PUBLIC_LINKEDIN_CLIENT_ID;
-  const redirectUri = encodeURIComponent("http://localhost:3000/linkedin");
-  const state = Math.random().toString(36).slice(2);
-  sessionStorage.setItem("linkedin_oauth_state", state);
+    const scope = encodeURIComponent("r_liteprofile r_emailaddress");
 
-  const scope = encodeURIComponent("r_liteprofile r_emailaddress");
-
-  window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
-};
-
-
-
-
-
+    window.location.href = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=${scope}`;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-xl shadow-md w-full max-w-md p-8">
         {/* Logo & Title */}
         <div className="flex flex-col items-center gap-2 mb-6">
-          <div className="bg-teal-500 rounded-full p-2">
+          <div className="review rounded-full p-2">
             <Image src={logo} alt="Logo" width={24} height={24} />
           </div>
           <h2 className="text-lg font-semibold text-gray-800">TalentBridge</h2>
@@ -142,51 +145,86 @@ const handleLinkedInLogin = () => {
 
         {/* Heading */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Log in to your account</h1>
-          <p className="text-sm text-gray-500 mt-1">Please enter your details to get started</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Log in to your account
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Please enter your details to get started
+          </p>
         </div>
 
         {/* Form */}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Email
+            </label>
             <input
               id="email"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => onEmailChange(e.target.value)}
-              className={`mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+              className={`mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                errors.email ? "border-red-500" : "border-gray-300"
+              }`}
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
             <input
               id="password"
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => onPasswordChange(e.target.value)}
-              className={`mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+              className={`mt-1 w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                errors.password ? "border-red-500" : "border-gray-300"
+              }`}
             />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm text-gray-600">
-              <input type="checkbox" className="form-checkbox" />
-              Remember me
-            </label>
-            <Link href="/forget-password" className="text-sm text-teal-600 font-medium hover:underline">Forgot password?</Link>
+           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer relative">
+  <input
+    type="checkbox"
+    className="peer h-4 w-4 rounded-[4px] border-2 border-gray-300 checked:border-[#02ABAC] checked:bg-[#E6F7F7] appearance-none"
+  />
+  <Image
+    src={tick}
+    alt="tick"
+    className="absolute left-1 top-1.5 hidden peer-checked:block h-2 w-2"
+  />
+  <span>Remember me</span>
+</label>
+            <Link
+              href="/forget-password"
+              className="text-sm text-teal-600 font-medium hover:underline"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <button
             type="submit"
-            className="w-full bg-teal-500 text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer disabled:opacity-60"
+            className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer disabled:opacity-60"
             disabled={isLoading}
           >
-            {isLoading ? 'Logging in...' : 'Log in'}
+            {isLoading ? "Logging in..." : "Log in"}
           </button>
         </form>
 
@@ -199,14 +237,17 @@ const handleLinkedInLogin = () => {
 
         {/* Social Buttons */}
         <div className="space-y-3">
-          <button className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md text-sm hover:bg-gray-50 transition cursor-pointer"
-          onClick={() => loginWithGoogle()}
+          <button
+            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md text-sm hover:bg-gray-50 transition cursor-pointer"
+            onClick={() => loginWithGoogle()}
           >
             <Image src={google} alt="google icon" width={24} />
             Continue with Google
           </button>
-          <button className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md text-sm hover:bg-gray-50 transition cursor-pointer"
-          onClick={handleLinkedInLogin}>
+          <button
+            className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md text-sm hover:bg-gray-50 transition cursor-pointer"
+            onClick={handleLinkedInLogin}
+          >
             <Image src={linkedin} alt="linkedin icon" width={24} />
             Continue with LinkedIn
           </button>
@@ -214,7 +255,13 @@ const handleLinkedInLogin = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-6">
-          Don’t have an account? <a href="/signup" className="text-teal-600 font-medium hover:underline">Sign up</a>
+          Don’t have an account?{" "}
+          <a
+            href="/signup"
+            className="text-teal-600 font-medium hover:underline"
+          >
+            Sign up
+          </a>
         </p>
       </div>
     </div>

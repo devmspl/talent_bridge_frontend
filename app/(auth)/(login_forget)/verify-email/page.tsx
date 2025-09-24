@@ -1,18 +1,34 @@
 "use client"
 import React from 'react';
 import Image from 'next/image'; // If using Next.js
-import logo from '@/public/assets/Icon.png'; // Adjust your logo path
+import logo from '@/public/assets/Icon1.svg'; // Adjust your logo path
 import { useRouter } from 'next/navigation';
+import bgShape from "@/public/Gradientbackground.svg";
 
 const VerifyEmailPage = () => {
     const router = useRouter()
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-gray-50 flex items-center justify-center px-4">
+<div className="bg_gradient">
+        <Image
+          src={bgShape}
+          className="absolute top-0 right-0 pointer-events-none"
+          alt="Background Shape"
+          fill
+        />
+         <Image
+    src={bgShape}
+    className="absolute bottom-0 left-0 pointer-events-none"
+    alt="Background Shape"
+    fill
+  />
+      </div>
+
       <div className="bg-white rounded-xl shadow-md w-full max-w-md p-8 text-center space-y-6">
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-2">
-          <div className="bg-teal-500 rounded-full p-2">
+          <div className="review rounded-full p-2">
             <Image src={logo} alt="TalentBridge" width={24} height={24} />
           </div>
           <h2 className="text-lg font-semibold text-gray-800">TalentBridge</h2>
@@ -40,7 +56,7 @@ const VerifyEmailPage = () => {
         </div>
 
         {/* Verify Button */}
-        <button className="w-full bg-teal-500 text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
+        <button className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
         onClick={(e)=>{
             e.preventDefault()
             router.push('/create-new-password')

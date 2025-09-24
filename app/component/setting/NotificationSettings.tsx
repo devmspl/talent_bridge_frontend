@@ -23,7 +23,7 @@ export default function NotificationSettings() {
             <label
               htmlFor="email-toggle"
               className={`relative inline-block w-11 h-6 rounded-full cursor-pointer ${
-                emailNotifications ? "bg-green-500" : "bg-gray-300"
+                emailNotifications ? "bg-[#029A9B]" : "bg-gray-300"
               }`}
             >
               <input
@@ -51,7 +51,7 @@ export default function NotificationSettings() {
             <label
               htmlFor="push-toggle"
               className={`relative inline-block w-11 h-6 rounded-full cursor-pointer ${
-                pushNotifications ? "bg-green-500" : "bg-gray-300"
+                pushNotifications ? "bg-[#029A9B]" : "bg-gray-300"
               }`}
             >
               <input

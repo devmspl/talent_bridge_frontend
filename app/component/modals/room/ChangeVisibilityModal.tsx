@@ -92,7 +92,7 @@ const ChangeVisibilityModal: React.FC<Props> = ({ isOpen, onClose, onSave }) => 
           </button>
           <button
             onClick={() => onSave(selected)}
-            className="px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-lg w-100 hover:cursor-pointer"
+            className="px-4 py-2 text-sm font-medium text-white review hover:bg-teal-600 rounded-lg w-100 hover:cursor-pointer"
           >
             Set Visibility
           </button>

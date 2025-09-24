@@ -1,13 +1,16 @@
 "use client"
 import Image from 'next/image';
 import React, { useEffect } from 'react';
-import logo from "@/public/assets/Icon.png"
+import logo from "@/public/assets/Icon1.svg"
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/app/store/store';
 import { useCreateUserMutation, useUploadProfileMutation } from '@/app/store/api/userApi';
 import { completeUserValidationSchema } from '@/app/utils/validation';
 import { toast } from 'react-toastify';
+import check from "@/public/assets/icons/Vector (1).svg"
+import Link from 'next/link';
+import tick from "@/public/assets/tick.svg";
 
 const Page = () => {
   const router = useRouter();
@@ -94,29 +97,29 @@ const Page = () => {
     <>
       <nav className="relative w-full flex items-center justify-between px-6 py-4 border-b border-gray-200">
         <div className="flex items-center space-x-10">
-          <div className="flex itemscenter space-x-2">
-            <div className="w-8 h-8 rounded-full bg-teal-500 flex items-center justify-center text-white text-sm font-bold">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full icon flex items-center justify-center text-white text-sm font-bold">
               <Image src={logo} alt="" />
             </div>
-            <span className="text-base font-semibold text-gray-900">TalentBridge</span>
+           <Link href="/auth"> <span className=" font-semibold text-gray-900">TalentBridge</span> </Link>
           </div>
         </div>
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <div className="flex items-center space-x-4 text-sm">
             <div className="flex items-center space-x-1">
-              <div className="w-5 h-5 bg-teal-500 text-white text-[10px] rounded-full flex items-center justify-center">✓</div>
+              <div className="w-5 h-5 bg-teal-500 text-white text-[10px] rounded-full flex items-center justify-center"><Image src={check} alt="" /> </div>
               <span className="text-gray-700">Account</span>
             </div>
             <span className="text-gray-400 text-xs">{'>'}</span>
 
             <div className="flex items-center space-x-1">
-              <div className="w-5 h-5 bg-teal-500 text-white text-[10px] rounded-full flex items-center justify-center">✓</div>
+              <div className="w-5 h-5 bg-teal-500 text-white text-[10px] rounded-full flex items-center justify-center"><Image src={check} alt="" /> </div>
               <span className="text-gray-700">Profile</span>
             </div>
             <span className="text-gray-400 text-xs">{'>'}</span>
 
             <div className="flex items-center space-x-1">
-              <div className="w-5 h-5 bg-teal-500 text-white text-[10px] rounded-full flex items-center justify-center">3</div>
+              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">3</div>
               <span className="text-gray-900 font-semibold">Showcase</span>
             </div>
           </div>
@@ -133,20 +136,20 @@ const Page = () => {
           <p className="text-gray-500 mb-6">
             TalentBridge allows you to create personalized showcase rooms featuring your best work.
           </p>
-          <div className="bg-teal-50 text-left p-4 rounded-lg mb-6">
+          <div className="bg-[#E6F7F780] text-left p-4 rounded-lg mb-6">
             <h3 className="font-semibold text-gray-800 mb-2">What is a Showcase Room?</h3>
             <p className="text-sm text-gray-600 mb-2">
               Think of it as your digital portfolio where you can:
             </p>
             <ul className="text-sm text-gray-700 space-y-1">
-              <li className="flex items-start"><span className="text-teal-500 mr-2">✔</span>Display your projects and achievements</li>
-              <li className="flex items-start"><span className="text-teal-500 mr-2">✔</span>Share your work experience</li>
-              <li className="flex items-start"><span className="text-teal-500 mr-2">✔</span>Connect with industry professionals and recruiters</li>
+              <li className="flex items-start"><span className="text-teal-500 mr-2"> <Image className='mt-1.5 w-3' src={tick} alt=''></Image> </span>Display your projects and achievements</li>
+              <li className="flex items-start"><span className="text-teal-500 mr-2"><Image className='mt-1.5 w-3' src={tick} alt=''></Image></span>Share your work experience</li>
+              <li className="flex items-start"><span className="text-teal-500 mr-2"><Image className='mt-1.5 w-3' src={tick} alt=''></Image></span>Connect with industry professionals and recruiters</li>
             </ul>
           </div>
           
           <button 
-            className="bg-teal-500 hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-lg w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="review hover:bg-teal-600 text-white font-medium py-2 px-4 rounded-lg w-full cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleCreateShowcase}
             disabled={isLoading}
           >

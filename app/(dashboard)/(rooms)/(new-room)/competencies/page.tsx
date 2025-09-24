@@ -2,6 +2,11 @@
 import { useRouter } from "next/navigation";
 import { AiOutlineCheck } from "react-icons/ai";
 import { FaRegEdit } from "react-icons/fa";
+import Tool from "@/public/assets/icons/Tooltip.svg"
+import TextIcon from "@/public/assets/icons/Tect.svg"
+import Image from "next/image";
+import check from "@/public/assets/icons/Vector (1).svg"
+import Link from "next/link";
 
 export default function page() {
   const competencies = [
@@ -18,7 +23,7 @@ export default function page() {
     <>
       <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
         <div>
-          Showcase rooms <span className="text-gray-800 font-semibold"> / New</span>
+       <Link href="/showcase-rooms">  Showcase rooms</Link> <span className="text-gray-800 font-semibold"> / New</span>
         </div>
         <div className="flex gap-2">
           <button className="absolute top-4 right-4 text-sm border border-gray-300 px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer"
@@ -31,21 +36,21 @@ export default function page() {
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-2xl ">
           <div className="flex text-gray-500 items-center w-full text-sm font-medium mb-6 gap-4 justify-center border-b border-gray-200 p-6 ">
             <div className="flex items-center gap-1 text-gray-500 ">
-              <div className="w-5 h-5 bg-teal-500 text-white text-xs flex items-center justify-center rounded-full">
-                <AiOutlineCheck className="text-white text-xs" />
+              <div className="w-5 h-5 review text-white text-xs flex items-center justify-center rounded-full">
+                 <Image src={check} alt="" />
               </div>
               Introduction
             </div>
             <span className="text-gray-400">›</span>
             <div className="text-gray-500 flex gap-2">
-              <div className="w-5 h-5 bg-teal-500 text-white text-xs flex items-center justify-center rounded-full">
+              <div className="w-5 h-5 review text-white text-xs flex items-center justify-center rounded-full">
                 2
               </div>
-              <span className="text-gray-800 font-semibold">Competencies</span>
+              <span className="text-[#0A0D14] font-inter font-medium text-[14px] leading-[20px] tracking-[-0.006em]">Competencies</span>
             </div>
             <span className="text-gray-400">›</span>
             <div className="text-gray-500 rounded-full flex gap-2">
-              <div className="w-5 h-5  text-gray text-xs flex items-center justify-center rounded-full border">
+              <div className="w-5 h-5   text-gray text-xs flex items-center justify-center rounded-full border">
                 3
               </div> Insights</div>
           </div>
@@ -72,10 +77,12 @@ export default function page() {
                   className="flex justify-between items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
                 >
                   <span className="text-gray-800 text-sm flex gap-3">{skill}
-                    {skill === "Statistical & Predictive Analysis" && (<FaRegEdit />)}
+                    {skill === "Statistical & Predictive Analysis" && (
+  <Image src={TextIcon} alt="Edit" width={16} height={16} />
+)}
                   </span>
                   <div className="flex items-center space-x-2">
-                    <span className=" text-dark-400">≡</span>
+                    <span className=" text-dark-400"><Image src={Tool} alt={""}></Image></span>
                   </div>
                 </div>
               ))}
@@ -86,7 +93,7 @@ export default function page() {
               >
                 Back
               </button>
-              <button className="bg-teal-500 text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
+              <button className="review text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
                 onClick={() => routes.push("/insights")}
               >
                 Next

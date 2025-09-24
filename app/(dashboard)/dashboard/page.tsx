@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   FiEye,
   FiUsers,
@@ -9,7 +9,9 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import up from '@/public/assets/media/trending-up.png';
 import down from '@/public/assets/media/trending-down.png';
+import drop from '@/public/assets/icons/Dropdown.svg'
 import Image from "next/image";
+import ups from "@/public/assets/icons/green up.svg"
 
 const data = [
   { date: 'Jan 11', analyst: 10, pianist: 50 },
@@ -21,12 +23,51 @@ const data = [
   { date: 'Jan 17', analyst: 0, pianist: 100 },
 ];
 
+const activities = [
+  {
+    id: 1,
+    title: "New message from Sarah Johnson",
+    description: "Regarding the Senior Software Engineer position at…",
+    action: "Reply",
+    time: "2h ago",
+  },
+  {
+    id: 2,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id: 3,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id: 4,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id: 5,
+    title: "New recruiter review request",
+    description: "Please rate your experience with Sarah Johnson",
+    action: "Leave review",
+    time: "2h ago",
+  },
+];
+
 const Dashboard = () => {
+    const [open, setOpen] = useState(false);
   return (
     <div className="min-h-screen bg-gray-50">
         <div className="bg-white p-6 rounded-xl shadow mb-3 ">
-          <h2 className="text-xl font-semibold text-gray-900">Welcome back, John!</h2>
-          <p className="text-sm text-gray-600">Here's what's happening with your profile</p>
+          <h2 className="text-2xl leading-8 tracking-normal font-inter font-semibold text-gray-900">Welcome back, John!</h2>
+          <p className="text-sm font-inter font-normal leading-5 tracking-normal text-gray-600">Here's what's happening with your profile</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -38,10 +79,35 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-xl shadow mb-3">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <h3  className="text-lg font-semibold text-gray-900">Room Engagement</h3>
+              <h3  className="text-lg font-inter font-semibold leading-7 tracking-normal text-gray-900">Room Engagement</h3>
               <p className="text-sm text-gray-600">Overview of showcase room engagement</p>
             </div>
-            <button className="border text-sm px-3 py-1 rounded-md text-gray-700">Last week</button>
+            {/* <button className="border text-sm px-3 py-1 rounded-md text-gray-700">Last week  </button> */}
+             
+           <div className="relative inline-block p-2">
+  <button
+    onClick={() => setOpen(!open)}
+    className="border text-sm px-3 py-1 rounded-md text-gray-700 flex items-center gap-1"
+  >
+    Last week
+    <Image src={drop} alt="dropdown icon" className="opacity-100" />
+  </button>
+
+  {open && (
+    <div className="absolute mt-1 w-max bg-white border rounded-md shadow-lg pr-2 z-50">
+      <div className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100">
+        Last week
+      </div>
+      <div className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100">
+        Last month
+      </div>
+      <div className="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100">
+        Last year
+      </div>
+    </div>
+  )}
+</div>
+
           </div>
           <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -66,16 +132,41 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent activity</h3>
-            <div className="flex space-x-2">
-              <button className="text-sm text-gray-700 border px-3 py-1 rounded-md">All</button>
-              <button className="text-sm text-gray-700 border px-3 py-1 rounded-md">Unread</button>
-            </div>
-          </div>
-          <p className="text-sm text-gray-600">Recent user activity will appear here.</p>
+        <div className="bg-white  rounded-2xl shadow-md">
+  <div className="flex justify-between items-center pt-6 pl-6 pr-6 ">
+    <h3 className=" font-inter font-semibold text-lg leading-7 tracking-normal text-gray-900">Recent activity</h3>
+    <div className="flex gap-2 bg-gray-100 rounded-full p-1">
+      <button className="text-sm px-3 py-1 rounded-full bg-white shadow-sm font-medium">
+        All
+      </button>
+      <button className="text-sm px-3 py-1 rounded-full text-gray-600 font-medium ">
+        Unread
+      </button>
+    </div>
+  </div>
+
+  <p className="text-sm text-gray-500 pl-6 mb-3 border-b pb-3  ">Recent user activity</p>
+
+  <div className="p-6 pt-0">
+    {activities.map((activity) => (
+      <div
+        key={activity.id}
+        className="flex justify-between items-start py-4 border-t first:border-t-0"
+      >
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+          <p className="text-sm text-gray-500">{activity.description}</p>
+          <button className="text-sm text-teal-600 font-medium hover:underline">
+            {activity.action}
+          </button>
         </div>
+        <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+        
     </div>
   );
 };
