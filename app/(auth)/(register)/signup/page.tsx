@@ -249,23 +249,7 @@ const loginWithFacebook = () => {
   </div>
             </div>
 
-            {/* DOB */}
-            {/* <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-              <input
-                type="date"
-                name="dob"
-                placeholder="YYYY-MM-DD"
-                value={user?.dob || ''}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md ${
-                  errors.dob ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.dob && <p className="text-red-500 text-xs mt-1">{errors.dob}</p>}
-            </div> */}
-
-            {/* Country & City */}
+           
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
