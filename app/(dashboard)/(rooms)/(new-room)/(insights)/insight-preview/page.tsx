@@ -11,6 +11,7 @@ import introvid from "@/public/assets/icons/intro vid.svg";
 import checkIcon from "@/public/assets/icons/check.svg";
 import call from "@/public/assets/icons/call.svg";
 import msg from "@/public/assets/icons/msgg.svg";
+import share from "@/public/assets/icons/share.svg";
 import delw from "@/public/assets/icons/delete.svg";
 import Tool from "@/public/assets/icons/Tooltip.svg"
 import delete_i from "@/public/assets/icons/delete.svg"
@@ -81,6 +82,10 @@ const [isModalOpen, setIsModalOpen] = useState(false);
     },
   ]);
 
+  const handleDeleteInsight = (id: number) => {
+    setCaseStudies(caseStudies.filter(insight => insight.id !== id));
+  };
+
   return (
 <>
      <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
@@ -96,7 +101,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
           </div>
     <div className="min-h-screen bg-white px-6 py-6">
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6 flex justify-between items-start">
+      <div className="bg-white rounded-xl border border-[#E5E7EB] p-6 mb-6 flex justify-between items-start">
         <div>
           <h2 className="text-xl font-semibold">Data Analytics Portfolio</h2>
           <p className="text-gray-700 text-sm mt-1">John Doe • London, UK</p>
@@ -112,13 +117,14 @@ const [isModalOpen, setIsModalOpen] = useState(false);
           </div>
         </div>
 
-        <div className="flex gap-4 mt-3">
-          <Image src={call} alt="" />
-          <Image src={msg} alt="" />
+        <div className="flex gap-[8px] mt-3 ">
+          <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-7 h-7  " src={call} alt=""  />
+          <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-7 h-7  " src={msg} alt="" />
+          <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-7 h-7  " src={share} alt=""  />
         </div>
       </div>
 
-       <div className="bg-white rounded-xl border border-gray-200 shadow-sm  mb-6">
+       <div className="bg-white rounded-xl border border-[#E5E7EB]  mb-6">
        <div className="mb-2 p-[20px]">
   <div className="flex justify-between items-center ">
     <h3 className="font-inter font-semibold text-[#111827]">Cover Image</h3>
@@ -255,13 +261,16 @@ const [isModalOpen, setIsModalOpen] = useState(false);
           </div>
           <div className="text-sm text-red-500 space-y-1">
             <div>
-              <button className="flex items-center gap-1 text-gray-600 hover:text-black cursor-pointer">
+          <Link href={`case-study?title=${encodeURIComponent(item.title)}&description=${encodeURIComponent(item.description)}&tag=${encodeURIComponent(item.tag)}`}>  <button className="flex items-center gap-1 text-gray-600 hover:text-black cursor-pointer">
                 <Image src={edit} alt="" width={16} />
                 Continue Editing
-              </button>
+              </button></Link>
             </div>
             <div className="flex justify-end">
-              <button className="flex items-center gap-1 hover:text-red-700 hover:cursor-pointer">
+              <button 
+                className="flex items-center gap-1 hover:text-red-700 hover:cursor-pointer"
+                onClick={() => handleDeleteInsight(item.id)}
+              >
                 <Image src={delete_i} alt="" width={16} />
                 Delete
               </button>

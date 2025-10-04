@@ -92,7 +92,7 @@ export default function RootLayout({
 
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen ">
       {/* Desktop Sidebar - Hidden on mobile/tablet */}
       <aside className={`hidden lg:block fixed top-0 left-0 h-screen z-30 transition-all duration-300 ${isCollapsed ? "w-20" : "w-70"
         }`}>
