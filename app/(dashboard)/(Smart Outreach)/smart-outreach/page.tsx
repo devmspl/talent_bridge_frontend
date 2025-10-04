@@ -97,12 +97,14 @@ export default function page() {
           <tbody>
             {messages.map((msg, i) => (
               <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-3 px-4 flex items-center gap-3">
+                <td className="">
+                <Link href={"/message"} className="py-3 px-4 flex items-center gap-3">
                   <img src={msg.avatar} alt="avatar" className="w-8 h-8 rounded-full" />
                   <div>
                     <div className="font-medium text-gray-900"><Link href={"/message"}> {msg.name} </Link></div>
                     <div className="text-xs text-gray-500">{msg.company}</div>
                   </div>
+                  </Link>
                 </td>
                 <td className="py-3 px-4 truncate max-w-xs">{msg.message}</td>
                 <td className="py-3 px-4">

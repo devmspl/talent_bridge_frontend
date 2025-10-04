@@ -123,7 +123,7 @@ const Dashboard = () => {
         <p className="text-sm font-inter font-normal leading-5 tracking-normal text-gray-600">Here's what's happening with your profile</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <StatCard title="Profile Views" value="100,000" icon={<FiEye />} change="3%" trend="up" time="last week" />
         <StatCard title="Response Rate" value="92%" icon={<FiInfo />} change="10%" trend="down" time="last week" />
         <StatCard title="Verified Connections" value="24" icon={<FiUsers />} change="10%" trend="down" time="last month" />

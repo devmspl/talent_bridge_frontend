@@ -127,9 +127,10 @@ const Personal_info = () => {
   };
 
   return (
-    <div className="flex-1 ">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-24 h-24 rounded-full overflow-hidden">
+    <div className="flex-1">
+      {/* Profile Section - Responsive Layout */}
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6">
+        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex-shrink-0">
           <Image
             src={
               storedUser?.avatar
@@ -143,17 +144,17 @@ const Personal_info = () => {
           />
         </div>
 
-        <div>
+        <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
           <div className="mb-3">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-lg sm:text-xl font-semibold">
               {formData.fullName || "John Doe"}
             </h2>
-            <p className="text-gray-500">
+            <p className="text-sm sm:text-base text-gray-500">
               {formData.industry || "Data Analyst"}
             </p>
           </div>
-          <div className="ml-auto space-x-2">
-            <label className="px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 justify-center sm:justify-start">
+            <label className="px-3 sm:px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base">
               Change Photo
               <input
                 type="file"
@@ -161,7 +162,7 @@ const Personal_info = () => {
                 onChange={handleFileChange}
               />
             </label>
-            <button className="px-4 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer">
+            <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base">
               Remove
             </button>
           </div>
@@ -169,21 +170,21 @@ const Personal_info = () => {
       </div>
 
       <div className="border border-gray-200 rounded-lg">
-        <div className=" border-b border-gray-200 py-5 px-5 text-2xl text-black font-semibold">
-          <h1>Profile</h1>
+        <div className="border-b border-gray-200 py-4 sm:py-5 px-4 sm:px-5">
+          <h1 className="text-xl sm:text-2xl text-black font-semibold">Profile</h1>
         </div>
 
-        <form className="grid grid-cols-2 gap-4 shadow p-6">
+        <form className="grid grid-cols-1 md:grid-cols-2 gap-4 shadow p-4 sm:p-6">
           {/* Full name */}
-          <div className="col-span-2">
-            <label className="block text-sm font-medium mb-1 ">Full name</label>
+          <div className="col-span-1 md:col-span-2">
+            <label className="block text-sm font-medium mb-1">Full name</label>
             <input
               type="text"
               name="fullName"
               placeholder="First name"
               value={formData.fullName}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded text-sm sm:text-base"
             />
           </div>
 
@@ -196,7 +197,7 @@ const Personal_info = () => {
               placeholder="+1 (555) 123-4567"
               value={formData.phone}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded text-sm sm:text-base"
             />
           </div>
 
@@ -209,7 +210,7 @@ const Personal_info = () => {
               placeholder="yourname@company.com"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded text-sm sm:text-base"
             />
           </div>
 
@@ -220,7 +221,13 @@ const Personal_info = () => {
               name="country"
               value={formData.country || ""}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
               <option value="">Select Country</option>
               <option value="USA">USA</option>
@@ -238,7 +245,7 @@ const Personal_info = () => {
               placeholder="Your city"
               value={formData.city}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded text-sm sm:text-base"
             />
           </div>
 
@@ -249,7 +256,13 @@ const Personal_info = () => {
               name="industry"
               value={formData.industry || ""}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
               <option value="">Select industry</option>
               <option value="IT">IT</option>
@@ -259,7 +272,7 @@ const Personal_info = () => {
           </div>
 
           {/* Employment Type */}
-          <div className="mb-3">
+          <div className="md:mb-3">
             <label className="block text-sm font-medium mb-1">
               Preferred Employment Type
             </label>
@@ -267,7 +280,13 @@ const Personal_info = () => {
               name="employmentType"
               value={formData.employmentType || ""}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                backgroundPosition: 'right 0.5rem center',
+                backgroundRepeat: 'no-repeat',
+                backgroundSize: '1.5em 1.5em'
+              }}
             >
               <option value="">Select employment type</option>
               <option value="Permanent">Permanent</option>
@@ -286,23 +305,18 @@ const Personal_info = () => {
               name="dob"
               value={formData.dob || ""}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-200 rounded"
+              className="w-full px-3 sm:px-4 py-2 border border-gray-200 rounded text-sm sm:text-base"
             />
           </div>
 
           {/* Open for work */}
-          <div className="col-span-2 flex items-center gap-2">
-            {/* <input
-              type="checkbox"
-              name="openForWork"
-              checked={formData.openForWork}
-              onChange={handleInputChange}
-              className="w-4 h-4"
-            />
-            <label className="text-sm font-medium">Open for Work</label> */}
+          <div className="col-span-1 md:col-span-2 flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer relative">
               <input
                 type="checkbox"
+                name="openForWork"
+                checked={formData.openForWork}
+                onChange={handleInputChange}
                 className="peer h-4 w-4 rounded-[4px] border-2 border-gray-300 checked:border-[#02ABAC] checked:bg-[#E6F7F7] appearance-none"
               />
               <Image
@@ -310,21 +324,21 @@ const Personal_info = () => {
                 alt="tick"
                 className="absolute left-1 top-1.5 hidden peer-checked:block h-2 w-2"
               />
-              <span> Open for Work </span>
+              <span>Open for Work</span>
             </label>
           </div>
         </form>
 
-        {/* Save + Cancel */}
-        <div className="mt-6 flex justify-end gap-3 mb-6 p-6">
+        {/* Save + Cancel - Responsive Button Layout */}
+        <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-end gap-3 mb-4 sm:mb-6 p-4 sm:p-6">
           <button
             type="button"
             onClick={handleSave}
-            className="px-6 py-2 review text-white rounded hover:bg-teal-600 cursor-pointer"
+            className="px-4 sm:px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base order-2 sm:order-1"
           >
             Save changes
           </button>
-          <button className="px-6 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer">
+          <button className="px-4 sm:px-6 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base order-1 sm:order-2">
             Cancel
           </button>
         </div>

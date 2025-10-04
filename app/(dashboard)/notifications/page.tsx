@@ -9,6 +9,7 @@ const notifications = [
         description: "Regarding the Senior Software Engineer position at...",
         actionText: "Reply",
         time: "2h ago",
+        isRead: false,
     },
     {
         id: 2,
@@ -16,6 +17,7 @@ const notifications = [
         description: "Tech Recruiter at Global Staffing Inc",
         actionText: "View Profile",
         time: "2h ago",
+        isRead: false,
     },
     {
         id: 3,
@@ -23,6 +25,7 @@ const notifications = [
         description: "Tech Recruiter at Global Staffing Inc",
         actionText: "View Profile",
         time: "2h ago",
+        isRead: true,
     },
     {
         id: 4,
@@ -30,6 +33,7 @@ const notifications = [
         description: "Tech Recruiter at Global Staffing Inc",
         actionText: "View Profile",
         time: "2h ago",
+        isRead: true,
     },
     {
         id: 5,
@@ -37,6 +41,7 @@ const notifications = [
         description: "Please rate your experience with Sarah Johnson",
         actionText: "Leave review",
         time: "2h ago",
+        isRead: false,
     },
 ];
 
@@ -44,6 +49,10 @@ export default function NotificationPage() {
     const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
     const [showModal, setShowModal] = useState(false);
     
+    // Filter notifications based on active tab
+    const filteredNotifications = activeTab === "all" 
+        ? notifications 
+        : notifications.filter(notification => !notification.isRead);
 
     return (
         <>
@@ -55,18 +64,27 @@ export default function NotificationPage() {
                         <p className="text-sm text-gray-600">Manage your notifications</p>
                     </div>
                     <div className="flex gap-2">
-                        <button className="px-3 py-[2px] h-[36px] w-[45px] text-sm bg-gray-100 rounded-full leading-none flex items-center hover:cursor-pointer"
-                        onClick={()=>setShowModal(true)}>
+                        <button 
+                            className={`px-3 py-[2px] h-[36px] w-[45px] text-sm rounded-full leading-none flex items-center hover:cursor-pointer ${
+                                activeTab === "all" ? "bg-gray-100" : "bg-white-100"
+                            }`}
+                            onClick={() => setActiveTab("all")}
+                        >
                             All
                         </button>
-                        <button className="px-3 py-[2px] h-[36px] text-sm bg-white-100 rounded-full leading-none flex items-center hover:cursor-pointer">
+                        <button 
+                            className={`px-3 py-[2px] h-[36px] text-sm rounded-full leading-none flex items-center hover:cursor-pointer ${
+                                activeTab === "unread" ? "bg-gray-100" : "bg-white-100"
+                            }`}
+                            onClick={() => setActiveTab("unread")}
+                        >
                             Unread
                         </button>
                     </div>
 
                 </div>
             <div className="bg-white shadow-sm border border-gray-100 rounded-lg divide-y">
-                {notifications.map((item) => (
+                {filteredNotifications.map((item) => (
                     <div key={item.id} className="p-4 hover:bg-gray-50 border-b border-gray-200">
                         <div className="flex justify-between items-start">
                             <div>
