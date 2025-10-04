@@ -40,6 +40,7 @@ const socketSlice = createSlice({
   initialState,
   reducers: {
     setSocket(state: any, action: PayloadAction<Socket>) {
+      // Store socket reference without serialization issues
       state.socket = action.payload;
     },
     addMessage(

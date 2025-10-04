@@ -74,6 +74,7 @@ const Sidebar: React.FC = () => {
     skip: !userId,
     pollingInterval: 10000,
   });
+
   const getAvatar = (
     avatar?: string | null
   ): string | StaticImageData => {
@@ -100,7 +101,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside
       className={`bg-white border-r border-gray-200 p-4 flex flex-col justify-between transition-all duration-300 
-      ${isCollapsed ? "w-20" : "w-64"} min-h-screen`}
+      ${isCollapsed ? "w-20" : "w-70"} min-h-screen`}
     >
       <div>
         <div className="flex items-center justify-between mb-6">

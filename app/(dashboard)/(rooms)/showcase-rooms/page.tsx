@@ -32,7 +32,7 @@ const ShowcasePage = () => {
   const routes =useRouter()
   return (
     <div className="min-h-screen bg-white ">
-    <div className="p-6">
+    <div className="">
       <div className="bg-white p-6 rounded-xl shadow mb-5 flex justify-between ">
         <div>
         <h2 className="text-xl font-semibold text-gray-900">Showcase Rooms</h2>

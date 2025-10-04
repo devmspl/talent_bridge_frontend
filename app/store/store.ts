@@ -14,7 +14,12 @@ export const store = configureStore({
     [chatApi.reducerPath]: chatApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(...concatMiddleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ['socket/setSocket'],
+        ignoredPaths: ['socket.socket'],
+      },
+    }).concat(...concatMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

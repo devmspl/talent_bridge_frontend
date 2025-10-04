@@ -82,7 +82,7 @@ export default function RecruiterGrid() {
 
   return (
     <>
-      <div className="bg-white min-h-screen px-6 py-10">
+      <div className="bg-white min-h-screen ">
         <div className="max-w-7xl mx-auto">
           <div className="border border-gray-200 rounded-lg px-6 py-5 bg-white mb-6">
             <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-1">
