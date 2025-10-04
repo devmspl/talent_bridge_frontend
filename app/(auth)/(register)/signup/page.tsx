@@ -175,7 +175,7 @@ const loginWithFacebook = () => {
       {/* === Signup Form Section === */}
       <main className="min-h-screen bg-[#f9f9f9] flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md bg-white rounded-xl shadow p-8">
-          <h2 className="text-2xl font-semibold text-center text-gray-900 mb-1">
+          <h2 className="text-[30px] leading-[38px] font-Inter text-center text-[#111827] mb-1 font-semibold">
             Create your account
           </h2>
           <p className="text-sm text-gray-500 text-center mb-6">

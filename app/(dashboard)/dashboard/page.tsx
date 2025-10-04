@@ -7,11 +7,12 @@ import {
   FiInfo,
 } from "react-icons/fi";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import up from '@/public/assets/media/trending-up.png';
-import down from '@/public/assets/media/trending-down.png';
+import up from '@/public/assets/media/upp.svg';
+import down from '@/public/assets/media/downn.svg';
 import drop from '@/public/assets/icons/Dropdown.svg'
 import Image from "next/image";
 import ups from "@/public/assets/icons/green up.svg"
+import avatar from "@/public/assets/profile/Avatar.svg"
 
 const data = [
   { date: 'Jan 11', analyst: 10, pianist: 50 },
@@ -60,11 +61,63 @@ const activities = [
     time: "2h ago",
   },
 ];
+const activities1 = [
+  {
+    id: 1,
+    avatar: "./assets/profile/Avatar.svg",
+    name: "Deanna Turner",
+    subtitle: "Scheduled for 3 PM today",
+    time: "12:45 PM",
+  },
+  {
+    id: 2,
+    title: "New message from Sarah Johnson",
+    description: "Regarding the Senior Software Engineer position at...",
+    action: "Reply",
+    time: "2h ago",
+  },
+  {
+    id: 3,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id: 4,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id:5,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id:6,
+    title: "Michael Chen viewed your profile",
+    description: "Tech Recruiter at Global Staffing Inc",
+    action: "View Profile",
+    time: "2h ago",
+  },
+  {
+    id: 7,
+    title: "New recruiter review request",
+    description: "Please rate your experience with Sarah Johnson",
+    action: "Leave review",
+    time: "2h ago",
+  },
+]
 
 const Dashboard = () => {
     const [open, setOpen] = useState(false);
+    const [activityFilter, setActivityFilter] = useState<'All' | 'Unread'>('All');
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
         <div className="bg-white p-6 rounded-xl shadow mb-3 ">
           <h2 className="text-2xl leading-8 tracking-normal font-inter font-semibold text-gray-900">Welcome back, John!</h2>
           <p className="text-sm font-inter font-normal leading-5 tracking-normal text-gray-600">Here's what's happening with your profile</p>
@@ -82,7 +135,6 @@ const Dashboard = () => {
               <h3  className="text-lg font-inter font-semibold leading-7 tracking-normal text-gray-900">Room Engagement</h3>
               <p className="text-sm text-gray-600">Overview of showcase room engagement</p>
             </div>
-            {/* <button className="border text-sm px-3 py-1 rounded-md text-gray-700">Last week  </button> */}
              
            <div className="relative inline-block p-2">
   <button
@@ -135,36 +187,101 @@ const Dashboard = () => {
         <div className="bg-white  rounded-2xl shadow-md">
   <div className="flex justify-between items-center pt-6 pl-6 pr-6 ">
     <h3 className=" font-inter font-semibold text-lg leading-7 tracking-normal text-gray-900">Recent activity</h3>
-    <div className="flex gap-2 bg-gray-100 rounded-full p-1">
-      <button className="text-sm px-3 py-1 rounded-full bg-white shadow-sm font-medium">
+    <div className="flex gap-2 bg-[#F9FAFB] rounded-full p-1">
+      <button 
+        onClick={() => setActivityFilter('All')}
+        className={`text-sm px-3 py-1 rounded-full font-medium ${activityFilter === 'All' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600'}`}
+      >
         All
       </button>
-      <button className="text-sm px-3 py-1 rounded-full text-gray-600 font-medium ">
+      <button 
+        onClick={() => setActivityFilter('Unread')}
+        className={`text-sm px-3 py-1 rounded-full font-medium ${activityFilter === 'Unread' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-600'}`}
+      >
         Unread
       </button>
     </div>
   </div>
 
-  <p className="text-sm text-gray-500 pl-6 mb-3 border-b pb-3  ">Recent user activity</p>
+  <p className="text-sm text-gray-500 pl-6 mb-3 border-b pb-3 border-[#E5E7EB]  ">Mark all as read</p>
 
-  <div className="p-6 pt-0">
-    {activities.map((activity) => (
-      <div
-        key={activity.id}
-        className="flex justify-between items-start py-4 border-t first:border-t-0"
-      >
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-          <p className="text-sm text-gray-500">{activity.description}</p>
-          <button className="text-sm text-teal-600 font-medium hover:underline">
-            {activity.action}
-          </button>
+  {activityFilter === 'All' && (
+    <div className="p-6 pt-0">
+      {activities.map((activity) => (
+        <div
+          key={activity.id}
+         className="flex justify-between items-start py-4 border-t first:border-t-0 border-[#E5E7EB] "
+        >
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+            <p className="text-sm text-gray-500">{activity.description}</p>
+            <button className="text-sm text-teal-600 font-medium hover:underline">
+              {activity.action}
+            </button>
+          </div>
+          <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
         </div>
-        <span className="text-xs text-gray-400 whitespace-nowrap">{activity.time}</span>
-      </div>
-    ))}
-  </div>
-</div>
+      ))}
+    </div>
+  )}
+
+  {activityFilter === 'Unread' && (
+    <div className="p-6 pt-0 bg-white">
+        {activities1.map((activity) => (
+        <div
+          key={activity.id}
+          className={`flex justify-between items-start py-4 px-6 ${
+            activity.id >= 1 && activity.id <= 4 
+              ? 'bg-gray-50 border-l-4 border-[#02ABAC] ml-0' 
+              : activity.id >= 5 ? 'border-b border-[#E5E7EB]' : ''
+          }`}
+        >
+          <div className="space-y-1">
+            {activity.avatar && (
+              <div className="flex items-center gap-3">
+                <img
+                  src={activity.avatar}
+                  alt={activity.name}
+                  className="w-8 h-8 rounded-full"
+                />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {activity.name}
+                  </p>
+                  {activity.subtitle && (
+                    <p className="text-xs text-gray-500">{activity.subtitle}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!activity.avatar && (
+              <>
+                <p className="text-sm font-medium text-gray-900">
+                  {activity.title}
+                </p>
+                {activity.description && (
+                  <p className="text-sm text-gray-500">{activity.description}</p>
+                )}
+              </>
+            )}
+
+            {activity.action && (
+              <button className="text-sm text-teal-600 font-medium hover:underline">
+                {activity.action}
+              </button>
+            )}
+          </div>
+
+          <span className="text-xs text-gray-400 whitespace-nowrap">
+            {activity.time}
+          </span>
+         </div>
+       ))}
+     </div>
+   )}
+   
+ </div>
 
         
     </div>

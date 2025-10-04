@@ -177,24 +177,24 @@ export default function ProfileSetup() {
           {/* Form */}
           <div className="mt-8 space-y-4">
             {/* Industry */}
-            <div>
-              <label className="text-sm font-medium text-gray-700">Industry</label>
-              <select 
-                className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
-                  errors.industry ? 'border-red-500' : 'border-gray-300'
-                }`}
-                value={user?.industry || ''}
-                onChange={handleIndustryChange}
-              >
-                <option value="">Select your industry</option>
-                <option value="IT">IT</option>
-                <option value="Finance">Finance</option>
-                <option value="Education">Education</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Marketing">Marketing</option>
-              </select>
-              {errors.industry && <p className="text-red-500 text-xs mt-1">{errors.industry}</p>}
-            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Industry</label>
+                <select 
+                  className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    errors.industry ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  value={user?.industry || ''}
+                  onChange={handleIndustryChange}
+                >
+                  <option value="">Select your industry</option>
+                  <option value="IT">IT</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Education">Education</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Marketing">Marketing</option>
+                </select>
+                {errors.industry && <p className="text-red-500 text-xs mt-1">{errors.industry}</p>}
+              </div>
 
            <div>
   <label className="text-sm font-medium text-gray-700">Preferred Employment Type</label>

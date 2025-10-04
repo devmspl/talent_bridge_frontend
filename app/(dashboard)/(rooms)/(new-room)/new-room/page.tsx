@@ -1,10 +1,40 @@
 "use client";
+import { updateUserData } from '@/app/store/slices/userSlice';
+import { RootState } from '@/app/store/store';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useRef, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
+import { useDispatch, useSelector } from 'react-redux';
 
 const Page: React.FC = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state: RootState) => state.user);
+  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([
+    "Bachelor's Degree",
+    "Master's Degree",
+    "PhD",
+  ]);
+  
+  const [errors, setErrors] = useState<{ qualification?: string }>({});
+
+  const handleQualificationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    dispatch(updateUserData({ qualification: value }));
+
+    if (errors.qualification) {
+      setErrors((prev) => ({ ...prev, qualification: "" }));
+    }
+
+    if (value && !selectedQualifications.includes(value)) {
+      setSelectedQualifications([...selectedQualifications, value]);
+    }
+  };
+
+  const handleRemoveQualification = (qual: string) => {
+    setSelectedQualifications(selectedQualifications.filter((q) => q !== qual));
+  };
+
   const router = useRouter();
 
   const [roomName, setRoomName] = useState("Data Analytics Portfolio");
@@ -135,6 +165,50 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm  focus:outline-none"
               />
             </div>
+
+
+            <div>
+      <label className="text-sm font-medium text-gray-700">Qualification</label>
+
+      <select
+        className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
+          errors.qualification ? "border-red-500" : "border-gray-300"
+        }`}
+        value={user?.qualification || ""}
+        onChange={handleQualificationChange}
+      >
+        <option value="">Select your qualification</option>
+        <option value="Bachelor's Degree">Bachelor's Degree</option>
+        <option value="Master's Degree">Master's Degree</option>
+        
+      </select>
+
+      {errors.qualification && (
+        <p className="text-red-500 text-xs mt-1">{errors.qualification}</p>
+      )}
+
+      <div className="flex flex-wrap gap-2 mt-2">
+        {selectedQualifications.map((qual) => (
+          <span
+            key={qual}
+            className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center gap-2"
+          >
+            {qual}
+            <button
+              onClick={() => handleRemoveQualification(qual)}
+              className="text-gray-400 hover:text-gray-600"
+              type="button"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+      </div>
+    </div>
+
+
+
+            
             <div className='flex justify-end mt-4'>
               <button className="review text-white px-4 py-2 h-[40px] rounded-md flex items-center gap-2 hover:bg-teal-600 cursor-pointer"
                 onClick={() => router.push("/competencies")}>

@@ -10,6 +10,7 @@ export interface UserData {
   employmentType?: string;
   selfEmployed?: boolean;
   profileImage?: string;
+  qualification?: string;
 } 
 // types.ts
 export interface FormData {
