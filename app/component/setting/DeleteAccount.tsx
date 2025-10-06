@@ -2,13 +2,15 @@
 import { useState } from "react";
 import { ImInfo } from "react-icons/im";
 import DeleteAccountModal from "../modals/setting/DeleteAccountModal";
+import Image from "next/image";
+import info from "@/public/assets/icons/info.svg"
 
 export default function DeleteAccount() {
     const [isOpen, setIsOpen] = useState(false);
   return (
     <>
     <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className="border-b border-gray-200 py-5 px-5 text-2xl text-black font-semibold">
+      <div className="border-b border-gray-200 py-5 px-5 text-lg text-[#111827] font-semibold">
         <h1>Delete account</h1>
       </div>
 
@@ -25,11 +27,11 @@ export default function DeleteAccount() {
         {/* Warning box */}
         <div className="bg-[#FFFBEB] border border-yellow-200 text-[#B45309] rounded-md px-4 py-3 flex gap-2">
             <div>
-          <p className="font-medium mb-1 flex gap-2"><ImInfo /></p>
+          <p className="font-medium mb-1 flex gap-2"><Image src={info} alt="" height={20} width={32} /></p>
             </div>
             <div>
-             <p className="font-medium mb-1 flex gap-2">Note</p>
-            <p>If you have any active subscriptions, they will be canceled immediately upon account deletion.</p>
+             <p className="text-sm text-[#92400E] font-medium mb-1 flex gap-2">Note</p>
+            <p className="text-sm font-normal text-[#B45309]">If you have any active subscriptions, they will be canceled immediately upon account deletion.</p>
             </div>
         </div>
 

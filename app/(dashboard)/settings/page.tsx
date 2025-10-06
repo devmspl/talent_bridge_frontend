@@ -51,8 +51,8 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen text-gray-800">
       <div className="bg-white p-6 rounded-xl shadow mb-5 ">
-        <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
-        <p className="text-sm text-gray-600">Welcome to your data insights hub!</p>
+        <h2 className="text-2xl font-semibold text-gray-900">Settings</h2>
+        <p className="text-sm font-normal text-[#4B5563]">Welcome to your data insights hub!</p>
       </div>
 
       {/* Mobile Dropdown - Visible on small screens */}
@@ -120,7 +120,7 @@ export default function SettingsPage() {
         </div>
         
         {/* Content Area */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm p-6">
+        <div className="flex-1 bg-white">
           {selectedTab === "Personal information" && <Personal_info />}
           {selectedTab === "Password" && <PasswordSettings />}
           {selectedTab === "Notification & Preferences" && <NotificationSettings />}

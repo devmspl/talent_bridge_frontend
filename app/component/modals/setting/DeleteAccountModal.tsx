@@ -30,7 +30,7 @@ export default function DeleteAccountModal({ onClose }: { onClose: () => void })
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40`     bg-opacity-40">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 bg-opacity-60">
       <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-xl relative">
         {/* Close Icon */}
         <button

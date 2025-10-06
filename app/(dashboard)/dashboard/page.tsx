@@ -373,7 +373,7 @@ const StatCard = ({ title, value, icon, change, trend, time }: any) => {
   const trendSymbol = trend === 'up' ? up : down;
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow  items-center">
+    <div className="bg-white p-4 rounded-xl border border-[#E5E7EB]  items-center">
       <div>
         <div className="text-gray-400 text-xl flex justify-between">
           <p className="text-sm text-gray-500">{title}</p>

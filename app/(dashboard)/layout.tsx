@@ -71,6 +71,23 @@ export default function RootLayout({
     setIsMobileMenuOpen(false);
   };
 
+  const handleLogout = () => {
+    // Clear all cookies
+    Cookies.remove("tb_userId");
+    Cookies.remove("tb_token");
+    Cookies.remove("user");
+    
+    // Clear localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.clear();
+    }
+    
+    // Redirect to login page
+    router.push('/login');
+  };
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -256,7 +273,11 @@ export default function RootLayout({
                       </p>
                     </div>
                   </div>
-                  <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <button 
+                    onClick={handleLogout}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Logout"
+                  >
                     <Image src={logout} alt="logout icon" width={20} />
                   </button>
                 </div>

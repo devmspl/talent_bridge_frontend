@@ -46,14 +46,18 @@ export default function PasswordSettings() {
 
   return (
     <div className="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm">
-      <div className=" border-b border-gray-200 py-5 px-5 text-2xl text-black font-semibold ">
-        <h1>Password</h1>
+      {/* Header */}
+      <div className="border-b border-gray-200 py-3 sm:py-4 md:py-5 px-4 sm:px-5">
+        <h1 className="text-lg sm:text-xl md:text-2xl text-[#111827] font-semibold">
+          Password
+        </h1>
       </div>
 
-      <div className="space-y-4 p-6">
+      {/* Form Content */}
+      <div className="space-y-4 sm:space-y-5 md:space-y-6 p-4 sm:p-5 md:p-6">
         {/* Current Password */}
         <div>
-          <label className="text-sm text-gray-600 block mb-1">
+          <label className="text-sm sm:text-base text-gray-600 block mb-1 sm:mb-2">
             Current Password
           </label>
           <input
@@ -61,10 +65,10 @@ export default function PasswordSettings() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="Current Password"
-            className="w-full px-3 py-2 border border-gray-200 rounded-md bg-gray-50"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
           />
           {errors.currentPassword && (
-            <p className="text-xs text-red-500 mt-1">
+            <p className="text-xs sm:text-sm text-red-500 mt-1">
               {errors.currentPassword}
             </p>
           )}
@@ -72,25 +76,29 @@ export default function PasswordSettings() {
 
         {/* New Password */}
         <div>
-          <label className="text-sm text-gray-600 block mb-1">New Password</label>
+          <label className="text-sm sm:text-base text-gray-600 block mb-1 sm:mb-2">
+            New Password
+          </label>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="New Password"
-            className="w-full px-3 py-2 border border-gray-200 rounded-md"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
           />
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-400 mt-1 sm:mt-2">
             Minimum of 8 characters with upper & lowercase & number
           </p>
           {errors.newPassword && (
-            <p className="text-xs text-red-500 mt-1">{errors.newPassword}</p>
+            <p className="text-xs sm:text-sm text-red-500 mt-1">
+              {errors.newPassword}
+            </p>
           )}
         </div>
 
         {/* Confirm Password */}
         <div>
-          <label className="text-sm text-gray-600 block mb-1">
+          <label className="text-sm sm:text-base text-gray-600 block mb-1 sm:mb-2">
             Confirm Password
           </label>
           <input
@@ -98,21 +106,22 @@ export default function PasswordSettings() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm Password"
-            className="w-full px-3 py-2 border border-gray-200 rounded-md"
+            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors"
           />
           {errors.confirmPassword && (
-            <p className="text-xs text-red-500 mt-1">
+            <p className="text-xs sm:text-sm text-red-500 mt-1">
               {errors.confirmPassword}
             </p>
           )}
         </div>
       </div>
 
-      <div className="mt-6 flex justify-end gap-3 mb-3">
+      {/* Action Buttons */}
+      <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 p-4 sm:p-5 md:p-6 pt-0">
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="px-6 py-2 review text-white rounded hover:bg-teal-600 cursor-pointer disabled:opacity-50"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base review text-white rounded-md hover:bg-teal-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
         >
           {isLoading ? "Saving..." : "Save changes"}
         </button>
@@ -123,7 +132,7 @@ export default function PasswordSettings() {
             setConfirmPassword("");
             setErrors({});
           }}
-          className="px-6 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base border border-gray-200 rounded-md hover:bg-gray-100 cursor-pointer transition-colors font-medium"
         >
           Cancel
         </button>

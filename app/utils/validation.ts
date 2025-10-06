@@ -14,11 +14,7 @@ export const signupValidationSchema = yup.object({
   phone: yup
     .string()
     .required('Phone number is required'),
-  dob: yup
-    .string()
-    .required('Date of birth is required')
-    .matches(/^\d{4}-\d{2}-\d{2}$/,'DOB must be YYYY-MM-DD'),
-  country: yup
+   country: yup
     .string()
     .required('Country is required')
     .min(2, 'Country must be at least 2 characters'),
@@ -31,8 +27,8 @@ export const signupValidationSchema = yup.object({
     .required('Password is required')
     .min(8, 'Password must be at least 8 characters')
     .matches(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/,
-      'Password must include upper, lower, number, and special character'
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
+      'Password must include upper, lower, and number'
     ),
 });
 
@@ -50,7 +46,16 @@ export const profileValidationSchema = yup.object({
 // Final check: all fields
 export const completeUserValidationSchema = signupValidationSchema.concat(
   profileValidationSchema
-);
+).shape({
+  dob: yup
+    .string()
+    .optional()
+    .test('is-valid-date', 'Date of birth must be a valid ISO 8601 date string', (value) => {
+      if (!value) return true; // Optional field
+      const date = new Date(value);
+      return !isNaN(date.getTime()) && !!value.match(/^\d{4}-\d{2}-\d{2}$/);
+    }),
+});
 
 // Login validation
 export const loginValidationSchema = yup.object({

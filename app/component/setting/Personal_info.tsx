@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import logo from "@/public/assets/profile/Avatarlogo.png";
 import tick from "@/public/assets/tick.svg";
+import { FiChevronDown } from "react-icons/fi";
 import {
   useGetUserByIdQuery,
   useUpdateProfileMutation,
@@ -13,6 +14,12 @@ import { toast } from "react-toastify";
 
 const Personal_info = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const dropdownRefs = {
+    country: useRef<HTMLDivElement>(null),
+    industry: useRef<HTMLDivElement>(null),
+    employmentType: useRef<HTMLDivElement>(null),
+  };
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,6 +32,28 @@ const Personal_info = () => {
     dob: "",
     openForWork: false,
   });
+
+  // Dropdown options
+  const dropdownOptions = {
+    country: [
+      { value: "", label: "Select Country" },
+      { value: "USA", label: "USA" },
+      { value: "India", label: "India" },
+      { value: "UK", label: "UK" },
+    ],
+    industry: [
+      { value: "", label: "Select industry" },
+      { value: "IT", label: "IT" },
+      { value: "Finance", label: "Finance" },
+      { value: "Healthcare", label: "Healthcare" },
+    ],
+    employmentType: [
+      { value: "", label: "Select employment type" },
+      { value: "Permanent", label: "Permanent" },
+      { value: "Contract", label: "Contract" },
+      { value: "N/A", label: "N/A" },
+    ],
+  };
 
   const [uploadProfile] = useUploadProfileMutation();
   const [updateUser] = useUpdateProfileMutation();
@@ -50,6 +79,25 @@ const Personal_info = () => {
       });
     }
   }, [storedUser]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      Object.values(dropdownRefs).forEach((ref) => {
+        if (ref.current && !ref.current.contains(event.target as Node)) {
+          setOpenDropdown(null);
+        }
+      });
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -87,6 +135,24 @@ const Personal_info = () => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
     }
+  };
+
+  const handleDropdownToggle = (dropdownName: string) => {
+    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+  };
+
+  const handleDropdownSelect = (dropdownName: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [dropdownName]: value,
+    }));
+    setOpenDropdown(null);
+  };
+
+  const getSelectedLabel = (dropdownName: string) => {
+    const options = dropdownOptions[dropdownName as keyof typeof dropdownOptions];
+    const selectedOption = options.find(option => option.value === formData[dropdownName as keyof typeof formData]);
+    return selectedOption?.label || options[0]?.label || "";
   };
 
   const handleSave = async () => {
@@ -154,7 +220,7 @@ const Personal_info = () => {
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 justify-center sm:justify-start">
-            <label className="px-3 sm:px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base">
+            <label className="px-3 sm:px-4 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base transition-colors">
               Change Photo
               <input
                 type="file"
@@ -162,7 +228,7 @@ const Personal_info = () => {
                 onChange={handleFileChange}
               />
             </label>
-            <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base">
+            <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base transition-colors">
               Remove
             </button>
           </div>
@@ -171,7 +237,7 @@ const Personal_info = () => {
 
       <div className="border border-gray-200 rounded-lg">
         <div className="border-b border-gray-200 py-4 sm:py-5 px-4 sm:px-5">
-          <h1 className="text-xl sm:text-2xl text-black font-semibold">Profile</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl text-black font-semibold">Profile</h1>
         </div>
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4 shadow p-4 sm:p-6">
@@ -217,23 +283,41 @@ const Personal_info = () => {
           {/* Country */}
           <div>
             <label className="block text-sm font-medium mb-1">Country</label>
-            <select
-              name="country"
-              value={formData.country || ""}
-              onChange={handleInputChange}
-              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.5em 1.5em'
-              }}
-            >
-              <option value="">Select Country</option>
-              <option value="USA">USA</option>
-              <option value="India">India</option>
-              <option value="UK">UK</option>
-            </select>
+            <div className="relative" ref={dropdownRefs.country}>
+              <button
+                type="button"
+                onClick={() => handleDropdownToggle('country')}
+                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
+              >
+                <span className={formData.country ? "text-gray-900" : "text-gray-500"}>
+                  {getSelectedLabel('country')}
+                </span>
+                <FiChevronDown 
+                  className={`text-gray-400 transition-transform duration-200 ${
+                    openDropdown === 'country' ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
+              
+              {openDropdown === 'country' && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {dropdownOptions.country.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleDropdownSelect('country', option.value)}
+                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
+                        formData.country === option.value 
+                          ? 'bg-teal-50 text-teal-700 font-medium' 
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* City */}
@@ -252,23 +336,41 @@ const Personal_info = () => {
           {/* Industry */}
           <div>
             <label className="block text-sm font-medium mb-1">Industry</label>
-            <select
-              name="industry"
-              value={formData.industry || ""}
-              onChange={handleInputChange}
-              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.5em 1.5em'
-              }}
-            >
-              <option value="">Select industry</option>
-              <option value="IT">IT</option>
-              <option value="Finance">Finance</option>
-              <option value="Healthcare">Healthcare</option>
-            </select>
+            <div className="relative" ref={dropdownRefs.industry}>
+              <button
+                type="button"
+                onClick={() => handleDropdownToggle('industry')}
+                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
+              >
+                <span className={formData.industry ? "text-gray-900" : "text-gray-500"}>
+                  {getSelectedLabel('industry')}
+                </span>
+                <FiChevronDown 
+                  className={`text-gray-400 transition-transform duration-200 ${
+                    openDropdown === 'industry' ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
+              
+              {openDropdown === 'industry' && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {dropdownOptions.industry.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleDropdownSelect('industry', option.value)}
+                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
+                        formData.industry === option.value 
+                          ? 'bg-teal-50 text-teal-700 font-medium' 
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Employment Type */}
@@ -276,23 +378,41 @@ const Personal_info = () => {
             <label className="block text-sm font-medium mb-1">
               Preferred Employment Type
             </label>
-            <select
-              name="employmentType"
-              value={formData.employmentType || ""}
-              onChange={handleInputChange}
-              className="w-full px-3 sm:px-4 pr-8 py-2 border border-gray-200 rounded text-sm sm:text-base appearance-none bg-white"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                backgroundPosition: 'right 0.5rem center',
-                backgroundRepeat: 'no-repeat',
-                backgroundSize: '1.5em 1.5em'
-              }}
-            >
-              <option value="">Select employment type</option>
-              <option value="Permanent">Permanent</option>
-              <option value="Contract">Contract</option>
-              <option value="N/A">N/A</option>
-            </select>
+            <div className="relative" ref={dropdownRefs.employmentType}>
+              <button
+                type="button"
+                onClick={() => handleDropdownToggle('employmentType')}
+                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
+              >
+                <span className={formData.employmentType ? "text-gray-900" : "text-gray-500"}>
+                  {getSelectedLabel('employmentType')}
+                </span>
+                <FiChevronDown 
+                  className={`text-gray-400 transition-transform duration-200 ${
+                    openDropdown === 'employmentType' ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
+              
+              {openDropdown === 'employmentType' && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {dropdownOptions.employmentType.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleDropdownSelect('employmentType', option.value)}
+                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
+                        formData.employmentType === option.value 
+                          ? 'bg-teal-50 text-teal-700 font-medium' 
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* DOB */}
@@ -334,11 +454,11 @@ const Personal_info = () => {
           <button
             type="button"
             onClick={handleSave}
-            className="px-4 sm:px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base order-2 sm:order-1"
+            className="px-4 sm:px-6 py-2 bg-teal-500 text-white rounded hover:bg-teal-600 cursor-pointer text-sm sm:text-base order-2 sm:order-1 transition-colors"
           >
             Save changes
           </button>
-          <button className="px-4 sm:px-6 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base order-1 sm:order-2">
+          <button className="px-4 sm:px-6 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base order-1 sm:order-2 transition-colors">
             Cancel
           </button>
         </div>

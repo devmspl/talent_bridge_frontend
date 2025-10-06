@@ -51,7 +51,6 @@ export default function Signup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (validateForm()) {
       dispatch(setCurrentStep(2));
       router.push("/step-2");
@@ -132,57 +131,65 @@ const loginWithFacebook = () => {
   return (
     <>
       {/* === Onboarding Navbar === */}
-      <div className="relative w-full flex items-center justify-between px-6 py-4 border-b border-gray-200">
+      <div className="relative w-full flex items-center justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 border-b border-gray-200">
         {/* Left: Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full icon flex items-center justify-center text-white text-sm font-bold">
+          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full icon flex items-center justify-center text-white text-xs sm:text-sm font-bold">
             <Image src={logo} alt="" />
           </div>
-        <Link href="/auth">  <span className="text-base font-semibold text-gray-900">TalentBridge</span></Link>
+        <Link href="/auth">  <span className="text-sm sm:text-base font-semibold text-gray-900">TalentBridge</span></Link>
         </div>
 
-        {/* Center: Stepper */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
-          <div className="flex items-center gap-4 text-sm">
+        {/* Center: Stepper - Responsive */}
+        <div className="hidden sm:block absolute left-1/2 transform -translate-x-1/2">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 text-xs sm:text-sm">
             {/* Step 1: Current */}
             <div className="flex items-center gap-1 text-gray-900 font-medium">
-              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">1</div>
-              <span>Account</span>
-              <span className="text-gray-400">›</span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">1</div>
+              <span className="hidden md:inline">Account</span>
+              <span className="text-gray-400 hidden sm:inline">›</span>
             </div>
 
             {/* Step 2: Upcoming */}
             <div className="flex items-center gap-1 text-gray-500">
-              <div className="w-6 h-6 rounded-full border border-gray-300 text-xs flex items-center justify-center">2</div>
-              <span>Profile</span>
-              <span className="text-gray-400">›</span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-gray-300 text-xs flex items-center justify-center">2</div>
+              <span className="hidden md:inline">Profile</span>
+              <span className="text-gray-400 hidden sm:inline">›</span>
             </div>
 
             {/* Step 3: Upcoming */}
             <div className="flex items-center gap-1 text-gray-500">
-              <div className="w-6 h-6 rounded-full border border-gray-300 text-xs flex items-center justify-center">3</div>
-              <span>Showcase</span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-gray-300 text-xs flex items-center justify-center">3</div>
+              <span className="hidden md:inline">Showcase</span>
             </div>
           </div>
         </div>
 
+        {/* Mobile Stepper */}
+        <div className="sm:hidden absolute left-1/2 transform -translate-x-1/2">
+          <div className="flex items-center gap-1 text-xs">
+            <div className="w-5 h-5 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center">1</div>
+            <span className="text-gray-500">of 3</span>
+          </div>
+        </div>
+
         {/* Right: Close Button */}
-        <div className="text-gray-400 cursor-pointer hover:text-gray-600 text-sm">
+        <div className="text-gray-400 cursor-pointer hover:text-gray-600 text-sm sm:text-base">
           ×
         </div>
       </div>
 
       {/* === Signup Form Section === */}
-      <main className="min-h-screen bg-[#f9f9f9] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white rounded-xl shadow p-8">
-          <h2 className="text-[30px] leading-[38px] font-Inter text-center text-[#111827] mb-1 font-semibold">
+      <main className="min-h-screen bg-[#f9f9f9] flex items-center justify-center px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12">
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg bg-white rounded-xl shadow p-4 sm:p-6 md:p-8">
+          <h2 className="text-xl sm:text-2xl md:text-[30px] leading-tight font-Inter text-center text-[#111827] mb-1 sm:mb-2 font-semibold">
             Create your account
           </h2>
-          <p className="text-sm text-gray-500 text-center mb-6">
+          <p className="text-xs sm:text-sm text-gray-500 text-center mb-4 sm:mb-6">
             Let's get you started with <span className="font-medium">TalentBridge</span>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
             {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
@@ -192,15 +199,15 @@ const loginWithFacebook = () => {
                 placeholder="e.g John Doe"
                 value={user?.fullName || ''}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md  ${
+                className={`w-full px-3 py-2 sm:py-2.5 border rounded-md text-sm sm:text-base ${
                   errors.fullName ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
               {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
             </div>
 
-            {/* Email & Phone */}
-            <div className="flex gap-3">
+            {/* Email & Phone - Responsive layout */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
@@ -209,48 +216,47 @@ const loginWithFacebook = () => {
                   placeholder="e.g johndoe@gmail.com"
                   value={user?.email || ''}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md ${
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-md text-sm sm:text-base ${
                     errors.email ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
              
-               <div className="flex-1">
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Phone number
-    </label>
-    <div className="flex">
-     <select
-  name="countryCode"
-  className="px-1 pr-0 py-2 border-gray-300 rounded-l-md border-t border-b border-l bg-white text-sm focus:outline-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22currentColor%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19 9l-7 7-7-7%22 /%3E%3C/svg%3E')] bg-no-repeat bg-right-1"
->
-  <option value="+1">US +1</option>
-  <option value="+91">IN +91</option>
-  <option value="+44">GB +44</option>
-  <option value="+61">AU +61</option>
-</select>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone number
+                </label>
+                <div className="flex">
+                  <select
+                    name="countryCode"
+                    className="px-1 sm:px-1 py-2 sm:py-2.5 border-gray-300 rounded-l-md border-t border-b border-l bg-white text-sm sm:text-base focus:outline-none bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22currentColor%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 stroke-linejoin=%22round%22 d=%22M19 9l-7 7-7-7%22 /%3E%3C/svg%3E')] bg-no-repeat bg-right-1"
+                  >
+                    <option value="+1">US (+1)</option>
+                    <option value="+91">IN (+91)</option>
+                    <option value="+44">GB (+44)</option>
+                    <option value="+61">AU (+61)</option>
+                  </select>
 
-
-      <input
-        type="tel"
-        name="phone"
-        placeholder="1234567890"
-        value={user?.phone || ""}
-        onChange={handleChange}
-        className={`w-full px-3 py-2 border-t border-b border-r rounded-r-md ${
-          errors.phone ? "border-red-500" : "border-gray-300"
-        }`}
-      />
-    </div>
-    {errors.phone && (
-      <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-    )}
-  </div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="1234567890"
+                    value={user?.phone || ""}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 sm:py-2.5 border-t border-b border-r rounded-r-md text-sm sm:text-base ${
+                      errors.phone ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                </div>
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                )}
+              </div>
             </div>
 
-           
-            <div className="flex gap-3">
+            {/* Country & City - Responsive layout */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
                 <input
@@ -259,7 +265,7 @@ const loginWithFacebook = () => {
                   placeholder="Your Country"
                   value={user?.country || ''}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md ${
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-md text-sm sm:text-base ${
                     errors.country ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -273,7 +279,7 @@ const loginWithFacebook = () => {
                   placeholder="Your City"
                   value={user?.city || ''}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md ${
+                  className={`w-full px-3 py-2 sm:py-2.5 border rounded-md text-sm sm:text-base ${
                     errors.city ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -290,7 +296,7 @@ const loginWithFacebook = () => {
                 placeholder="Create a password"
                 value={user?.password || ''}
                 onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md ${
+                className={`w-full px-3 py-2 sm:py-2.5 border rounded-md text-sm sm:text-base ${
                   errors.password ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
@@ -300,39 +306,39 @@ const loginWithFacebook = () => {
             {/* Submit */}
             <button
               type="submit"
-              className="w-full review text-white py-2 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer"
+              className="w-full review text-white py-2 sm:py-2.5 rounded-md font-semibold hover:bg-teal-600 transition cursor-pointer text-sm sm:text-base"
             >
               Right this way
             </button>
           </form>
 
           {/* Divider */}
-          <div className="flex items-center my-4">
+          <div className="flex items-center my-4 sm:my-6">
             <hr className="flex-grow border-gray-200" />
             <span className="mx-3 text-gray-400 text-sm">Or</span>
             <hr className="flex-grow border-gray-200" />
           </div>
 
           {/* Social Login */}
-          <div className="flex gap-3">
-            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button className="w-full sm:w-1/2 border border-gray-300 py-2 sm:py-2.5 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
               onClick={() => registerWithGoogle()}
             >
-              <Image src={google} alt="google icon" width={24} />
+              <Image src={google} alt="google icon" width={20} height={20} />
             </button>
-            <button className="w-1/2 border border-gray-300 py-2 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
+            <button className="w-full sm:w-1/2 border border-gray-300 py-2 sm:py-2.5 rounded-md flex justify-center items-center hover:bg-gray-50 cursor-pointer"
              onClick={loginWithFacebook}
             >
-              <Image src={facebook} alt="facebook icon" width={24} />
+              <Image src={facebook} alt="facebook icon" width={20} height={20} />
             </button>
           </div>
 
           {/* Bottom Text */}
-          <p className="text-sm text-center mt-6 text-gray-500">
+          <p className="text-sm text-center mt-4 sm:mt-6 text-gray-500">
             Already have an account?{" "}
-            <a href="/login" className="text-teal-600 font-medium hover:underline">
+            <Link href="/login" className="text-teal-600 font-medium hover:underline">
               Log in
-            </a>
+            </Link>
           </p>
         </div>
       </main>

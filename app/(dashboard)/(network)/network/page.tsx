@@ -76,9 +76,9 @@ export default function RecruiterGrid() {
             .includes(filters.experience.toLowerCase()))
       );
     });
-    const activeFiltersCount = Object.values(filters).filter(
-  (val) => val && val.trim() !== ""
-).length;
+  const activeFiltersCount = Object.values(filters).filter(
+    (val) => val && val.trim() !== ""
+  ).length;
 
   return (
     <>
@@ -94,7 +94,8 @@ export default function RecruiterGrid() {
           </div>
 
           {/* Search and Filter */}
-          <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm mb-6">
+          <div className="bg-white px-4 py-3 rounded-lg shadow-sm mb-6">
+            <div className="flex items-center gap-3">
             <div className="relative flex-grow">
               <BiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
               <input
@@ -103,24 +104,52 @@ export default function RecruiterGrid() {
                 className="w-full border border-gray-300 rounded-md py-2 pl-10 pr-3 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-           
-           <button
-  className="flex items-center gap-2 review hover:bg-[#00a19a] text-white px-4 py-2 rounded-md text-sm  font-medium hover:cursor-pointer"
-  onClick={() => setShowModal(true)}
->
-  {activeFiltersCount === 0 ? (
-    <>
-      <Image src={search} alt="Filters" /> Filters
-    </>
-  ) : (
-    <div className="flex items-center gap-1">
-      <span className="bg-white text-[#02ABAC] rounded-full w-4 h-4 flex items-center justify-center text-xs font-inter font-semibold">
-        {activeFiltersCount}
-      </span>
-      Filters
-    </div>
-  )}
-</button>
+
+            <button
+              className="flex items-center gap-2 review hover:bg-[#00a19a] text-white px-4 py-2 rounded-md text-sm  font-medium hover:cursor-pointer"
+              onClick={() => setShowModal(true)}
+            >
+              {activeFiltersCount === 0 ? (
+                <>
+                  <Image src={search} alt="Filters" /> Filters
+                </>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="bg-white text-[#02ABAC] rounded-full w-4 h-4 flex items-center justify-center text-xs font-inter font-semibold">
+                    {activeFiltersCount}
+                  </span>
+                  Filters
+                </div>
+              )}
+            </button>
+            </div>
+
+            {/* Applied filters chips */}
+            {activeFiltersCount > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {(
+                  [
+                    { key: 'industry', label: 'Industry' },
+                    { key: 'experience', label: 'Experience' },
+                    { key: 'companyName', label: 'Company name' },
+                    { key: 'location', label: 'Location' },
+                  ] as { key: keyof typeof filters; label: string }[]
+                ).map(({ key, label }) =>
+                  filters[key] ? (
+                    <span key={key as string} className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center gap-2">
+                      {label}
+                      <button
+                        aria-label={`Remove ${label}`}
+                        className="text-gray-400 hover:text-gray-600"
+                        onClick={() => setFilters({ ...filters, [key]: '' })}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ) : null
+                )}
+              </div>
+            )}
           </div>
 
           {/* Recruiter Cards */}
@@ -133,11 +162,10 @@ export default function RecruiterGrid() {
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs mb-2">
                     <span
-                      className={`px-2 py-0.5 rounded-full font-medium capitalize ${
-                        card.type === "Recruiter"
+                      className={`px-2 py-0.5 rounded-full font-medium capitalize ${card.type === "Recruiter"
                           ? "bg-gray-100 text-gray-700"
                           : "bg-pink-100 text-pink-700"
-                      }`}
+                        }`}
                     >
                       {card.type || "Industry Professional"}
                     </span>
@@ -198,16 +226,16 @@ export default function RecruiterGrid() {
             ))}
           </div>
           <div className="border border-gray-200 mt-8 rounded-lg px-6 py-5  flex justify-between items-center text-xs text-gray-500 ">
-             <p>Showing 1 to 5 of 20 results</p>
-             <div className="flex gap-2">
-               <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
-                 <Image src={left} alt="" />
-               </button>
-               <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
-                 <Image src={right} alt="" />
+            <p>Showing 1 to 5 of 20 results</p>
+            <div className="flex gap-2">
+              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                <Image src={left} alt="" />
               </button>
-             </div>
-           </div>
+              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                <Image src={right} alt="" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
