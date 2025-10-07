@@ -52,13 +52,15 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
   return (
     <>
-      <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
-        <div>
-        <Link href="/showcase-rooms">  Showcase rooms </Link> <span className="text-gray-800 font-semibold"> / New</span>
+      {/* Breadcrumb and Save Draft - Responsive */}
+      <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 px-3 sm:px-0">
+        <div className="flex items-center">
+          <Link href="/showcase-rooms" className="hover:text-gray-700">Showcase rooms</Link>
+          <span className="text-gray-800 font-semibold"> / New</span>
         </div>
-        <div className="flex gap-2">
+        <div className="w-full sm:w-auto">
           <button
-            className="absolute top-4 right-4 text-sm border border-gray-300 px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer"
+            className="w-full sm:w-auto text-xs sm:text-sm border border-gray-300 px-3 sm:px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer transition"
           // onClick={() => router.push("/competencies")}
           >
             Save as draft
@@ -66,152 +68,167 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         </div>
       </div>
 
-      <div className="min-h-screen flex justify-center items-start pt-12">
-        <div className="relative bg-white rounded-xl w-full max-w-xl shadow-md">
-          <div className="flex items-center text-sm font-medium mb-6 gap-4 justify-center px-6 py-8 border-b border-gray-200">
+      <div className="min-h-screen flex justify-center items-start sm:pt-6 md:pt-12 px-3 sm:px-4 md:px-6">
+        <div className="relative bg-white rounded-lg sm:rounded-xl w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-xl shadow-sm sm:shadow-md">
+          
+          {/* Stepper - Responsive */}
+          <div className="flex items-center text-xs sm:text-sm font-medium gap-2 sm:gap-3 md:gap-4 justify-center px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 border-b border-gray-200">
+            
+            {/* Step 1: Introduction */}
             <div className="flex items-center gap-1 text-teal-600">
-              <div className="w-5 h-5 review text-white text-xs flex items-center justify-center rounded-full">1</div>
-              <span className="text-[#0A0D14] font-inter font-medium text-[14px] leading-[20px] tracking-[-0.006em]">Introduction</span>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 review text-white text-[10px] sm:text-xs flex items-center justify-center rounded-full flex-shrink-0">1</div>
+              <span className="hidden sm:inline text-[#0A0D14] font-medium text-xs sm:text-sm">Introduction</span>
             </div>
-            <span className="text-gray-400">›</span>
-            {/* <div className="text-gray-500">2 Competencies</div> */}
-             <div className="text-gray-500 rounded-full flex gap-2">
-              <div className="w-5 h-5  text-gray text-xs flex items-center justify-center rounded-full border">
-                2
-              </div> Competencies</div>
-            <span className="text-gray-400">›</span>
-            {/* <div className="text-gray-500">3 Insights</div> */}
-             <div className="text-gray-500 rounded-full flex gap-2">
-              <div className="w-5 h-5  text-gray text-xs flex items-center justify-center rounded-full border">
-                3
-              </div> Insights</div>
+            <span className="text-gray-400 text-xs sm:text-sm">›</span>
+            
+            {/* Step 2: Competencies */}
+            <div className="text-gray-500 flex items-center gap-1">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 text-gray text-[10px] sm:text-xs flex items-center justify-center rounded-full border border-gray-300 flex-shrink-0">2</div>
+              <span className="hidden sm:inline text-xs sm:text-sm">Competencies</span>
+            </div>
+            <span className="text-gray-400 text-xs sm:text-sm">›</span>
+            
+            {/* Step 3: Insights */}
+            <div className="text-gray-500 flex items-center gap-1">
+              <div className="w-4 h-4 sm:w-5 sm:h-5 text-gray text-[10px] sm:text-xs flex items-center justify-center rounded-full border border-gray-300 flex-shrink-0">3</div>
+              <span className="hidden sm:inline text-xs sm:text-sm">Insights</span>
+            </div>
           </div>
-          <div className="px-6 py-8">
-            <div className="mb-5">
-              <label className="text-sm font-medium text-gray-800 block mb-1">Room name</label>
+
+          {/* Form Content - Responsive Padding */}
+          <div className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+            
+            {/* Room Name */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-800 block mb-1 sm:mb-2">Room name</label>
               <input
                 type="text"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm  focus:outline-none"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none"
               />
             </div>
-            <div className="mb-5">
-              <label className="text-sm font-medium text-gray-800 block mb-1">Room Summary</label>
+
+            {/* Room Summary */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-800 block mb-1 sm:mb-2">Room Summary</label>
               <textarea
                 rows={3}
                 placeholder="Type your message here"
                 value={roomSummary}
                 onChange={(e) => setRoomSummary(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none  focus:outline-none"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-xs sm:text-sm resize-none focus:outline-none"
               />
-              <p className="text-xs text-gray-500 mt-1">max 120 characters</p>
+              <p className="text-[10px] sm:text-xs text-gray-500 mt-1">max 120 characters</p>
             </div>
-            <div className="mb-5">
-              <label className="text-sm font-medium text-gray-800 block mb-1">Cover Image</label>
-              <div className="border border-dashed border-gray-300 rounded-md flex items-center justify-center flex-col py-6 text-sm text-gray-600">
-                <AiOutlineCloudUpload className="w-6 h-6 mb-2 text-gray-400" />
-                <p className="flex">
-                  Drag & drop file here or{" "}
-                  {/* <span className="text-blue-600 font-medium cursor-pointer">choose file</span> */}
+
+            {/* Cover Image Upload */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-800 block mb-1 sm:mb-2">Cover Image</label>
+              <div className="border border-dashed border-gray-300 rounded-md flex items-center justify-center flex-col py-4 sm:py-6 text-xs sm:text-sm text-gray-600">
+                <AiOutlineCloudUpload className="w-5 h-5 sm:w-6 sm:h-6 mb-2 text-gray-400" />
+                <p className="flex flex-col sm:flex-row items-center gap-1 text-center px-2">
+                  <span className="hidden sm:inline">Drag & drop file here or</span>
+                  <span className="sm:hidden">Upload image or</span>
                   <span
-  onClick={handleCoverClick}  
-  className="text-blue-600 font-medium cursor-pointer"
->
-  choose file
-</span>
-
-<input
-  type="file"
-  accept="image/*"
-  ref={coverInputRef}          
-  onChange={handleCoverChange} 
-  className="hidden"
-/>
+                    onClick={handleCoverClick}  
+                    className="text-blue-600 font-medium cursor-pointer hover:underline"
+                  >
+                    choose file
+                  </span>
                 </p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={coverInputRef}          
+                  onChange={handleCoverChange} 
+                  className="hidden"
+                />
               </div>
             </div>
-            <div className="mb-5">
-              <label className="text-sm font-medium text-gray-800 block mb-1">Video Intro (30s max)</label>
-              <div className="border border-dashed border-gray-300 rounded-md flex items-center justify-center flex-col py-6 text-sm text-gray-600">
-                <AiOutlineCloudUpload className="w-6 h-6 mb-2 text-gray-400" />
-                <p className="flex">
-                  Drag & drop file here or{" "}
-                  {/* <span className="text-blue-600 font-medium cursor-pointer">choose file</span> */}
 
-                   <span
-  onClick={handleCoverClick}  
-  className="text-blue-600 font-medium cursor-pointer"
->
-  choose file
-</span>
-
-<input
-  type="file"
-  accept="video/*"
-  ref={coverInputRef}          
-  onChange={handleCoverChange} 
-  className="hidden"
-/>
+            {/* Video Intro Upload */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-800 block mb-1 sm:mb-2">Video Intro (30s max)</label>
+              <div className="border border-dashed border-gray-300 rounded-md flex items-center justify-center flex-col py-4 sm:py-6 text-xs sm:text-sm text-gray-600">
+                <AiOutlineCloudUpload className="w-5 h-5 sm:w-6 sm:h-6 mb-2 text-gray-400" />
+                <p className="flex flex-col sm:flex-row items-center gap-1 text-center px-2">
+                  <span className="hidden sm:inline">Drag & drop file here or</span>
+                  <span className="sm:hidden">Upload video or</span>
+                  <span
+                    onClick={handleCoverClick}  
+                    className="text-blue-600 font-medium cursor-pointer hover:underline"
+                  >
+                    choose file
+                  </span>
                 </p>
+                <input
+                  type="file"
+                  accept="video/*"
+                  ref={coverInputRef}          
+                  onChange={handleCoverChange} 
+                  className="hidden"
+                />
               </div>
             </div>
-            <div className="mb-2">
-              <label className="text-sm font-medium text-gray-800 block mb-1">Role</label>
+
+            {/* Role Input */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-800 block mb-1 sm:mb-2">Role</label>
               <input
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm  focus:outline-none"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-xs sm:text-sm focus:outline-none"
               />
             </div>
 
+            {/* Qualification Select */}
+            <div className="mb-4 sm:mb-5">
+              <label className="text-xs sm:text-sm font-medium text-gray-700 block mb-1 sm:mb-2">Qualification</label>
+              <select
+                className={`w-full rounded-md border text-xs sm:text-sm p-2 sm:p-2.5 focus:ring-teal-500 focus:border-teal-500 ${
+                  errors.qualification ? "border-red-500" : "border-gray-300"
+                }`}
+                value={user?.qualification || ""}
+                onChange={handleQualificationChange}
+              >
+                <option value="">Select your qualification</option>
+                <option value="Bachelor's Degree">Bachelor's Degree</option>
+                <option value="Master's Degree">Master's Degree</option>
+              </select>
 
-            <div>
-      <label className="text-sm font-medium text-gray-700">Qualification</label>
+              {errors.qualification && (
+                <p className="text-red-500 text-[10px] sm:text-xs mt-1">{errors.qualification}</p>
+              )}
 
-      <select
-        className={`w-full mt-1 rounded-md border text-sm p-2 focus:ring-teal-500 focus:border-teal-500 ${
-          errors.qualification ? "border-red-500" : "border-gray-300"
-        }`}
-        value={user?.qualification || ""}
-        onChange={handleQualificationChange}
-      >
-        <option value="">Select your qualification</option>
-        <option value="Bachelor's Degree">Bachelor's Degree</option>
-        <option value="Master's Degree">Master's Degree</option>
-        
-      </select>
+              {/* Selected Qualifications Tags */}
+              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+                {selectedQualifications.map((qual) => (
+                  <span
+                    key={qual}
+                    className="bg-gray-100 text-gray-700 text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2"
+                  >
+                    {qual}
+                    <button
+                      onClick={() => handleRemoveQualification(qual)}
+                      className="text-gray-400 hover:text-gray-600 text-xs sm:text-sm"
+                      type="button"
+                      aria-label={`Remove ${qual}`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
 
-      {errors.qualification && (
-        <p className="text-red-500 text-xs mt-1">{errors.qualification}</p>
-      )}
-
-      <div className="flex flex-wrap gap-2 mt-2">
-        {selectedQualifications.map((qual) => (
-          <span
-            key={qual}
-            className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full flex items-center gap-2"
-          >
-            {qual}
-            <button
-              onClick={() => handleRemoveQualification(qual)}
-              className="text-gray-400 hover:text-gray-600"
-              type="button"
-            >
-              ✕
-            </button>
-          </span>
-        ))}
-      </div>
-    </div>
-
-
-
-            
-            <div className='flex justify-end mt-4'>
-              <button className="review text-white px-4 py-2 h-[40px] rounded-md flex items-center gap-2 hover:bg-teal-600 cursor-pointer"
-                onClick={() => router.push("/competencies")}>
+            {/* Next Button */}
+            <div className='flex justify-end mt-4 sm:mt-6'>
+              <button 
+                className="w-full sm:w-auto review text-white px-4 sm:px-6 py-2 sm:py-2.5 h-auto sm:h-[40px] rounded-md flex items-center justify-center gap-2 hover:bg-teal-600 cursor-pointer transition text-xs sm:text-sm font-medium"
+                onClick={() => router.push("/competencies")}
+              >
                 Next
               </button>
             </div>

@@ -96,144 +96,184 @@ const Page = () => {
 
   return (
     <>
-    <div className="bg-white min-h-screen p-6 text-sm text-gray-800 font-sans">
-      <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
-  <div>
- <Link href="/showcase-rooms">  Showcase rooms </Link>  / <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
-  </div>
-
-  <div className="flex gap-2">
-    <button className="bg-white text-gray-700 px-4 py-2 rounded-md text-sm border h-9 hover:cursor-pointer">
-      Edit Room
-    </button>
-    <button className="bg-[#FEF2F2] text-red-700 px-3 py-2 rounded-md text-sm border h-9 flex items-center justify-center hover:cursor-pointer"
-   onClick={() => setShowModal(true)}>
-      <Image src={del} alt=""></Image>
-    </button>
-  </div>
-</div>
-
-      {/* Header */}
-      <div className="bg-white rounded-xl p-6 mb-6 border border-[#E5E7EB]">
-        <div className="flex justify-between items-start">
-          <div>
-          <h1 className="text-[20px] font-semibold flex items-center">
-  Data/BI Analyst
-  <span className="ml-2 text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full inline-flex items-center">
-    <TbWorld className="mr-1" /> Public
-  </span>
-</h1>
-
-            <p className="text-sm text-gray-600 mt-1">John Doe</p>
-          </div>
-          <div className="flex gap-2">
-            <button className="bg-white border border-[#D1D5DB] text-gray-700 px-4 py-2 rounded-md text-sm  hover:cursor-pointer"
-              onClick={() => setVisibility(true)}>Change Visibility</button>
-            <button className="review text-white px-4 py-2 rounded-md text-sm hover:cursor-pointer"
-             onClick={() => setOpen(true)}>Share room</button>
-          </div>
-        </div>
-      </div>
-
-      {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {metrics.map((item, index) => (
-        <div
-          key={index}
-          className="bg-white rounded-xl p-5 shadow-sm w-full border border-gray-200"
-        >
-          <div className="flex justify-between items-start mb-1">
-            <span className="text-sm text-gray-500">{item.title}</span>
-            {item.icon}
-          </div>
-          <div className="text-2xl font-semibold text-gray-900 mb-2">
-            {item.value}
-          </div>
-          <div
-            className={`flex items-center text-xs ${
-              item.trend.includes("-") ? "text-red-500" : "text-green-600"
-            }`}
-          >
-            <Image
-              src={item.trend.includes("-") ? loss : profit}
-              alt="Trend icon"
-              className="w-3 h-3 mr-1"
-            />
-            {item.trend.replace("+", "")}
-          </div>
-        </div>
-      ))}
-    </div>
-
-      {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-base">Summary</h2>
-              <span className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded">AI Generated</span>
+      <div className="bg-white min-h-screen px-4 sm:px-6 md:px-8 py-4 sm:py-6 text-sm text-gray-800 font-sans">
+        
+        {/* Breadcrumb and Action Buttons - Responsive */}
+        <div className="mb-4 sm:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center text-sm text-gray-600 flex-wrap">
+              <Link href="/showcase-rooms" className="hover:text-gray-800 transition">
+                Showcase rooms
+              </Link>
+              <span className="mx-2 text-gray-400">/</span>
+              <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
             </div>
-            <p className="text-gray-700 leading-relaxed text-sm">
-              Data/BI Analyst with 5+ years of experience in transforming complex datasets into actionable insights. Proficient in data visualization, SQL, and statistical analysis to drive strategic decision-making. Skilled in leveraging BI tools like Power BI and Tableau, with a strong foundation in ETL processes and data modeling.
-            </p>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
+                Edit Room
+              </button>
+              <button 
+                className="bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm border border-red-200 hover:bg-red-100 cursor-pointer transition flex items-center justify-center"
+                onClick={() => setShowModal(true)}
+              >
+                <Image src={del} alt="Delete" className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Header - Responsive */}
+        <div className="bg-white rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">
+                  Data/BI Analyst
+                </h1>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full inline-flex items-center w-fit">
+                  <TbWorld className="mr-1 w-3 h-3" />
+                  Public
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">John Doe</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button 
+                className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer transition font-medium"
+                onClick={() => setVisibility(true)}
+              >
+                Change Visibility
+              </button>
+              <button 
+                className="w-full sm:w-auto review text-white px-4 py-2 rounded-lg text-sm hover:bg-teal-600 cursor-pointer transition font-medium"
+                onClick={() => setOpen(true)}
+              >
+                Share room
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Metrics - Responsive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4 sm:mb-6">
+          {metrics.map((item, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs sm:text-sm text-gray-500 font-medium">{item.title}</span>
+                <div className="text-gray-400">
+                  {item.icon}
+                </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                {item.value}
+              </div>
+              <div
+                className={`flex items-center text-xs ${
+                  item.trend.includes("-") ? "text-red-500" : "text-green-600"
+                }`}
+              >
+                <Image
+                  src={item.trend.includes("-") ? loss : profit}
+                  alt="Trend icon"
+                  className="w-3 h-3 mr-1"
+                />
+                {item.trend.replace("+", "")}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Main content - Responsive Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
+          
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+            
+            {/* Summary */}
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">Summary</h2>
+                <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium border border-blue-100 w-fit">
+                  AI Generated
+                </span>
+              </div>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                Data/BI Analyst with 5+ years of experience in transforming complex datasets into actionable insights. Proficient in data visualization, SQL, and statistical analysis to drive strategic decision-making. Skilled in leveraging BI tools like Power BI and Tableau, with a strong foundation in ETL processes and data modeling.
+              </p>
+            </div>
+
+            {/* Qualifications */}
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Qualifications</h2>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {qualifications.map((item, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-gray-50 px-3 py-2 rounded-full text-xs sm:text-sm text-gray-700 border border-gray-200 flex items-center gap-2 hover:bg-gray-100 transition"
+                  >
+                    <Image src={item.icon} alt="" width={16} height={16} />
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Core Competencies */}
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Core Competencies</h2>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
+                {["Statistical & Predictive Analysis", "Stakeholder Communication & Reporting", "Data Visualization (Power BI, Tableau)", "ETL & Data Processing"].map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="bg-gray-50 px-3 py-2 rounded-full text-xs sm:text-sm text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Qualifications */}
-          <div className="bg-white rounded-xl p-5 shadow-sm">
-      <h2 className="font-semibold text-base mb-3">Qualifications</h2>
-      <div className="flex flex-wrap gap-2">
-        {qualifications.map((item, idx) => (
-          <span
-            key={idx}
-            className="bg-[#f3f4f6] px-3 py-1 rounded-full text-xs text-gray-700 border border-gray-300 flex items-center gap-2"
-          >
-            <Image src={item.icon} alt="" width={14} height={14} />
-            {item.label}
-          </span>
-        ))}
-      </div>
-    </div>
-
-          {/* Core Competencies */}
-          <div className="bg-white rounded-xl p-5 shadow-sm">
-            <h2 className="font-semibold text-base mb-3">Core Competencies</h2>
-            <div className="flex flex-wrap gap-2">
-              {["Statistical & Predictive Analysis", "Stakeholder Communication & Reporting", "Data Visualization (Power BI, Tableau)", "ETL & Data Processing"].map((tag, idx) => (
-                <span key={idx} className="bg-[#f3f4f6] px-3 py-1 rounded-full text-xs text-gray-700 border border-gray-300">{tag}</span>
+          {/* Right Column - Recent Activity */}
+          <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Recent activity</h2>
+            <p className="text-xs text-gray-500 mb-4">Based on room interaction</p>
+            <div className="space-y-4 sm:space-y-6">
+              {[
+                { image: you, name: "You", action: "updated Pets World case study", time: "11:30 AM" },
+                { image: user1, name: "Breanna Butler", action: "viewed your profile", time: "2:00 PM" },
+                { image: user2, name: "Lana Ray", action: "viewed your profile", time: "12:45 PM" },
+                { image: user3, name: "Deanna T.", action: "sent a message", time: "12:45 PM" },
+                { image: you, name: "Anthony S.", action: "viewed your profile", time: "11:30 AM" },
+                { image: user4, name: "Michele C.", action: "sent a message", time: "9:30 AM" },
+                { image: user5, name: "Scott M.", action: "viewed your profile", time: "5 days ago" },
+                { image: user6, name: "Michel L.", action: "viewed your profile", time: "5 days ago" },
+              ].map((activity, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <Image 
+                    src={activity.image} 
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
+                    alt="profile" 
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-800 leading-tight text-sm">{activity.name}</div>
+                    <div className="text-gray-500 text-xs truncate">{activity.action}</div>
+                  </div>
+                  <div className="text-xs text-gray-400 whitespace-nowrap pt-1 flex-shrink-0">
+                    {activity.time}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </div>
-
-        {/* Right Side - Recent Activity */}
-        <div className="bg-white rounded-xl p-5 shadow-sm">
-          <h2 className="font-semibold text-base mb-1">Recent activity</h2>
-          <p className="text-xs text-gray-500 mb-4">Based on room interaction</p>
-          <div className="space-y-6">
-            {[
-              { image:  you ,name: "You", action: "updated Pets World case study", time: "11:30 AM" },
-              {  image:  user1 , name: "Breanna Butler", action: "viewed your profile", time: "2:00 PM" },
-              {  image:  user2 , name: "Lana Ray", action: "viewed your profile", time: "12:45 PM" },
-              {  image:  user3 , name: "Deanna T.", action: "sent a message", time: "12:45 PM" },
-              {  image:  you , name: "Anthony S.", action: "viewed your profile", time: "11:30 AM" },
-              {  image:  user4 , name: "Michele C.", action: "sent a message", time: "9:30 AM" },
-              {  image:  user5 , name: "Scott M.", action: "viewed your profile", time: "5 days ago" },
-              {  image:  user6 , name: "Michel L.", action: "viewed your profile", time: "5 days ago" },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <Image src={activity.image} className="w-10 h-10 rounded-full" alt="profile" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-800 leading-tight text-sm">{activity.name}</div>
-                  <div className="text-gray-500 text-xs truncate">{activity.action}</div>
-                </div>
-                <div className="text-xs text-gray-400 whitespace-nowrap pt-1">{activity.time}</div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
-    </div>
-    <DeleteShowcaseRoom
+
+      {/* Modals */}
+      <DeleteShowcaseRoom
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onDelete={handleDelete}
