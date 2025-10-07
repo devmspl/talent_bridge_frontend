@@ -33,6 +33,19 @@ const Personal_info = () => {
     openForWork: false,
   });
 
+  // Normalize various date representations to YYYY-MM-DD (ISO date without time)
+  const toYYYYMMDD = (raw: string): string => {
+    if (!raw) return "";
+    // If already in YYYY-MM-DD, keep as is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) return "";
+    const year = parsed.getUTCFullYear();
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   // Dropdown options
   const dropdownOptions = {
     country: [
@@ -74,7 +87,7 @@ const Personal_info = () => {
         city: storedUser?.city || "",
         industry: storedUser?.industryType?.[0] || "",
         employmentType: storedUser?.employmentType?.[0] || "",
-        dob: storedUser?.dob || "",
+        dob: toYYYYMMDD(storedUser?.dob || ""),
         openForWork: storedUser?.openForWork ?? false,
       });
     }
@@ -122,7 +135,11 @@ const Personal_info = () => {
         [name]: values,
       }));
     } else {
-      const { name, value } = target;
+      const { name } = target;
+      let { value } = target as HTMLInputElement | HTMLSelectElement;
+      if (name === "dob") {
+        value = toYYYYMMDD(value);
+      }
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -176,7 +193,7 @@ const Personal_info = () => {
         fullname: formData.fullName,
         email: formData.email,
         contact_number: formData.phone,
-        dob: formData.dob,
+        dob: formData.dob ? toYYYYMMDD(formData.dob) : undefined,
         industryType: formData.industry ? [formData.industry] : [],
         employmentType: formData.employmentType
           ? [formData.employmentType]

@@ -13,7 +13,8 @@ export const signupValidationSchema = yup.object({
     .email('Please enter a valid email address'),
   phone: yup
     .string()
-    .required('Phone number is required'),
+    .required('Phone number is required')
+    .matches(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
    country: yup
     .string()
     .required('Country is required')

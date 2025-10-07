@@ -65,6 +65,23 @@ export default function ProfileSetup() {
     }
   };
 
+  // Normalize date to YYYY-MM-DD (ISO date without time)
+  const toYYYYMMDD = (raw: string): string => {
+    if (!raw) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    const parsed = new Date(raw);
+    if (isNaN(parsed.getTime())) return '';
+    const year = parsed.getUTCFullYear();
+    const month = String(parsed.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(parsed.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleDobChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = toYYYYMMDD(e.target.value);
+    dispatch(updateUserData({ dob: value }));
+  };
+
   const handleSelfEmployedChange = (checked: boolean) => {
     setSelfEmployed(checked);
     dispatch(updateUserData({ selfEmployed: checked }));
@@ -274,6 +291,19 @@ export default function ProfileSetup() {
             </div>
 
 
+            {/* Date of Birth */}
+            <div>
+              <label className="text-sm sm:text-base font-medium text-gray-700">Date of Birth</label>
+              <input
+                type="date"
+                className={`w-full mt-1 sm:mt-2 rounded-md border text-sm sm:text-base p-2 sm:p-3 focus:ring-teal-500 focus:border-teal-500 ${errors.dob ? 'border-red-500' : 'border-gray-300'}`}
+                value={user?.dob || ''}
+                onChange={handleDobChange}
+              />
+              {errors.dob && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.dob}</p>}
+            </div>
+
+
             <div className="flex items-center space-x-2">
               <label className="flex items-center gap-2 text-xs sm:text-sm text-gray-700 cursor-pointer relative">
                 <input
@@ -282,11 +312,16 @@ export default function ProfileSetup() {
                   className="peer h-4 w-4 sm:h-5 sm:w-5 rounded-[4px] border-2 border-gray-300 checked:border-[#02ABAC] checked:bg-[#E6F7F7] appearance-none"
                   onChange={(e) => handleSelfEmployedChange(e.target.checked)}
                 />
-                <Image
+                {/* <Image
                   src={tick}
                   alt="tick"
                   className="absolute left-1 top-1.5 sm:left-1.5 sm:top-2 hidden peer-checked:block h-2 w-2 sm:h-2.5 sm:w-2.5"
-                />
+                /> */}
+                <Image
+    src={tick}
+    alt="tick"
+    className="absolute left-1.5 top-1.5 hidden peer-checked:block h-2 w-2"
+  />
                 <span className="leading-tight">I am open to self employed opportunities</span>
               </label>
             </div>

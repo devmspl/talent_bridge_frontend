@@ -13,9 +13,9 @@ import user6 from "@/public/assets/profile/Avatar (6).png";
 import user7 from "@/public/assets/profile/Avatar (9).png";
 import user8 from "@/public/assets/profile/Avatar (10).png";
 import user9 from "@/public/assets/profile/Avatar (11).png";
-import call from "@/public/assets/media/Button with icon only.png";
-import mail from "@/public/assets/media/Button with icon only (1).png";
-import deleteIcon from "@/public/assets/media/Button with icon only (2).png";
+import call from "@/public/assets/icons/call12.svg";
+import mail from "@/public/assets/icons/mail12.svg";
+import deleteIcon from "@/public/assets/icons/un-archive.svg";
 import link from "@/public/assets/icons/link.png";
 import smile from "@/public/assets/icons/smile.png";
 import ArchiveModal from "@/app/component/modals/message/ArchiveModal";
@@ -636,8 +636,8 @@ console.log("filteredContacts",filteredContacts);
                 contacts.map((contact) => (
                   <div
                     key={contact.id}
-                    className={`flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors ${
-                      selectedContact?.id === contact.id ? "bg-teal-50 border border-teal-200" : ""
+                    className={`flex items-center justify-between cursor-pointer p-3 hover:bg-gray-50 transition-colors ${
+                      selectedContact?.id === contact.id ? "bg-teal-50 border-l-[4px] border-teal-300" : ""
                     }`}
                     onClick={() => handleContactSelect(contact)}
                   >
@@ -701,21 +701,21 @@ console.log("filteredContacts",filteredContacts);
 
                 <div className="relative" ref={dropdownRef}>
                   <div className="flex items-center gap-3 text-gray-500">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Image src={call} alt="Call" width={24} />
+                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
+                      <Image  src={call} alt="Call" width={20} />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Image src={mail} alt="Mail" width={24} />
+                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
+                      <Image src={mail} alt="Mail" width={20} />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Image src={deleteIcon} alt="Delete" width={24} />
+                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setModalOpen(true)}>
+                      <Image src={deleteIcon} alt="Delete" width={20 } />
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
                       <BsThreeDotsVertical />
-                    </button>
+                    </button> */}
                   </div>
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">

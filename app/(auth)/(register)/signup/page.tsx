@@ -27,7 +27,12 @@ export default function Signup() {
   const fbReady = useFacebookSDK();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+    if (name === 'phone') {
+      // Keep only digits and limit to 10
+      value = value.replace(/\D/g, '').slice(0, 10);
+    }
     dispatch(updateUserData({ [name]: value }));
     
     if (errors[name]) {
@@ -247,6 +252,8 @@ const loginWithFacebook = () => {
                     className={`w-full px-3 py-2 sm:py-2.5 border-t border-b border-r rounded-r-md text-sm sm:text-base ${
                       errors.phone ? "border-red-500" : "border-gray-300"
                     }`}
+                    inputMode="numeric"
+                    pattern="\\d{10}"
                   />
                 </div>
                 {errors.phone && (
