@@ -112,9 +112,9 @@ const Page = () => {
               <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
+            <Link href="/edit-room">  <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
                 Edit Room
-              </button>
+              </button> </Link> 
               <button 
                 className="bg-red-50 text-red-700 px-3 py-2 rounded-lg text-sm border border-red-200 hover:bg-red-100 cursor-pointer transition flex items-center justify-center"
                 onClick={() => setShowModal(true)}
@@ -147,6 +147,12 @@ const Page = () => {
               >
                 Change Visibility
               </button>
+             <Link href="/preview"
+                className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer transition font-medium"
+               
+              >
+                Preview
+            </Link>
               <button 
                 className="w-full sm:w-auto review text-white px-4 py-2 rounded-lg text-sm hover:bg-teal-600 cursor-pointer transition font-medium"
                 onClick={() => setOpen(true)}
