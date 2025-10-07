@@ -28,7 +28,10 @@ import DeleteShowcaseRoom from "@/app/component/modals/room/DeleteShowcaseRoom";
 import ShareRoom from "@/app/component/modals/room/ShareRoom";
 import ChangeVisibilityModal from "@/app/component/modals/room/ChangeVisibilityModal";
 import del from "@/public/assets/icons/delete.svg"
+import Public from "@/public/assets/icons/public.svg"
 import Link from "next/link";
+import up from '@/public/assets/media/upp.svg';
+import down from '@/public/assets/media/downn.svg';
 
 
 

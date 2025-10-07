@@ -205,9 +205,9 @@ const InsightsPage: React.FC = () => {
                 Back
               </button>
               <button className="review text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
-                onClick={() => routes.push("/showcase-rooms")}
+                onClick={() => routes.push("/insight-preview")}
               >
-                Next
+                Preview
               </button>
             </div>
                 </div>

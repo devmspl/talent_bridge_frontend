@@ -107,17 +107,21 @@ export default function RootLayout({
 
   if (!isReady) return null;
 
+  // Check if current page is preview to hide sidebar
+  const isPreviewPage = pathname.includes('/preview');
 
   return (
     <div className="flex min-h-screen ">
-      {/* Desktop Sidebar - Hidden on mobile/tablet */}
-      <aside className={`hidden lg:block fixed top-0 left-0 h-screen z-30 transition-all duration-300 ${isCollapsed ? "w-20" : "w-70"
-        }`}>
-        <Sidebar />
-      </aside>
+      {/* Desktop Sidebar - Hidden on mobile/tablet and preview pages */}
+      {!isPreviewPage && (
+        <aside className={`hidden lg:block fixed top-0 left-0 h-screen z-30 transition-all duration-300 ${isCollapsed ? "w-20" : "w-70"
+          }`}>
+          <Sidebar />
+        </aside>
+      )}
 
-      {/* Mobile Sidebar Overlay - Only on mobile/tablet */}
-      {isMobileMenuOpen && (
+      {/* Mobile Sidebar Overlay - Only on mobile/tablet and not preview pages */}
+      {isMobileMenuOpen && !isPreviewPage && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}></div>
           <div className="fixed top-0 left-0 h-full w-full bg-white shadow-2xl">
@@ -288,15 +292,22 @@ export default function RootLayout({
       )}
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isCollapsed ? "lg:ml-20" : "lg:ml-70"
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${
+        isPreviewPage 
+          ? "lg:ml-0" 
+          : isCollapsed 
+            ? "lg:ml-20" 
+            : "lg:ml-70"
         }`}>
-        {/* Header - Only visible on mobile/tablet */}
-        <div className="lg:hidden">
-          <Header
-            onMenuToggle={handleMenuToggle}
-            isMobileMenuOpen={isMobileMenuOpen}
-          />
-        </div>
+        {/* Header - Only visible on mobile/tablet and not preview pages */}
+        {!isPreviewPage && (
+          <div className="lg:hidden">
+            <Header
+              onMenuToggle={handleMenuToggle}
+              isMobileMenuOpen={isMobileMenuOpen}
+            />
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="flex-1 p-6">

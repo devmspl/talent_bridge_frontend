@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-
+import tick from "@/public/assets/tick.svg";
+import Image from 'next/image';
 interface DeleteShowcaseRoomProps {
   isOpen: boolean;
   onClose: () => void;

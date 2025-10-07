@@ -90,7 +90,7 @@ const ShowcasePage = () => {
             
             <div className="flex-shrink-0">
               <button 
-                className="w-full sm:w-auto bg-teal-500 text-white px-3 sm:px-4 py-2 h-[36px] sm:h-[40px] rounded-md flex items-center justify-center gap-2 hover:bg-teal-600 cursor-pointer transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+                className="w-full sm:w-auto bg-teal-500 text-white px-3 sm:px-4 py-2 h-[36px] sm:h-[40px] rounded-md flex items-center justify-center gap-2 hover:bg-teal-600 cursor-pointer transition-colors duration-200 "
                 onClick={()=>routes.push("/new-room")}
               >
                 <FiPlus className="text-base sm:text-lg flex-shrink-0" />
