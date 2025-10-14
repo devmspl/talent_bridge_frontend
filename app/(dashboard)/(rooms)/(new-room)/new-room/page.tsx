@@ -184,7 +184,7 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             </div>
 
             {/* Qualification Select */}
-            <div className="mb-4 sm:mb-5">
+            {/* <div className="mb-4 sm:mb-5">
               <label className="text-xs sm:text-sm font-medium text-gray-700 block mb-1 sm:mb-2">Qualification</label>
               <select
                 className={`w-full rounded-md border text-xs sm:text-sm p-2 sm:p-2.5 focus:ring-teal-500 focus:border-teal-500 ${
@@ -200,10 +200,10 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
               {errors.qualification && (
                 <p className="text-red-500 text-[10px] sm:text-xs mt-1">{errors.qualification}</p>
-              )}
+              )} */}
 
               {/* Selected Qualifications Tags */}
-              <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+              {/* <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
                 {selectedQualifications.map((qual) => (
                   <span
                     key={qual}
@@ -221,7 +221,62 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   </span>
                 ))}
               </div>
-            </div>
+            </div> */}
+
+
+
+            <div className="mb-4 sm:mb-5 relative">
+  <label className="text-xs sm:text-sm font-medium text-gray-700 block mb-1 sm:mb-2">
+    Qualification
+  </label>
+
+  <select
+    className={`w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8 ${
+      errors.qualification ? "border-red-500" : "border-gray-300"
+    }`}
+    value={user?.qualification || ""}
+    onChange={handleQualificationChange}
+  >
+    <option value="">Select your qualification</option>
+    <option value="Bachelor's Degree">Bachelor's Degree</option>
+    <option value="Master's Degree">Master's Degree</option>
+  </select>
+
+  {/* Arrow icon */}
+  <svg
+    className="w-4 h-4 absolute right-3 top-[45px] -translate-y-1/2 text-gray-500 pointer-events-none"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+
+  {errors.qualification && (
+    <p className="text-red-500 text-[10px] sm:text-xs mt-1">{errors.qualification}</p>
+  )}
+
+  {/* Selected Qualifications Tags */}
+  <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2 sm:mt-3">
+    {selectedQualifications.map((qual) => (
+      <span
+        key={qual}
+        className="bg-gray-100 text-gray-700 text-[10px] sm:text-xs px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2"
+      >
+        {qual}
+        <button
+          onClick={() => handleRemoveQualification(qual)}
+          className="text-gray-400 hover:text-gray-600 text-xs sm:text-sm"
+          type="button"
+          aria-label={`Remove ${qual}`}
+        >
+          ✕
+        </button>
+      </span>
+    ))}
+  </div>
+</div>
 
             {/* Next Button */}
             <div className='flex justify-end mt-4 sm:mt-6'>

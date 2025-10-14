@@ -83,7 +83,7 @@ export default function RecruiterGrid() {
   return (
     <>
       <div className="bg-white min-h-screen ">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-9xl mx-auto">
           <div className="border border-gray-200 rounded-lg px-6 py-5 bg-white mb-6">
             <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900 mb-1">
               Find Recruiters & Industry Professionals
@@ -94,7 +94,7 @@ export default function RecruiterGrid() {
           </div>
 
           {/* Search and Filter */}
-          <div className="bg-white px-4 py-3 rounded-lg shadow-sm mb-6">
+          <div className="bg-[#F9FAFB] px-4 py-3 rounded-lg  mb-6">
             <div className="flex items-center gap-3">
             <div className="relative flex-grow">
               <BiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
@@ -143,7 +143,7 @@ export default function RecruiterGrid() {
                         className="text-gray-400 hover:text-gray-600"
                         onClick={() => setFilters({ ...filters, [key]: '' })}
                       >
-                        ×
+                        × 
                       </button>
                     </span>
                   ) : null

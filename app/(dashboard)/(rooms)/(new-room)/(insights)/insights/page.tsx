@@ -14,10 +14,13 @@ const InsightsPage = () => {
   const [skills] = useState(["SQL", "Tableau", "Python", "Power Automate", "DAX",
     "Power BI "
   ]);
-  const [skills2] = useState(["Project Management", "Agile", "Scrum", "Process Improvement", "Cpmmunication",
+  const [skills2] = useState(["Project Management", "Agile", "Scrum", "Process Improvement", "Communication",
     "Patience "
   ]);
   const routes = useRouter()
+      const [duration, setDuration] = useState("< 6 months");
+          const [teamSize, setTeamSize] = useState("0-10");
+            const [industry, setIndustry] = useState("Finance");
   const [files, setFiles] = useState<any[]>([]);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -111,36 +114,108 @@ const InsightsPage = () => {
 
             {/* Industry and Duration - Responsive */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
+              {/* <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
                 <select className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm text-gray-700 focus:outline-none">
                   <option>Finance</option>
                   <option>Retail</option>
                   <option>Healthcare</option>
                 </select>
-              </div>
-              <div className="flex-1">
+              </div> */}
+
+               <div className="w-1/2 relative">
+  <label className="block text-sm text-gray-700 mb-1">Industry</label>
+  <select
+    value={industry}
+    onChange={(e) => setIndustry(e.target.value)}
+    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
+  >
+    <option>Finance</option>
+    <option>Retail</option>
+    <option>Healthcare</option>
+  </select>
+  {/* custom dropdown icon */}
+  <svg
+    className="w-4 h-4 absolute right-3 top-11 -translate-y-1/2 text-gray-500 pointer-events-none"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</div>
+
+              {/* <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
                 <select className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm text-gray-700 focus:outline-none">
                   <option>&lt; 6 months</option>
                   <option>6-12 months</option>
                   <option>1+ year</option>
                 </select>
-              </div>
+              </div> */}
+
+                <div className="w-1/2 relative">
+  <label className="block text-sm text-gray-700 mb-1">Duration</label>
+  <select
+    value={duration}
+    onChange={(e) => setDuration(e.target.value)}
+    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
+  >
+    <option>{"< 6 months"}</option>
+    <option>6-12 months</option>
+    <option>1+ year</option>
+  </select>
+  {/* custom dropdown icon */}
+  <svg
+    className="w-4 h-4 absolute right-3 top-11 -translate-y-1/2 text-gray-500 pointer-events-none"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</div>
+
             </div>
 
             {/* Team Size */}
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Team Size</label>
               <select className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm text-gray-700 focus:outline-none">
                 <option>0-10</option>
                 <option>10-25</option>
                 <option>25+</option>
               </select>
-            </div>
+            </div> */}
+
+
+             <div className="mb-6 relative">
+  <label className="block text-sm text-gray-700 mb-1">Team Size</label>
+  <select
+    value={teamSize}
+    onChange={(e) => setTeamSize(e.target.value)}
+    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
+  >
+    <option>0-10</option>
+    <option>10-25</option>
+    <option>25+</option>
+  </select>
+  <svg
+    className="w-4 h-4 absolute right-3 top-11 -translate-y-1/2 text-gray-500 pointer-events-none"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</div>
+
 
             {/* Summary Textarea */}
-            <div>
+            <div> 
               <label className="block text-sm font-medium text-gray-700 mb-2">Summarise the value you added in 3 paragraphs</label>
               <textarea
                 rows={4}
@@ -284,7 +359,7 @@ const InsightsPage = () => {
             <Link href="/insights-overview">
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-3 text-sm font-medium text-teal-600 hover:bg-gray-50 transition"
+                className="w-full flex  gap-2  py-3 text-sm font-medium text-teal-600 hover:bg-gray-50 transition"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

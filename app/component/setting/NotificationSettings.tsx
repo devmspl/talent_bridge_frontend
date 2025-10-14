@@ -42,7 +42,7 @@ export default function NotificationSettings() {
                   onChange={() => setEmailNotifications(!emailNotifications)}
                 />
                 <span
-                  className={`absolute left-0.5 top-0.5 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
+                  className={`absolute left-0.5 top-1 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
                     emailNotifications ? "translate-x-5 sm:translate-x-5" : ""
                   }`}
                 />
@@ -75,7 +75,7 @@ export default function NotificationSettings() {
                   onChange={() => setPushNotifications(!pushNotifications)}
                 />
                 <span
-                  className={`absolute left-0.5 top-0.5 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
+                  className={`absolute left-0.5 top-1 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
                     pushNotifications ? "translate-x-5 sm:translate-x-5" : ""
                   }`}
                 />

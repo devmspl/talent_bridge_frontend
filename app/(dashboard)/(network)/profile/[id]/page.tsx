@@ -27,6 +27,7 @@ import Link from "next/link";
 export default function page() {
   const [showEmail, setShowEmail] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState('All reviews');
   const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -188,15 +189,33 @@ export default function page() {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Candidate Reviews</h3>
             <div className="flex gap-2">
-              <select className="border border-gray-300 text-sm rounded-md px-3 py-1">
-                <option>All reviews</option>
-                <option>Top reviews</option>
-                <option>New to old</option>
-                <option>Highest to lowest</option>
-                <option>Lowest to highest </option>
-              </select>
+   
+              <div className="mb-6 relative">
+  <select
+    value={reviewFilter}
+    onChange={(e) => setReviewFilter(e.target.value)}
+    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
+  >
+    <option>All reviews</option>
+    <option>Top reviews</option>
+    <option>New to old</option>
+    <option>Highest to lowest</option>
+    <option>Lowest to highest</option>
+  </select>
+
+  <svg
+    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+  </svg>
+</div>
+
               <button
-                className="border border-gray-300 review text-white  px-4 py-2 rounded-lg flex items-center gap-2 hover:cursor-pointer"
+                className="border border-gray-300 review text-white  px-4 py-2 h-[38px] rounded-lg flex items-center gap-2 hover:cursor-pointer"
                 onClick={() => setShowModal(true)}
               >
                 Add Review

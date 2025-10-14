@@ -89,7 +89,7 @@ export default function PrivacySecurity() {
                 onChange={() => setTwoFactorEnabled(!twoFactorEnabled)}
               />
               <span
-                className={`absolute left-0.5 top-0.5 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
+                className={`absolute left-0.5 top-1 w-6 h-6 sm:w-4 sm:h-4 bg-white rounded-full transition-transform duration-200 shadow-sm ${
                   twoFactorEnabled ? "translate-x-5 sm:translate-x-5" : ""
                 }`}
               />
