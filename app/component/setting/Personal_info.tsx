@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Avatar from "@/app/component/Avatar";
 import React, { useEffect, useState, useRef } from "react";
 import logo from "@/public/assets/profile/Avatarlogo.png";
 import tick from "@/public/assets/tick.svg";
@@ -214,16 +215,14 @@ const Personal_info = () => {
       {/* Profile Section - Responsive Layout */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6">
         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex-shrink-0">
-          <Image
-            src={
-              storedUser?.avatar
-                ? `https://backend.webridgetalent.com/assets/images/${storedUser.avatar}`
-                : logo
-            }
+          <Avatar
+            avatar={storedUser?.avatar}
+            avatarSvg={storedUser?.avatarSvg}
             alt="Profile"
             width={96}
             height={96}
             className="object-cover w-full h-full"
+            fallbackImage={logo}
           />
         </div>
 

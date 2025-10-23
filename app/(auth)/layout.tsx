@@ -8,7 +8,7 @@ export default function GoogleProviders({ children }: { children: React.ReactNod
   
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <SessionProvider>
+      <SessionProvider basePath="/api/auth">
         {children}
       </SessionProvider>
     </GoogleOAuthProvider>

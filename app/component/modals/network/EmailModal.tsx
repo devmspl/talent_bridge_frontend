@@ -35,7 +35,6 @@ export default function EmailModal({ onClose }: any) {
 
   return (
     <>
-      {/* <div className="fixed inset-0 z-50 bg-gray-200/40 flex items-center justify-center border border-gray-200"> */}
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-200/30 backdrop-blur-sm px-3 sm:px-4">
         <div className="w-full mx-auto border border-gray-200 rounded-lg shadow bg-white relative w-[92%] sm:max-w-lg md:max-w-2xl lg:max-w-3xl">
           {/* Header */}

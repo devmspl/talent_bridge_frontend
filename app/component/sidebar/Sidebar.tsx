@@ -4,6 +4,7 @@ import { FiMoreHorizontal, FiSearch } from "react-icons/fi";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
+import Avatar from "@/app/component/Avatar";
 import Profile from "@/public/assets/profile/Avatar.png";
 import DashboardIcon from "@/public/assets/icons/home-2.svg";
 import showcase from "@/public/assets/icons/tv.svg";
@@ -75,27 +76,6 @@ const Sidebar: React.FC = () => {
     pollingInterval: 10000,
   });
 
-  const getAvatar = (
-    avatar?: string | null
-  ): string | StaticImageData => {
-    if (!avatar) return Profile; // fallback image
-
-    if (avatar.startsWith("https://lh3.googleusercontent.com/")) {
-      return avatar; // Google direct URL
-    }
-
-    if (avatar.startsWith("http")) {
-      return avatar; // any other full URL
-    }
-
-    return `https://backend.webridgetalent.com/assets/images/${avatar}`;
-  };
-
-  const [imgSrc, setImgSrc] = useState<string | StaticImageData>(Profile);
-
-  useEffect(() => {
-    setImgSrc(getAvatar(user?.avatar));
-  }, [user?.avatar]);
   
 
   return (
@@ -106,12 +86,14 @@ const Sidebar: React.FC = () => {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <Image
-              src={imgSrc}
+            <Avatar
+              avatar={user?.avatar}
+              avatarSvg={user?.avatarSvg}
               width={32}
               height={32}
               alt="avatar"
               className="w-10 h-10 rounded-full"
+              fallbackImage={Profile}
             />
 
             <div className="hidden sm:block">
