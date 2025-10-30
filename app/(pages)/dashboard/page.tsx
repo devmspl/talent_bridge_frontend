@@ -27,6 +27,7 @@ const data = [
 const activities = [
   {
     id: 1,
+    avatar: "./assets/profile/Avatar.svg",
     title: "New message from Sarah Johnson",
     description: "Regarding the Senior Software Engineer position at…",
     action: "Reply",
