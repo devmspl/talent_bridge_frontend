@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import profit from "@/public/assets/media/trending-up.png"
 import loss from "@/public/assets/media/trending-down.png"
 import Image from "next/image";
@@ -32,34 +32,52 @@ import Public from "@/public/assets/icons/public.svg"
 import Link from "next/link";
 import up from '@/public/assets/media/upp.svg';
 import down from '@/public/assets/media/downn.svg';
+import { useSearchParams } from "next/navigation";
+import { useGetShowcaseRoomByIdQuery, useDeleteShowcaseRoomMutation } from "@/app/store/api/showcaseApi";
 
 
 
 const Page = () => {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
+  const { data, isLoading, isError, refetch } = useGetShowcaseRoomByIdQuery(id, { skip: !id });
+  const [deleteRoom, { isLoading: isDeleting }] = useDeleteShowcaseRoomMutation();
+  const roomName = data?.showcaseRoomName || "Data/BI Analyst";
+  const roomSummary = data?.showcaseRoomSummary || "";
+  const roomCompetencies: string[] = useMemo(() => {
+    if (Array.isArray(data?.coreCompetencies) && data.coreCompetencies.length) return data.coreCompetencies;
+    return [
+      "Statistical & Predictive Analysis",
+      "Stakeholder Communication & Reporting",
+      "Data Visualization (Power BI, Tableau)",
+      "ETL & Data Processing",
+    ];
+  }, [data]);
   const metrics = [
     {
       icon: <AiOutlineEye className="w-4 h-4 text-gray-400" />,
       title: "Showcase Views",
-      value: "100,000",
-      trend: "+10% vs last week",
+      value: "--",
+       trend: "--",
+      // trend: "+10% vs last week",
     },
     {
       icon: <AiOutlineClockCircle className="w-4 h-4 text-gray-400" />,
       title: "Conversion Rate",
-      value: "92%",
-      trend: "-10% vs last week",
+      value: "--%",
+      trend: "--",
     },
     {
       icon: <AiOutlineMessage className="w-4 h-4 text-gray-400" />,
       title: "Interactions",
-      value: "24",
-      trend: "-10% vs last month",
+      value: "--",
+      trend: "--",
     },
     {
       icon: <AiOutlineStar className="w-4 h-4 text-gray-400" />,
       title: "Endorsement",
-      value: "80",
-      trend: "+10% vs last month",
+      value: "--",
+      trend: "--",
     },
   ];
   const qualifications = [
@@ -88,8 +106,18 @@ const Page = () => {
   const [open, setOpen] = useState(false);
   const [visibility, setVisibility] = useState(false);
 
-  const handleDelete = () => {
-    setShowModal(false);
+  const handleDelete = async () => {
+    try {
+      if (!id) return;
+      await deleteRoom(id).unwrap();
+      setShowModal(false);
+      // redirect back to list
+      window.location.href = "/showcase-rooms";
+    } catch (e) {
+      console.error(e);
+      setShowModal(false);
+      alert("Failed to delete room.");
+    }
   };
  
 
@@ -109,7 +137,7 @@ const Page = () => {
                 Showcase rooms
               </Link>
               <span className="mx-2 text-gray-400">/</span>
-              <span className="text-gray-800 font-semibold">Data/BI Analyst</span>
+              <span className="text-gray-800 font-semibold">{roomName}</span>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
             <Link href="/edit-room">  <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
@@ -131,7 +159,7 @@ const Page = () => {
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">
-                  Data/BI Analyst
+                  {roomName}
                 </h1>
                 <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full inline-flex items-center w-fit">
                   <TbWorld className="mr-1 w-3 h-3" />
@@ -147,7 +175,7 @@ const Page = () => {
               >
                 Change Visibility
               </button>
-             <Link href="/preview"
+             <Link href={`/preview?id=${id}`}
                 className="w-full sm:w-auto bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-50 cursor-pointer transition font-medium"
                
               >
@@ -210,7 +238,7 @@ const Page = () => {
                 </span>
               </div>
               <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                Data/BI Analyst with 5+ years of experience in transforming complex datasets into actionable insights. Proficient in data visualization, SQL, and statistical analysis to drive strategic decision-making. Skilled in leveraging BI tools like Power BI and Tableau, with a strong foundation in ETL processes and data modeling.
+                {roomSummary || ""}
               </p>
             </div>
 
@@ -234,7 +262,7 @@ const Page = () => {
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-sm border border-gray-200">
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Core Competencies</h2>
               <div className="flex flex-wrap gap-2 sm:gap-3">
-                {["Statistical & Predictive Analysis", "Stakeholder Communication & Reporting", "Data Visualization (Power BI, Tableau)", "ETL & Data Processing"].map((tag, idx) => (
+                {roomCompetencies.map((tag, idx) => (
                   <span 
                     key={idx} 
                     className="bg-gray-50 px-3 py-2 rounded-full text-xs sm:text-sm text-gray-700 border border-gray-200 hover:bg-gray-100 transition"

@@ -29,7 +29,10 @@ import {
   type Room 
 } from "@/app/store/slices/socketSlice";
 import { useGetAllUsersQuery } from "@/app/store/api/userApi";
+import { useSendMessageMutation } from "@/app/store/api/chatApi";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import Cookies from "js-cookie";
 
 type Contact = {
   id: string;
@@ -48,13 +51,17 @@ type Contact = {
 export default function ChatPage() {
   const dispatch = useAppDispatch();
   const { socket, messages, rooms, currentRoomId } = useAppSelector(state => state.socket);
-  const { userId } = useAppSelector(state => state.user);
+  // Read userId directly from cookies as it's the source of truth
+  const userId = Cookies.get("tb_userId");
+  const searchParams = useSearchParams();
+  const targetUserId = searchParams.get("userId");
   
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [attachments, setAttachments] = useState<any[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -63,6 +70,10 @@ export default function ChatPage() {
     page_no: 1,
     page_size: 50
   });
+
+  // Send message mutation
+  const [sendMessageApi, { isLoading: isSendingMessage }] = useSendMessageMutation();
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -105,9 +116,13 @@ export default function ChatPage() {
 
   const fetchRooms = async () => {
     try {
-      const response = await fetch(`https://backend.webridgetalent.com/chat/getAllRooms`, {
+      const token = Cookies.get("tb_token");
+      const response = await fetch(`https://backend.webridgetalent.com/chat/rooms`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
 
       const res = await response.json();
@@ -136,9 +151,13 @@ export default function ChatPage() {
 
   const fetchMessages = async (roomId: string) => {
     try {
+      const token = Cookies.get("tb_token");
       const response = await fetch(`https://backend.webridgetalent.com/chat/getMessages/${roomId}`, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
 
       const res = await response.json();
@@ -214,29 +233,84 @@ export default function ChatPage() {
     }
   };
   
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !socket || !currentRoomId || !userId) return;
-  
-    const messageData = {
-      roomId: currentRoomId,
-      senderId: userId,
-      text: messageText.trim(),
-      timestamp: new Date().toISOString(),
-    };
-  
-    socket.emit("chatMsg", messageData);
-  
-    dispatch(
-      addMessage({
+  const handleSendMessage = async () => {
+    if (!currentRoomId || !userId) {
+      console.error("Missing currentRoomId or userId:", { currentRoomId, userId });
+      return;
+    }
+    
+    // Check if there's at least text or attachments
+    const hasText = messageText.trim().length > 0;
+    const hasAttachments = attachments && attachments.length > 0;
+    
+    if (!hasText && !hasAttachments) {
+      console.log("No text or attachments to send");
+      return;
+    }
+
+    // Build dynamic payload - supports text only, attachments only, or both
+    const payload: { msg?: string; attachments?: any[] } = {};
+    
+    if (hasText) {
+      payload.msg = messageText.trim();
+    }
+    
+    if (hasAttachments) {
+      payload.attachments = attachments;
+    }
+
+    console.log("Sending message with payload:", payload, "to room:", currentRoomId);
+
+    try {
+      // Send message via REST API
+      const response = await sendMessageApi({
         roomId: currentRoomId,
-        message: {
-          ...messageData,
-          _id: Date.now().toString(),
-        },
-      })
-    );
-  
-    setMessageText("");
+        payload,
+      }).unwrap();
+
+    
+      const messageData = {
+        _id: response._id || Date.now().toString(),
+        roomId: response.room || currentRoomId,
+        senderId: response.msgFrom?._id || userId || "",
+        senderName: response.msgFrom?.email || selectedContact?.name || "",
+        text: response.msg || payload.msg || "",
+        timestamp: response.createdAt || new Date().toISOString(),
+        createdAt: response.createdAt || new Date().toISOString(),
+      };
+
+      console.log("Mapped message data:", messageData);
+      console.log("Current roomId for dispatch:", currentRoomId);
+
+      // Also emit via socket for real-time updates
+      if (socket) {
+        socket.emit("chatMsg", {
+          roomId: currentRoomId,
+          senderId: userId,
+          text: payload.msg || "",
+          attachments: payload.attachments || [],
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Update local state immediately for optimistic UI
+      dispatch(
+        addMessage({
+          roomId: currentRoomId,
+          message: messageData,
+        })
+      );
+
+      console.log("Message added to Redux store");
+
+      // Clear inputs
+      setMessageText("");
+      setAttachments([]);
+    } catch (error: any) {
+      console.error("Failed to send message:", error);
+      console.error("Error details:", error?.data || error?.message || error);
+      // You can add toast notification here if needed
+    }
   };
   
 
@@ -260,8 +334,16 @@ export default function ChatPage() {
           handleCreateRoom(userId, contact.id, [userId, contact.id]);
         });
       }
+
+      // Auto-select contact if userId query param is present
+      if (targetUserId && transformedContacts.length > 0) {
+        const contactToSelect = transformedContacts.find(c => c.id === targetUserId);
+        if (contactToSelect) {
+          handleContactSelect(contactToSelect);
+        }
+      }
     }
-  }, [usersData, socket, userId]);
+  }, [usersData, socket, userId, targetUserId]);
 
   useEffect(() => {
     if (socket && userId) {
@@ -324,6 +406,11 @@ console.log("filteredContacts",filteredContacts);
 
 
   const currentMessages = currentRoomId ? messages[currentRoomId] || [] : [];
+  
+  // Debug logging
+  console.log("Current roomId:", currentRoomId);
+  console.log("Current messages:", currentMessages);
+  console.log("All messages:", messages);
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -590,7 +677,7 @@ console.log("filteredContacts",filteredContacts);
                 />
                 <button 
                   onClick={handleSendMessage}
-                  disabled={!messageText.trim()}
+                  disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
                   className="bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
                   <FiSend size={16} />
@@ -810,11 +897,11 @@ console.log("filteredContacts",filteredContacts);
                   />
                   <button 
                     onClick={handleSendMessage}
-                    disabled={!messageText.trim()}
+                    disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
                     className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
                   >
                     <FiSend size={16} />
-                    Send
+                    {isSendingMessage ? "Sending..." : "Send"}
                   </button>
                 </div>
               </div>

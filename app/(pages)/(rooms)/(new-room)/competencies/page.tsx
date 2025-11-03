@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineCheck } from "react-icons/ai";
 import { FaRegEdit } from "react-icons/fa";
@@ -8,6 +8,7 @@ import TextIcon from "@/public/assets/icons/Tect.svg"
 import Image from "next/image";
 import check from "@/public/assets/icons/Vector (1).svg"
 import Link from "next/link";
+import { lsGet, lsSet, ROOM_KEYS } from "@/app/utils/roomStorage";
 
 export default function page() {
   const [competencies, setCompetencies] = useState([
@@ -18,6 +19,7 @@ export default function page() {
     "DAX",
     "PYTHON",
   ]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
@@ -39,6 +41,21 @@ export default function page() {
     newCompetencies.splice(dragIndex, 1);
     newCompetencies.splice(dropIndex, 0, draggedItem);
     setCompetencies(newCompetencies);
+  };
+
+  // hydrate selected from localStorage
+  useEffect(() => {
+    const saved = lsGet<string[]>(ROOM_KEYS.competencies, []);
+    if (saved.length) setSelected(saved);
+  }, []);
+
+  // when list changes (due to edit/reorder), keep selected in-sync by removing items that no longer exist
+  useEffect(() => {
+    setSelected(prev => prev.filter(s => competencies.includes(s)));
+  }, [competencies]);
+
+  const toggleSelect = (skill: string) => {
+    setSelected(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]);
   };
 
   const handleDoubleClick = (skill: string) => {
@@ -145,11 +162,12 @@ export default function page() {
                   onDragStart={(e) => handleDragStart(e, i)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, i)}
-                  className="group flex justify-between items-center bg-white px-4 py-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all cursor-move"
+                  className={"group flex justify-between items-center bg-white px-4 py-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all cursor-move"}
                 >
                   <span 
                     className="text-gray-800 text-sm font-medium flex gap-2 items-center cursor-pointer flex-1 min-w-0"
                     onDoubleClick={() => handleDoubleClick(skill)}
+                    onClick={() => toggleSelect(skill)}
                   >
                     {editingSkill === skill ? (
                       <input
@@ -218,7 +236,7 @@ export default function page() {
               </button>
               <button 
                 className="w-full sm:w-auto review text-white px-6 py-2.5 rounded-lg hover:bg-teal-600 cursor-pointer transition shadow-md text-sm font-semibold"
-                onClick={() => routes.push("/insights")}
+                onClick={() => { lsSet(ROOM_KEYS.competencies, selected); routes.push("/insights"); }}
               >
                 Next
               </button>

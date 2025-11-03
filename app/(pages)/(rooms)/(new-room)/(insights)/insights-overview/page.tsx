@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AiOutlineEdit, AiOutlineDelete, AiOutlineCheck, AiOutlineCloudUpload } from "react-icons/ai";
 import edit from "@/public/assets/icons/text.svg"
 import delete_i from "@/public/assets/icons/delete.svg"
@@ -10,6 +10,7 @@ import Link from "next/link";
 import Tool from "@/public/assets/icons/Tooltip.svg"
 import Doc from "@/public/assets/icons/doc.svg"
 import cut from "@/public/assets/icons/cutt.svg"
+import { lsGet, lsSet, ROOM_KEYS, InsightsData } from "@/app/utils/roomStorage";
 const InsightsPage: React.FC = () => {
   const [skills] = useState(["SQL", "Tableau", "Python", "Power Automate", "DAX",
       "Power BI "
@@ -39,18 +40,56 @@ const InsightsPage: React.FC = () => {
     const [teamSize, setTeamSize] = useState("0-10");
     const routes =useRouter()
 
-    const insights = [
-        {
-            name: "GSTC Bank",
-            description: "Multinational Bank Listed on the FTSE 100 Index",
-            tag: "Finance",
-        },
-        {
-            name: "Pets World Co.",
-            description: "Fastest Growing Pet Store in the UK",
-            tag: "Retail",
-        },
-    ];
+    const [insightsList, setInsightsList] = useState<{title:string; description:string; tag:string;}[]>([]);
+
+    // hydrate dynamic insights list from localStorage
+    useEffect(() => {
+      const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+        companyName: "",
+        website: "",
+        industry: "Finance",
+        duration: "< 6 months",
+        teamSize: "0-10",
+        summary: "",
+        technicalSkills: [],
+        transferableSkills: [],
+        insights: [],
+      });
+      setInsightsList(saved.insights || []);
+    }, []);
+
+    const persistInsights = (next: {title:string; description:string; tag:string;}[]) => {
+      setInsightsList(next);
+      const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+        companyName: companyName,
+        website: website,
+        industry: industry,
+        duration: duration,
+        teamSize: teamSize,
+        summary: "",
+        technicalSkills: [],
+        transferableSkills: [],
+        insights: [],
+      });
+      lsSet(ROOM_KEYS.insights, { ...saved, insights: next });
+    };
+
+    // When navigating to Preview, also append current form as a new insight
+    const handlePreview = () => {
+      const newItem = {
+        title: companyName.trim() || "Untitled",
+        description: "",
+        tag: industry || "",
+      };
+      const next = [...insightsList, newItem];
+      persistInsights(next);
+      routes.push("/insight-preview");
+    };
+
+    const handleDeleteCard = (idx: number) => {
+      const next = insightsList.filter((_, i) => i !== idx);
+      persistInsights(next);
+    };
 
     return (
         <>
@@ -90,11 +129,11 @@ const InsightsPage: React.FC = () => {
                             </div> <span className="text-gray-800 font-semibold">Insights</span></div>
                     </div>
                     <div className="p-6">
-                        {insights.map((item, index) => (
+                        {insightsList.map((item, index) => (
                             <div key={index} className="bg-gray-20 bg-[#F9FAFB] border border-gray-100 rounded-lg p-6 mb-4">
                                 <div className="flex justify-between items-start ">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800 mb-1">{item.name}</h3>
+                                        <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
                                         <p className="text-sm text-gray-500 mb-2">{item.description}</p>
                                         <span className="text-xs bg-[#F0FDFA] border border-[#99F6E4] text-[#0F766E] px-2 py-0.5 rounded-full font-medium">{item.tag}</span>
                                     </div>
@@ -108,7 +147,7 @@ const InsightsPage: React.FC = () => {
                                         </div>
                                         <div className="flex justify-end">
                                             <button className="flex items-center gap-1 hover:text-red-700 hover:cursor-pointer"
-                                             onClick={()=>routes.push("/insights")}>
+                                             onClick={()=>handleDeleteCard(index)}>
                                                 <Image src={delete_i} alt="" width={16} />
                                                 Delete
                                             </button>
@@ -368,6 +407,11 @@ const InsightsPage: React.FC = () => {
                <Link href="/insights-overview">
                  <button
                    type="button"
+                   onClick={() => {
+                     const newItem = { title: (companyName || '').trim() || "Untitled", description: "", tag: industry || "" };
+                     const next = [...insightsList, newItem];
+                     persistInsights(next);
+                   }}
                    className="w-full flex gap-2 py-3 text-sm font-medium text-teal-600 hover:bg-gray-50 transition"
                  >
                    <svg
@@ -392,7 +436,7 @@ const InsightsPage: React.FC = () => {
                 Back
               </button>
               <button className="review text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
-                onClick={() => routes.push("/insight-preview")}
+                onClick={handlePreview}
               >
                 Preview
               </button>

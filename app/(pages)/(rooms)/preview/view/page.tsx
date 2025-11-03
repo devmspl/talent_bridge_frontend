@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import call from "@/public/assets/icons/call.svg";
 import msg from "@/public/assets/icons/msgg.svg";
 import share from "@/public/assets/icons/share.svg";
@@ -14,8 +14,27 @@ import { AiOutlinePlayCircle } from "react-icons/ai";
 import up from "@/public/assets/icons/up-arrow.svg"
 import ShareRoom from "@/app/component/modals/room/ShareRoom";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useGetShowcaseRoomByIdQuery } from "@/app/store/api/showcaseApi";
+
+type DocumentItem = {
+  id: number;
+  name: string;
+  size: string;
+  url: string;
+};
 
 export default function CaseStudyView() {
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id") || "";
+  const insIndex = Number(searchParams.get("ins") || 0);
+  const { data } = useGetShowcaseRoomByIdQuery(id, { skip: !id });
+
+  const insight = useMemo(() => {
+    const list = Array.isArray(data?.insightsId) ? data?.insightsId : [];
+    return list?.[insIndex] || null;
+  }, [data, insIndex]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalImage, setModalImage] = useState<any>(profile);
   const [open, setOpen] = useState(false);
@@ -30,34 +49,32 @@ export default function CaseStudyView() {
     }
     setIsModalOpen(true);
   };
-  const achievements = [
-    {
-      id: 1,
-      title: "Optimized Credit Risk Modeling",
-      description:
-        "Enhanced the bank's risk assessment framework, reducing loan default rates by 18% through improved data-driven insights.",
-    },
-    {
-      id: 2,
-      title: "Automated Customer Churn Prediction",
-      description:
-        "Developed a predictive model that increased retention strategies' effectiveness by 25%, minimizing customer attrition.",
-    },
-    {
-      id: 3,
-      title: "Enhanced Fraud Detection System",
-      description:
-        "Implemented anomaly detection techniques, leading to a 40% reduction in fraudulent transactions and improved security measures.",
-    },
-  ];
+  const achievements = useMemo(() => {
+    const text: string = insight?.valueAddedSummary || "";
+    const parts = text
+      .split(/\.|\n|\r/)
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+    if (parts.length) {
+      return parts.slice(0, 3).map((p, i) => ({ id: i + 1, title: p, description: "" }));
+    }
+    return [
+      { id: 1, title: "Key contribution", description: "--" },
+      { id: 2, title: "Impact", description: "--" },
+      { id: 3, title: "Result", description: "--" },
+    ];
+  }, [insight]);
 
-  const documents = [
-    { id: 1, name: "Project Breakdown.mp4", size: "300 KB" },
-    { id: 2, name: "Redacted Solution Architecture.pdf", size: "300 KB" },
-    { id: 3, name: "Replica Dashboard for Credit Reporting.pbix", size: "300 KB" },
-    { id: 4, name: "Project Challanges and Devised Solutions.docx", size: "300 KB" },
-    { id: 5, name: "Project Challenges.mp4", size: "300 KB" },
-  ];
+  const documents: DocumentItem[] = useMemo(() => {
+    const files = Array.isArray(insight?.insightsFile) ? insight?.insightsFile : [];
+    if (!files.length) return [] as DocumentItem[];
+    return files.map((f: any, idx: number): DocumentItem => ({
+      id: idx + 1,
+      name: f?.name || f?.fileName || "Attachment",
+      size: f?.size ? `${f.size}` : "",
+      url: f?.url || f?.fileUrl || f,
+    }));
+  }, [insight]);
 
   return (
     <>
@@ -66,9 +83,9 @@ export default function CaseStudyView() {
         {/* Top bar */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 mb-4">
           <div className="w-full text-[#6B7280] text-xs py-2 flex items-center gap-1">
-            <Link href="/preview"> <span>Data/BI Analyst</span></Link>
+            <Link href={`/preview?id=${id}`}> <span>{data?.showcaseRoomName || "Data/BI Analyst"}</span></Link>
             <span className="text-[#111827]">/</span>
-            <span className="font-medium font-weight-500 text-[#111827]">GSTC Bank</span>
+            <span className="font-medium font-weight-500 text-[#111827]">{insight?.companyName || "Company"}</span>
           </div>
           <div className="flex items-center gap-2">
             <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7" src={call} alt="" />
@@ -81,9 +98,9 @@ export default function CaseStudyView() {
         <div className="bg-white rounded-xl border border-[#E5E7EB] p-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
             <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <h1 className="text-lg sm:text-xl lg:text-[20px] font-semibold text-[#111827]">GSTC Bank</h1>
+              <h1 className="text-lg sm:text-xl lg:text-[20px] font-semibold text-[#111827]">{insight?.companyName || ""}</h1>
               <span className="text-[11px] bg-[#F9FAFB] text-[#374151] px-2 py-0.5 rounded-full border border-[#E5E7EB] w-fit">
-                Finance
+                {insight?.industry || ""}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -91,7 +108,6 @@ export default function CaseStudyView() {
             </div>
           </div>
         </div>
-
 
         {/* Key Achievements */}
         <div className="bg-white rounded-xl border border-[#E5E7EB] mb-4">
@@ -113,7 +129,9 @@ export default function CaseStudyView() {
                 <div className="text-sm sm:text-base lg:text-[16px] font-medium font-inter text-[#111827] mb-1">
                   {a.title}
                 </div>
-                <div className="text-xs sm:text-sm lg:text-[14px] font-regular text-[#4B5563]">{a.description}</div>
+                {a.description ? (
+                  <div className="text-xs sm:text-sm lg:text-[14px] font-regular text-[#4B5563]">{a.description}</div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -127,7 +145,7 @@ export default function CaseStudyView() {
           </div>
           <div className="border-t border-[#E5E7EB]" />
           <div className="p-4 space-y-3">
-            {documents.map((doc) => (
+            {(documents.length ? documents : []).map((doc) => (
               <div
                 key={doc.id}
                 className="bg-[#F9FAFB] rounded-[10px] p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
@@ -139,10 +157,10 @@ export default function CaseStudyView() {
                     <div className="text-xs sm:text-[12px] text-[#4B5563]">{doc.size}</div>
                   </div>
                 </div>
-                <button className="text-xs sm:text-[12px] text-[#374151] flex items-center gap-2 sm:gap-3 hover:text-gray-800 transition-colors" onClick={() => openPreview(doc.id)}>
+                <a className="text-xs sm:text-[12px] text-[#374151] flex items-center gap-2 sm:gap-3 hover:text-gray-800 transition-colors" href={doc.url || "#"} target="_blank" rel="noreferrer">
                   View
                   <Image src={up} alt="" width={8} height={8} className="sm:w-2.5 sm:h-2.5" />
-                </button> 
+                </a> 
               </div>
             ))}
           </div>

@@ -24,19 +24,63 @@ import ReviewModal from "@/app/component/modals/network/ReviewModal";
 import { useGetUserByIdQuery } from "@/app/store/api/userApi";
 import profile from "@/public/assets/profile/Avatar.png";
 import Link from "next/link";
+import Cookies from "js-cookie";
 
 export default function page() {
   const [showEmail, setShowEmail] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [reviewFilter, setReviewFilter] = useState('All reviews');
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const router = useRouter();
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  // Read userId directly from cookies as it's the source of truth
+  const userId = Cookies.get("tb_userId");
+  const token = Cookies.get("tb_token");
 
   const { data: user, isLoading } = useGetUserByIdQuery(id!, {
     skip: !id,
     pollingInterval: 10000,
   });
+
+  const handleSendMessage = async () => {
+    if (!id || !userId) {
+      console.error("Missing user ID or profile ID");
+      return;
+    }
+
+    setIsCreatingRoom(true);
+    try {
+      const response = await fetch("https://backend.webridgetalent.com/chat/rooms", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+          members: [id, userId],
+          type: "chat",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.isSuccess && data.data) {
+        // Navigate to message page with user ID query param
+        router.push(`/message?userId=${id}`);
+      } else {
+        console.error("Failed to create room:", data);
+        // Still navigate to message page even if room creation fails
+        router.push(`/message?userId=${id}`);
+      }
+    } catch (error) {
+      console.error("Error creating room:", error);
+      // Still navigate to message page on error
+      router.push(`/message?userId=${id}`);
+    } finally {
+      setIsCreatingRoom(false);
+    }
+  };
 
   return (
     <>
@@ -94,10 +138,12 @@ export default function page() {
           </div>
           <div className="flex gap-4 mt-4 md:mt-0">
             <button
-              className="review text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:cursor-pointer"
-              onClick={() => setShowEmail(true)}
+              className="review text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleSendMessage}
+              disabled={isCreatingRoom || !id || !userId}
             >
-              <Image src={mail} alt="" width={20} /> Send Message
+              <Image src={mail} alt="" width={20} /> 
+              {isCreatingRoom ? "Creating..." : "Send Message"}
             </button>
             <button className="border border-gray-300 px-4 py-2 rounded-lg flex items-center gap-2 hover:cursor-pointer">
               <Image src={call} alt=" " width={20} /> Request call

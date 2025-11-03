@@ -1,7 +1,7 @@
 "use client"
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AiOutlineAccountBook, AiOutlineCheck, AiOutlineCloudUpload, AiOutlineEdit } from "react-icons/ai";
 import { BsGripVertical } from "react-icons/bs";
 import Tool from "@/public/assets/icons/Tooltip.svg"
@@ -9,12 +9,13 @@ import check from "@/public/assets/icons/Vector (1).svg"
 import Doc from "@/public/assets/icons/doc.svg"
 import cut from "@/public/assets/icons/cutt.svg"
 import Link from "next/link";
+import { lsGet, lsSet, ROOM_KEYS, InsightsData } from "@/app/utils/roomStorage";
 
 const InsightsPage = () => {
-  const [skills, setSkills] = useState(["SQL", "Tableau", "Python", "Power Automate", "DAX",
+  const [skills, setSkills] = useState<string[]>(["SQL", "Tableau", "Python", "Power Automate", "DAX",
     "Power BI "
   ]);
-  const [skills2, setSkills2] = useState(["Project Management", "Agile", "Scrum", "Process Improvement", "Communication",
+  const [skills2, setSkills2] = useState<string[]>(["Project Management", "Agile", "Scrum", "Process Improvement", "Communication",
     "Patience "
   ]);
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
@@ -22,21 +23,211 @@ const InsightsPage = () => {
   const routes = useRouter()
   const [duration, setDuration] = useState("< 6 months");
   const [teamSize, setTeamSize] = useState("0-10");
-  const [industry, setIndustry] = useState("Finance");
+  const [industry, setIndustry] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [website, setWebsite] = useState("");
+  const [summary, setSummary] = useState("");
+  const [insights, setInsights] = useState<{ title: string; description: string; tag: string; files?: any[] }[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map((file) => ({
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + " KB",
-        progress: 50, // 
-      }));
+      const newFiles = Array.from(e.target.files).map((file) => {
+        const url = URL.createObjectURL(file);
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        return {
+          name: file.name,
+          size: (file.size / 1024).toFixed(1) + " KB",
+          progress: 100,
+          url,
+          type: isImage ? 'image' : isVideo ? 'video' : 'file',
+          file, // Store actual File object for upload
+        };
+      });
       setFiles([...files, ...newFiles]);
     }
   };
 
   const removeFile = (index: number) => {
     setFiles(files.filter((_, i) => i !== index));
+  };
+
+  // hydrate from localStorage
+  useEffect(() => {
+    const savedSelected = lsGet<string[]>(ROOM_KEYS.competencies, []);
+    if (savedSelected.length) {
+      setSkills(savedSelected);
+      setSkills2(savedSelected);
+    }
+    const savedInsights = lsGet<InsightsData>(ROOM_KEYS.insights, {
+      companyName: "",
+      website: "",
+      industry: "",
+      duration: "< 6 months",
+      teamSize: "0-10",
+      summary: "",
+      technicalSkills: savedSelected.length ? savedSelected : skills,
+      transferableSkills: savedSelected.length ? savedSelected : skills2,
+      insights: [],
+    });
+    setCompanyName(savedInsights.companyName || "");
+    setWebsite(savedInsights.website || "");
+    setIndustry(savedInsights.industry || "");
+    setDuration(savedInsights.duration || "< 6 months");
+    setTeamSize(savedInsights.teamSize || "0-10");
+    setSummary(savedInsights.summary || "");
+    if (savedInsights.technicalSkills?.length) setSkills(savedInsights.technicalSkills);
+    if (savedInsights.transferableSkills?.length) setSkills2(savedInsights.transferableSkills);
+    // Only show insights if they exist, otherwise start empty
+    setInsights(savedInsights.insights || []);
+  }, []);
+
+  // persist to localStorage on changes
+  useEffect(() => {
+    const data: InsightsData = {
+      companyName,
+      website,
+      industry,
+      duration,
+      teamSize,
+      summary,
+      technicalSkills: skills,
+      transferableSkills: skills2,
+      insights,
+    };
+    lsSet(ROOM_KEYS.insights, data);
+  }, [companyName, website, industry, duration, teamSize, summary, skills, skills2, insights]);
+
+  // Save current form files to localStorage when files change
+  useEffect(() => {
+    const saveCurrentFiles = async () => {
+      if (files.length > 0) {
+        // Convert files to base64 for storage
+        const filesData = await Promise.all(
+          files.map(async (f) => {
+            return new Promise<any>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                resolve({
+                  name: f.name,
+                  size: f.size,
+                  type: f.file.type,
+                  data: reader.result as string,
+                });
+              };
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(f.file);
+            });
+          })
+        );
+
+        const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+          companyName: "",
+          website: "",
+          industry: "",
+          duration: "< 6 months",
+          teamSize: "0-10",
+          summary: "",
+          technicalSkills: [],
+          transferableSkills: [],
+          insights: [],
+        });
+
+        lsSet(ROOM_KEYS.insights, {
+          ...saved,
+          currentFormFiles: filesData.filter(f => f !== null),
+        });
+      } else {
+        // Clear currentFormFiles if no files
+        const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+          companyName: "",
+          website: "",
+          industry: "",
+          duration: "< 6 months",
+          teamSize: "0-10",
+          summary: "",
+          technicalSkills: [],
+          transferableSkills: [],
+          insights: [],
+        });
+        if (saved.currentFormFiles) {
+          lsSet(ROOM_KEYS.insights, {
+            ...saved,
+            currentFormFiles: undefined,
+          });
+        }
+      }
+    };
+
+    saveCurrentFiles();
+  }, [files]);
+
+  // insights creation UI is preserved as design (external route)
+  const appendCurrentInsight = async () => {
+    const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+      companyName,
+      website,
+      industry,
+      duration,
+      teamSize,
+      summary,
+      technicalSkills: skills,
+      transferableSkills: skills2,
+      insights: [],
+    });
+    
+    // Convert files to base64 for storage
+    const filesData = await Promise.all(
+      files.map(async (f) => {
+        return new Promise<any>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              name: f.name,
+              size: f.size,
+              type: f.file.type,
+              data: reader.result as string, // base64 data URL
+            });
+          };
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(f.file);
+        });
+      })
+    );
+
+    const newItem = {
+      title: (companyName || '').trim() || 'Untitled',
+      description: (summary || '').trim(),
+      tag: (industry || '').trim(),
+      files: filesData.filter(f => f !== null), // Store file data with the insight
+    };
+    const next = [...(saved.insights || []), newItem];
+    lsSet(ROOM_KEYS.insights, { ...saved, insights: next });
+    setInsights(next);
+    // Clear files after adding to insight
+    setFiles([]);
+    // Clear form fields
+    setCompanyName("");
+    setWebsite("");
+    setIndustry("");
+    setSummary("");
+  };
+
+  const removeSavedInsight = (idx: number) => {
+    const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+      companyName,
+      website,
+      industry,
+      duration,
+      teamSize,
+      summary,
+      technicalSkills: skills,
+      transferableSkills: skills2,
+      insights: [],
+    });
+    const next = (saved.insights || []).filter((_, i) => i !== idx);
+    setInsights(next);
+    lsSet(ROOM_KEYS.insights, { ...saved, insights: next });
   };
 
   // Drag and drop handlers for Technical Skills
@@ -128,12 +319,44 @@ const InsightsPage = () => {
           {/* Content - Responsive Padding */}
           <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8 space-y-4 sm:space-y-5">
 
+            {/* Existing Insights (dynamic) */}
+            {!!insights.length && (
+              <div className="space-y-3">
+                {insights.map((it, idx) => (
+                  <div key={idx} className="bg-gray-20 bg-[#F9FAFB] border border-gray-100 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-gray-800 mb-1">{it.title}</h3>
+                        <p className="text-sm text-gray-500 mb-2">{it.description}</p>
+                        <span className="text-xs bg-[#F0FDFA] border border-[#99F6E4] text-[#0F766E] px-2 py-0.5 rounded-full font-medium">{it.tag}</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <button className="flex items-center gap-1 text-gray-600 hover:text-black cursor-pointer"
+                          onClick={() => routes.push("/insights-overview")}
+                        >
+                          Continue Editing
+                        </button>
+                        <div className="flex justify-end">
+                          <button className="flex items-center gap-1 text-red-500 hover:text-red-700"
+                            onClick={() => removeSavedInsight(idx)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Company Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Company name</label>
               <input
                 type="text"
-                defaultValue="GSTC Bank"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm focus:outline-none"
               />
             </div>
@@ -143,7 +366,8 @@ const InsightsPage = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
               <input
                 type="text"
-                defaultValue="http://www.designsystem.com"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm focus:outline-none"
               />
             </div>
@@ -166,6 +390,7 @@ const InsightsPage = () => {
                   onChange={(e) => setIndustry(e.target.value)}
                   className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
                 >
+                  <option value="">Select industry</option>
                   <option>Finance</option>
                   <option>Retail</option>
                   <option>Healthcare</option>
@@ -256,6 +481,8 @@ const InsightsPage = () => {
               <textarea
                 rows={4}
                 placeholder="Type your message here"
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 sm:py-2.5 text-sm focus:outline-none resize-none"
               />
               <p className="text-xs text-gray-500 mt-1">max 1200 characters (AI will tweak it in the preview)</p>
@@ -409,17 +636,26 @@ const InsightsPage = () => {
                     key={index}
                     className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
                   >
-                    <div className="flex items-start flex-1 mr-3 gap-3 min-w-0">
-                      <Image src={Doc} alt="doc" className="w-6 h-5 sm:w-8 sm:h-6 mt-1 flex-shrink-0" />
+                  <div className="flex items-start flex-1 mr-3 gap-3 min-w-0">
+                      {file.type === 'image' ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={file.url} alt="preview" className="w-10 h-10 object-cover rounded flex-shrink-0" />
+                      ) : file.type === 'video' ? (
+                        <video src={file.url} className="w-10 h-10 rounded flex-shrink-0" />
+                      ) : (
+                        <Image src={Doc} alt="doc" className="w-6 h-5 sm:w-8 sm:h-6 mt-1 flex-shrink-0" />
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
                         <p className="text-xs text-gray-500">{file.size}</p>
-                        <div className="w-full bg-gray-200 h-1.5 rounded mt-2">
-                          <div
-                            className="bg-blue-500 h-1.5 rounded transition-all duration-300"
-                            style={{ width: `${file.progress}%` }}
-                          ></div>
-                        </div>
+                        {file.type === 'file' && (
+                          <div className="w-full bg-gray-200 h-1.5 rounded mt-2">
+                            <div
+                              className="bg-blue-500 h-1.5 rounded transition-all duration-300"
+                              style={{ width: `${file.progress}%` }}
+                            ></div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <button
@@ -433,10 +669,11 @@ const InsightsPage = () => {
               </div>
             </div>
 
-            {/* Add New Insight Button */}
-            <Link href="/insights-overview">
+            {/* Add New Insight Button (design preserved) */}
+            <Link href="/insights">
               <button
                 type="button"
+                onClick={appendCurrentInsight}
                 className="w-full flex  gap-2  py-3 text-sm font-medium text-teal-600 hover:bg-gray-50 transition"
               >
                 <svg
@@ -462,7 +699,7 @@ const InsightsPage = () => {
               </button>
               <button
                 className="w-full sm:w-auto review text-white px-6 py-2.5 rounded-lg hover:bg-teal-600 cursor-pointer transition shadow-md text-sm font-semibold"
-                onClick={() => routes.push("/insight-preview")}
+                onClick={() => { appendCurrentInsight(); routes.push("/insight-preview"); }}
               >
                 Preview
               </button>

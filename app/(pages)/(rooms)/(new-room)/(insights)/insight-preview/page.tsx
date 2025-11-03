@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineEdit } from "react-icons/ai";
 import { BsTrash } from "react-icons/bs";
@@ -19,71 +19,118 @@ import edit from "@/public/assets/icons/text.svg"
 import Link from "next/link";
 import PublishModal from "@/app/component/modals/showcase-modal/showcase-model";
 import cover from "@/public/assets/image cover.svg"
+import { lsGet, ROOM_KEYS, InsightsData, NewRoomIntro } from "@/app/utils/roomStorage";
+import { useCreateDefaultShowcaseRoomMutation } from "@/app/store/api/showcaseApi";
 
 const PortfolioPage = () => {
   const router = useRouter();
-const [isModalOpen, setIsModalOpen] = useState(false);
-  const [coreSkills] = useState(["SQL", "Tableau", "Python", "Power BI"]);
-  const [transferableSkills] = useState([
-    "Project Management",
-    "Leadership",
-    "Agile",
-    "Scrum",
-  ]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [createDefaultRoom, { isLoading: isSavingDraft }] = useCreateDefaultShowcaseRoomMutation();
+  const [coreSkills, setCoreSkills] = useState<string[]>([]);
+  const [transferableSkills, setTransferableSkills] = useState<string[]>([]);
+  const [caseStudies, setCaseStudies] = useState<{ title: string; description: string; tag: string }[]>([]);
+  const [roomTitle, setRoomTitle] = useState<string>("Data Analytics Portfolio");
+  const [roomSummary, setRoomSummary] = useState<string>("");
+  const [companyName, setCompanyName] = useState<string>("");
+  const [industry, setIndustry] = useState<string>("");
+  const [coverDataUrl, setCoverDataUrl] = useState<string | null>(null);
+  const [videoDataUrl, setVideoDataUrl] = useState<string | null>(null);
 
-  const [caseStudies, setCaseStudies] = useState([
-    {
-      id: 1,
-      title: "GSTC BANK",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-      
-      color: "bg-[#FFF7ED]",
-    },
-    {
-      id: 2,
-      title: "Pet World Co.",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-     
-       color: "bg-[#F9FAFB]",
-    },
-    {
-      id: 3,
-      title: "Bridge Fx",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-   
-      color: "bg-[#F0F8FF]",
-    },
-    {
-      id: 4,
-      title: "Bridge Fx",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-   
-      color: "bg-[#EEF2FF]",
-    },
-    {
-      id: 5,
-      title: "Bridge Fx",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-  
-      color: "bg-[#F0FDFA]",
-    },
-     {
-      id: 5,
-      title: "Bridge Fx",
-      description: "AI Summary of the 3 paragraphs here",
-      tag: "Finance",
-  
-      color: "bg-[#FDF2F8]",
-    },
-  ]);
+  useEffect(() => {
+    const intro = lsGet<any>(ROOM_KEYS.intro, { roomName: "Data Analytics Portfolio", roomSummary: "", role: "" });
+    setRoomTitle(intro.roomName || "Data Analytics Portfolio");
+    setRoomSummary(intro.roomSummary || "");
+    if (intro.coverImageDataUrl) setCoverDataUrl(intro.coverImageDataUrl as string);
+    if (intro.videoDataUrl) setVideoDataUrl(intro.videoDataUrl as string);
 
-  const handleDeleteInsight = (id: number) => {
-    setCaseStudies(caseStudies.filter(insight => insight.id !== id));
+    const insights = lsGet<InsightsData>(ROOM_KEYS.insights, {
+      companyName: "",
+      website: "",
+      industry: "",
+      duration: "< 6 months",
+      teamSize: "0-10",
+      summary: "",
+      technicalSkills: [],
+      transferableSkills: [],
+      insights: [],
+    });
+    setCoreSkills(insights.technicalSkills || []);
+    setTransferableSkills(insights.transferableSkills || []);
+    setCaseStudies((insights.insights || []).map(i => ({ title: i.title, description: i.description, tag: i.tag })));
+    setCompanyName(insights.companyName || "");
+    setIndustry(insights.industry || "");
+  }, []);
+
+  const handleDeleteInsight = (index: number) => {
+    const next = caseStudies.filter((_, i) => i !== index);
+    setCaseStudies(next);
+    // persist to localStorage
+    const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+      companyName: companyName,
+      website: "",
+      industry: industry,
+      duration: "< 6 months",
+      teamSize: "0-10",
+      summary: roomSummary,
+      technicalSkills: coreSkills,
+      transferableSkills: transferableSkills,
+      insights: [],
+    });
+    const persisted = { ...saved, insights: next };
+    localStorage.setItem(ROOM_KEYS.insights, JSON.stringify(persisted));
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      const intro = lsGet<any>(ROOM_KEYS.intro, {
+        roomName: "",
+        roomSummary: "",
+        role: "",
+        qualification: undefined,
+        coverImageDataUrl: undefined,
+        videoDataUrl: undefined,
+      });
+      const insights = lsGet<InsightsData>(ROOM_KEYS.insights, {
+        companyName: "",
+        website: "",
+        industry: "",
+        duration: "< 6 months",
+        teamSize: "0-10",
+        summary: "",
+        technicalSkills: [],
+        transferableSkills: [],
+        insights: [],
+      });
+      const coreCompetencies = lsGet<string[]>(ROOM_KEYS.competencies, []);
+
+      const body = {
+        showcaseRoomName: intro.roomName || "Untitled",
+        showcaseRoomSummary: intro.roomSummary || "",
+        coverImage: intro.coverImageDataUrl || undefined,
+        videoIntro: intro.videoDataUrl || undefined,
+        role: intro.role || "",
+        qualification: intro.qualification || undefined,
+        coreCompetencies: Array.isArray(coreCompetencies) ? coreCompetencies : [],
+        insightsId: [
+          {
+            companyName: insights.companyName || "",
+            website: insights.website || "",
+            industry: insights.industry || "",
+            duration: insights.duration || "",
+            teamSize: insights.teamSize || "",
+            valueAddedSummary: insights.summary || "",
+            technicalSkills: insights.technicalSkills || [],
+            transferableSkills: insights.transferableSkills || [],
+            insightsFile: [],
+          },
+        ],
+      } as any;
+
+      await createDefaultRoom(body).unwrap();
+      alert("Draft saved successfully.");
+    } catch (e: any) {
+      alert(e?.data?.message || "Failed to save draft.");
+    }
   };
 
   return (
@@ -99,9 +146,11 @@ const [isModalOpen, setIsModalOpen] = useState(false);
             <span className="text-gray-800 font-semibold">Preview</span>
           </div>
           <button 
-            className="w-full sm:w-auto text-sm text-gray-700 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition shadow-sm font-medium"
+            className="w-full sm:w-auto text-sm text-gray-700 bg-white border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition shadow-sm font-medium disabled:opacity-60"
+            onClick={handleSaveDraft}
+            disabled={isSavingDraft}
           >
-            Save as draft
+            {isSavingDraft ? "Saving..." : "Save as draft"}
           </button>
         </div>
       </div>
@@ -112,8 +161,10 @@ const [isModalOpen, setIsModalOpen] = useState(false);
         <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div className="flex-1">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Data Analytics Portfolio</h2>
-              <p className="text-gray-700 text-sm mt-1">John Doe • London, UK</p>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{roomTitle || "Portfolio"}</h2>
+              {companyName && (
+                <p className="text-gray-700 text-sm mt-1">{companyName}{industry ? ` • ${industry}` : ''}</p>
+              )}
               
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className="bg-gray-100 px-2 py-1 rounded text-xs font-medium">MS-PL60</span>
@@ -149,11 +200,17 @@ const [isModalOpen, setIsModalOpen] = useState(false);
             </div>
             <div className="border-b border-gray-200 mb-4"></div>
             <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
-              <Image
-                src={cover}
-                alt="Cover Image"
-                className="w-full h-full object-cover rounded-lg"
-              />
+              {coverDataUrl ? (
+                // show uploaded cover image
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={coverDataUrl} alt="Cover Image" className="w-full h-full object-cover rounded-lg" />
+              ) : (
+                <Image
+                  src={cover}
+                  alt="Cover Image"
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -169,11 +226,15 @@ const [isModalOpen, setIsModalOpen] = useState(false);
             </div>
             <div className="border-b border-gray-200 mb-4"></div>
             <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
-              <Image
-                src={introvid}
-                alt="Intro Video"
-                className="w-full h-full object-cover rounded-lg"
-              />
+              {videoDataUrl ? (
+                <video src={videoDataUrl} controls className="w-full h-full rounded-lg" />
+              ) : (
+                <Image
+                  src={introvid}
+                  alt="Intro Video"
+                  className="w-full h-full object-cover rounded-lg"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -269,7 +330,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {caseStudies.map((item, index) => (
-              <div key={index} className={`${item.color} border border-gray-100 rounded-lg p-4 sm:p-6`}>
+              <div key={index} className={`${["bg-[#FFF7ED]","bg-[#F9FAFB]","bg-[#F0F8FF]","bg-[#EEF2FF]","bg-[#F0FDFA]","bg-[#FDF2F8]"][index % 6]} border border-gray-100 rounded-lg p-4 sm:p-6`}>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-semibold text-gray-800 mb-2 text-sm sm:text-base truncate">{item.title}</h4>
@@ -288,7 +349,7 @@ const [isModalOpen, setIsModalOpen] = useState(false);
                     </Link>
                     <button 
                       className="flex items-center gap-1 text-red-500 hover:text-red-700 cursor-pointer transition"
-                      onClick={() => handleDeleteInsight(item.id)}
+                      onClick={() => handleDeleteInsight(index)}
                     >
                       <Image src={delete_i} alt="Delete" width={14} height={14} />
                       <span className="hidden sm:inline">Delete</span>

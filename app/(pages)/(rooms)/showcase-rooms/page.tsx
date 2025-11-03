@@ -1,77 +1,48 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FiEdit, FiShare2, FiEye, FiHeart, FiPlus } from "react-icons/fi";
 import Sidebar from "../../../component/sidebar/Sidebar";
-import room_1 from "@/public/assets/room-1.png"
-import room_2 from "@/public/assets/room-2.png"
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-const rooms = [
-  {
-    title: "Data/BI Analyst",
-    description: "Showcasing my latest projects in data visualization and analysis",
-    tags: ["Python", "Tableau", "SQL", "+5 skills"],
-    views: "2.5K",
-    likes: "300",
-    image: room_1,
-    status: "active"
-  },
-  {
-    title: "Professional Pianist",
-    description: "Collection of my recent design projects and case studies",
-    tags: ["Scaling", "Sight reading", "Accompaniments", "+5 skills"],
-    views: "2.5K",
-    likes: "300",
-    image: room_2,
-    status: "active"
-  },
-];
-
-const draftRooms = [
-  {
-    title: "UX Designer Portfolio",
-    description: "Work in progress - showcasing user experience design projects",
-    tags: ["Figma", "Prototyping", "User Research", "+3 skills"],
-    views: "0",
-    likes: "0",
-    image: room_1,
-    status: "draft"
-  },
-];
-
-const archivedRooms = [
-  {
-    title: "Old Marketing Campaign",
-    description: "Previous marketing projects and campaigns",
-    tags: ["Marketing", "Analytics", "SEO", "+2 skills"],
-    views: "1.2K",
-    likes: "150",
-    image: room_2,
-    status: "archived"
-  },
-];
+import { useRouter, useSearchParams } from "next/navigation";
+import { useGetShowcaseRoomsQuery, useGetDraftsByUserQuery } from "@/app/store/api/showcaseApi";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store/store";
+import { clearRoomData } from "@/app/utils/roomStorage";
 
 const ShowcasePage = () => {
   const routes = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("active");
+  const pageFromUrl = Number(searchParams.get("page") || 1);
+  const limitFromUrl = Number(searchParams.get("limit") || 10);
 
-  const getCurrentRooms = () => {
-    switch (activeTab) {
-      case "active":
-        return rooms;
-      case "draft":
-        return draftRooms;
-      case "archived":
-        return archivedRooms;
-      default:
-        return rooms;
+  const { data, isLoading, isError, refetch } = useGetShowcaseRoomsQuery({
+    page: pageFromUrl,
+    limit: limitFromUrl,
+  });
+
+  const { userId } = useSelector((state: RootState) => state.user);
+  const { data: draftsData, isLoading: isDraftsLoading, isError: isDraftsError, refetch: refetchDrafts } = useGetDraftsByUserQuery(userId as string, { skip: !userId });
+
+  const filteredRooms = useMemo(() => {
+    if (activeTab === "draft") {
+      return Array.isArray(draftsData) ? draftsData : [];
     }
-  };
+    const list = Array.isArray(data) ? data : [];
+    if (activeTab === "archived") return list.filter((r: any) => r.isArchived);
+    return list.filter((r: any) => r.isActive || (!r.isDraft && !r.isArchived));
+  }, [data, draftsData, activeTab]);
 
-  const currentRooms = getCurrentRooms();
+  const currentRooms = filteredRooms;
+
+  const setPage = (newPage: number) => {
+    const params = new URLSearchParams(searchParams as any);
+    params.set("page", String(newPage));
+    params.set("limit", String(limitFromUrl));
+    routes.push(`/showcase-rooms?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-white ">
@@ -91,7 +62,11 @@ const ShowcasePage = () => {
             <div className="flex-shrink-0">
               <button 
                 className="w-full sm:w-auto bg-teal-500 text-white px-3 sm:px-4 py-2 h-[36px] sm:h-[40px] rounded-md flex items-center justify-center gap-2 hover:bg-teal-600 cursor-pointer transition-colors duration-200 "
-                onClick={()=>routes.push("/new-room")}
+                onClick={() => {
+                  // Clear localStorage when starting a new room
+                  clearRoomData();
+                  routes.push("/new-room");
+                }}
               >
                 <FiPlus className="text-base sm:text-lg flex-shrink-0" />
                 <span className="text-sm sm:text-base font-medium">New Room</span>
@@ -134,22 +109,87 @@ const ShowcasePage = () => {
         </button>
       </div>
 
+      {(activeTab !== 'draft' && isLoading) && (
+        <div className="text-sm text-gray-500">Loading rooms...</div>
+      )}
+      {(activeTab !== 'draft' && isError) && (
+        <div className="text-sm text-red-600">Failed to load rooms. <button className="underline" onClick={()=>refetch()}>Retry</button></div>
+      )}
+
+      {activeTab === 'draft' && !userId && (
+        <div className="text-sm text-gray-600">Sign in to view your drafts.</div>
+      )}
+      {activeTab === 'draft' && userId && isDraftsLoading && (
+        <div className="text-sm text-gray-500">Loading drafts...</div>
+      )}
+      {activeTab === 'draft' && userId && isDraftsError && (
+        <div className="text-sm text-red-600">Failed to load drafts. <button className="underline" onClick={()=>refetchDrafts()}>Retry</button></div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {currentRooms.map((room, index) => (
-  <Link href={`/room-details`} key={index}>
+        {currentRooms?.map((room: any, index: number) => 
+        (
+          
+  <Link href={`/room-details?id=${room._id ?? ''}`} key={room._id ?? index}>
     <div className="bg-white rounded-2xl shadow overflow-hidden cursor-pointer hover:shadow-lg transition">
-      <div className="h-48 bg-gray-200">
-        <Image
-          src={room.image}
-          alt={room.title}
-          className="object-cover w-full h-full"
-        />
+      <div className="h-48 bg-gray-200 relative">
+        {room.coverImage ? (
+          (() => {
+            const src: string = room.coverImage;
+            const isDataOrBlob = src.startsWith("data:") || src.startsWith("blob:");
+            const isHttp = /^https?:\/\//.test(src);
+            
+            // Get the full image URL
+            let imageSrc = src;
+            if (!isDataOrBlob && !isHttp && src) {
+              // If it's just a filename, prefix with base URL
+              imageSrc = `https://backend.webridgetalent.com/assets/images/${src}`;
+            }
+            
+            if (isDataOrBlob) {
+              return (
+                <img
+                  src={src}
+                  alt={room.showcaseRoomName || "Cover image"}
+                  className="object-cover w-full h-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    if (target.parentElement) {
+                      target.parentElement.style.backgroundColor = '#F3F4F6';
+                    }
+                  }}
+                />
+              );
+            }
+            
+            if (isHttp || imageSrc !== src) {
+              return (
+                <Image
+                  src={imageSrc}
+                  alt={room.showcaseRoomName || "Cover image"}
+                  className="object-cover w-full h-full"
+                  width={800}
+                  height={300}
+                  unoptimized
+                  onError={() => {
+                    // Error handled by Next.js Image fallback
+                  }}
+                />
+              );
+            }
+            
+            return <div className="w-full h-full bg-gray-100" />;
+          })()
+        ) : (
+          <div className="w-full h-full bg-gray-100" />
+        )}
       </div>
       <div className="p-4 space-y-2">
-        <h2 className="text-lg font-semibold">{room.title}</h2>
-        <p className="text-sm text-gray-600">{room.description}</p>
+        <h2 className="text-lg font-semibold">{room.showcaseRoomName}</h2>
+        <p className="text-sm text-gray-600">{room.showcaseRoomSummary}</p>
         <div className="flex flex-wrap gap-2 mt-2">
-          {room.tags.map((tag, i) => (
+          {(room.coreCompetencies || []).slice(0,4).map((tag: string, i: number) => (
             <span
               key={i}
               className="bg-teal-50 text-teal-700 border border-[#99F6E4] px-3 py-1 text-xs rounded-full"
@@ -162,11 +202,13 @@ const ShowcasePage = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
               <FiEye />
-              {room.views}
+              {/* Views not provided by API */}
+              --
             </div>
             <div className="flex items-center gap-1">
               <FiHeart />
-              {room.likes}
+              {/* Likes not provided by API */}
+              --
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -192,3 +234,4 @@ const ShowcasePage = () => {
 };
 
 export default ShowcasePage;
+
