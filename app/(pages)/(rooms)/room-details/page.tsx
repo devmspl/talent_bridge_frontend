@@ -32,13 +32,14 @@ import Public from "@/public/assets/icons/public.svg"
 import Link from "next/link";
 import up from '@/public/assets/media/upp.svg';
 import down from '@/public/assets/media/downn.svg';
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useGetShowcaseRoomByIdQuery, useDeleteShowcaseRoomMutation } from "@/app/store/api/showcaseApi";
 
 
 
 const Page = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id") || "";
   const { data, isLoading, isError, refetch } = useGetShowcaseRoomByIdQuery(id, { skip: !id });
   const [deleteRoom, { isLoading: isDeleting }] = useDeleteShowcaseRoomMutation();
@@ -294,6 +295,7 @@ const Page = () => {
                     src={activity.image} 
                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
                     alt="profile" 
+                    onClick={() => router.push(`/message`)}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-gray-800 leading-tight text-sm">{activity.name}</div>
