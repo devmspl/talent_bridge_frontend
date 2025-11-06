@@ -4,9 +4,10 @@ import { AiOutlineEdit, AiOutlineDelete, AiOutlineCheck } from "react-icons/ai";
 import edit from "@/public/assets/icons/text.svg"
 import delete_i from "@/public/assets/icons/delete.svg"
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import check from "@/public/assets/icons/Vector (1).svg"
 import Link from "next/link";
+import { lsGet, ROOM_KEYS, InsightsData } from "@/app/utils/roomStorage";
 
 const InsightsPage: React.FC = () => {
     const [companyName, setCompanyName] = useState("Pets World Co.");
@@ -15,25 +16,27 @@ const InsightsPage: React.FC = () => {
     const [duration, setDuration] = useState("< 6 months");
     const [teamSize, setTeamSize] = useState("0-10");
     const routes =useRouter()
+    const params = useSearchParams();
+    const roomId = params.get("id") || "";
 
-    const insights = [
-        {
-            name: "GSTC Bank",
-            description: "Multinational Bank Listed on the FTSE 100 Index",
-            tag: "Finance",
-        },
-        {
-            name: "Pets World Co.",
-            description: "Fastest Growing Pet Store in the UK",
-            tag: "Retail",
-        },
-    ];
+    const stored = lsGet<InsightsData>(ROOM_KEYS.insights, {
+        companyName: "",
+        website: "",
+        industry: "",
+        duration: "< 6 months",
+        teamSize: "0-10",
+        summary: "",
+        technicalSkills: [],
+        transferableSkills: [],
+        insights: [],
+    });
+    const insights = stored.insights || [];
 
     return (
         <>
             <div className="mb-4 text-sm text-gray-500 flex justify-between items-center">
                 <div>
-                   <Link href="/showcase-rooms"> Showcase rooms</Link><span className='text-sm text-gray-500'>/ ...  </span> <span className="text-gray-800 font-semibold"> / New</span>
+                   <Link href="/showcase-rooms"> Showcase rooms</Link><span className='text-sm text-gray-500'>/ ...  </span> <span className="text-gray-800 font-semibold"> / Edit Room</span>
                 </div>
                 <div className="flex gap-2">
                     <button className="absolute top-4 right-4 text-sm border border-gray-300 px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer"
@@ -67,25 +70,27 @@ const InsightsPage: React.FC = () => {
                             </div> <span className="text-gray-800 font-semibold">Insights</span></div>
                     </div>
                     <div className="p-6">
-                        {insights.map((item, index) => (
+                        {insights.map((item: any, index: number) => (
                             <div key={index} className="bg-gray-20 bg-[#F9FAFB] border border-gray-100 rounded-lg p-6 mb-4">
                                 <div className="flex justify-between items-start ">
                                     <div>
-                                        <h3 className="font-semibold text-gray-800 mb-1">{item.name}</h3>
+                                        <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
                                         <p className="text-sm text-gray-500 mb-2">{item.description}</p>
-                                        <span className="text-xs bg-[#F0FDFA] border border-[#99F6E4] text-[#0F766E] px-2 py-0.5 rounded-full font-medium">{item.tag}</span>
+                                        {item.tag && (
+                                          <span className="text-xs bg-[#F0FDFA] border border-[#99F6E4] text-[#0F766E] px-2 py-0.5 rounded-full font-medium">{item.tag}</span>
+                                        )}
                                     </div>
                                     <div className="text-sm text-red-500 space-y-1">
                                         <div>
                                             <button className="flex items-center gap-1 text-gray-600 hover:text-black cursor-pointer"
-                                            onClick={()=>routes.push("/insights")}>
+                                            onClick={()=>routes.push(roomId ? `/insights?id=${roomId}` : "/insights")}>
                                                 <Image src={edit} alt="" width={16} />
                                                 Continue Editing
                                             </button>
                                         </div>
                                         <div className="flex justify-end">
                                             <button className="flex items-center gap-1 hover:text-red-700 hover:cursor-pointer"
-                                             onClick={()=>routes.push("/insights")}>
+                                             onClick={()=>routes.push(roomId ? `/insights?id=${roomId}` : "/insights")}>
                                                 <Image src={delete_i} alt="" width={16} />
                                                 Delete
                                             </button>
@@ -200,12 +205,12 @@ const InsightsPage: React.FC = () => {
                     </div>
                      <div className=" flex justify-end gap-3 mb-4 ">
               <button className="text-gray-600 bg-gray-100 px-4 py-2 rounded-md hover:bg-gray-200 cursor-pointer"
-                onClick={() => routes.push("/edit-insights")}
+                onClick={() => routes.push(roomId ? `/edit-insights?id=${roomId}` : "/edit-insights")}
               >
                 Back
               </button>
               <button className="review text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
-                onClick={() => routes.push("/edit-previiew")}
+                onClick={() => routes.push(roomId ? `/edit-previiew?id=${roomId}` : "/edit-previiew")}
               >
                 Preview
               </button>

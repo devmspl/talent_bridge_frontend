@@ -1,44 +1,62 @@
 "use client";
 import Image from "next/image";
-
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-
-import profile from "@/public/assets/profile/profilepreview.svg"
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import call from "@/public/assets/icons/call.svg";
 import msg from "@/public/assets/icons/msgg.svg";
 import share from "@/public/assets/icons/share.svg";
-import up from "@/public/assets/icons/up-arrow.svg"
-import logo from "@/public/assets/icons/logo.svg"
+import up from "@/public/assets/icons/up-arrow.svg";
+import logo from "@/public/assets/icons/logo.svg";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useGetShowcaseRoomByIdQuery } from "@/app/store/api/showcaseApi";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function PreviewPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id") || "";
+  
   const { data } = useGetShowcaseRoomByIdQuery(id, { skip: !id });
 
-  const title = data?.showcaseRoomName || "Data/BI Analyst";
+  
+
+
+  const title = data?.showcaseRoomName || "";
   const summary = data?.showcaseRoomSummary || "";
   const qualifications = useMemo(() => {
-    const arr: string[] = [];
-    if (data?.qualification) arr.push(data.qualification);
-    if (data?.role) arr.push(data.role);
-    return arr.length ? arr : ["MS-PLGO", "CISSP", "ACCA", "LLB", "LLM"]; // fallback
+    const q = (typeof data?.qualification === 'string' ? data.qualification : '').trim();
+    if (!q) return [] as string[];
+    return q.split(',').map((s: string) => s.trim()).filter(Boolean);
   }, [data]);
+
+  const resolveMediaSrc = (src?: string, kind?: "image" | "video") => {
+    if (!src) return "";
+    if (src.startsWith("data:") || src.startsWith("blob:")) return src;
+    if (/^https?:\/\//.test(src)) return src;
+    const clean = src.replace(/^\/+/, "");
+    const alreadyPrefixed = clean.startsWith("assets/images/") || clean.startsWith("assets/videos/");
+    const trimmedBase = BaseUrl.replace(/\/$/, "");
+    if (alreadyPrefixed) return `${trimmedBase}/${clean}`;
+    const ext = (clean.split(".").pop() || "").toLowerCase();
+    const guessImage = ["jpg","jpeg","png","gif","webp","svg"].includes(ext);
+    const guessVideo = ["mp4","webm","mov","avi","mkv"].includes(ext);
+    const isVideo = kind === "video" || (kind !== "image" && guessVideo);
+    const isImage = kind === "image" || (!isVideo && guessImage);
+    const base = isImage ? "assets/images/" : isVideo ? "assets/videos/" : "";
+    return `${trimmedBase}/${base}${clean}`;
+  };
   const technicalSkills: string[] = useMemo(() => {
     const ins = Array.isArray(data?.insightsId) && data.insightsId.length ? data.insightsId[0] : null;
     if (ins?.technicalSkills && ins.technicalSkills.length) return ins.technicalSkills;
-    return ["SQL", "Python", "Tableau", "Power BI", "Power Automate", "DAX"]; // fallback
+    return [] as string[];
   }, [data]);
   const transferableSkills: string[] = useMemo(() => {
     const ins = Array.isArray(data?.insightsId) && data.insightsId.length ? data.insightsId[0] : null;
     if (ins?.transferableSkills && ins.transferableSkills.length) return ins.transferableSkills;
-    return ["Project Management", "Process Improvement", "Agile", "Communication", "Scrum", "Patience"]; // fallback
+    return [] as string[];
   }, [data]);
   const insights = useMemo(() => {
+    console.log("Insights data check:", data?.insightsId);
     const list = Array.isArray(data?.insightsId) ? data.insightsId : [];
     if (!list.length) return [] as any[];
     return list.map((it: any, i: number) => ({
@@ -62,15 +80,20 @@ export default function PreviewPage() {
           <div className="bg-white rounded-[10px] border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div className="flex-1">
-                <h1 className="text-xl sm:text-2xl lg:text-[24px] font-bold text-[#111827] mb-2">{title}</h1>
-                <p className="text-base sm:text-lg lg:text-[18px] text-[#4B5563] mb-2">John Doe • London, UK</p>
-                
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <span className="text-sm sm:text-base lg:text-[16px] text-[#4B5563]">Qualifications:</span>
-                  {qualifications.map((q, i) => (
-                    <span key={i} className="bg-gray-100 px-2 sm:px-3 py-1 rounded-[20px] text-xs sm:text-[12px] text-[#374151]">{q}</span>
-                  ))}
-                </div>
+                {title && (
+                  <h1 className="text-xl sm:text-2xl lg:text-[24px] font-bold text-[#111827] mb-2">{title}</h1>
+                )}
+                {summary && (
+                  <p className="text-sm sm:text-base text-[#4B5563] mb-2">{summary}</p>
+                )}
+                {qualifications.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    <span className="text-sm sm:text-base lg:text-[16px] text-[#4B5563]">Qualifications:</span>
+                    {qualifications.map((q: string, i: number) => (
+                      <span key={i} className="bg-gray-100 px-2 sm:px-3 py-1 rounded-[20px] text-xs sm:text-[12px] text-[#374151]">{q}</span>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2 sm:gap-3">
@@ -81,30 +104,27 @@ export default function PreviewPage() {
             </div>
           </div>
 
-          {/* Video Section */}
+          {/* Intro Video / Cover Section */}
           <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
-            <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden">
-              {/* Profile Image Background */}
-              {data?.coverImage ? (
-                (() => {
-                  const src: string = data.coverImage;
-                  const isDataOrBlob = src.startsWith("data:") || src.startsWith("blob:");
-                  const isHttp = /^https?:\/\//.test(src);
-                  if (isDataOrBlob) {
-                    return <img src={src} alt="Cover" className="w-full h-full object-cover" />;
-                  }
-                  if (isHttp) {
-                    return <Image src={src} alt="Cover" className="w-full h-full object-cover" fill unoptimized />;
-                  }
-                  return <Image src={profile} alt="Profile Preview" className="w-full h-full object-cover" fill />;
-                })()
-              ) : (
-                <Image
-                  src={profile}
-                  alt="Profile Preview"
-                  className="w-full h-full object-cover"
-                  fill
+            <div className="relative w-full h-auto rounded-lg overflow-hidden">
+              {data?.videoIntro ? (
+                <video
+                  src={resolveMediaSrc(data.videoIntro, "video")}
+                  controls
+                  className="w-full max-h-[480px] rounded-lg"
                 />
+              ) : (
+                data?.coverImage ? (
+                  <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96">
+                    {(() => {
+                      const src: string = resolveMediaSrc(data.coverImage, "image");
+                      if (src.startsWith("data:") || src.startsWith("blob:")) {
+                        return <img src={src} alt="Cover" className="w-full h-full object-cover" />;
+                      }
+                      return <Image src={src} alt="Cover" className="w-full h-full object-cover" fill unoptimized />;
+                    })()}
+                  </div>
+                ) : null
               )}
             </div>
           </div>
@@ -120,7 +140,7 @@ export default function PreviewPage() {
               </div>
               <div className="border-b border-[#E5E7EB] mb-4"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 p-4 sm:p-6 pt-0">
-                {technicalSkills.map((skill, index) => (
+                {technicalSkills.length > 0 && technicalSkills.map((skill, index) => (
                   <div key={index} className="bg-[#F9FAFB] px-3 py-2 rounded-[10px] text-sm sm:text-[14px] text-[#333333] flex items-start justify-start">
                     {skill}
                   </div>
@@ -136,7 +156,7 @@ export default function PreviewPage() {
               </div>
               <div className="border-b border-[#E5E7EB] mb-4"></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 p-4 sm:p-6 pt-0">
-                {transferableSkills.map((skill, index) => (
+                {transferableSkills.length > 0 && transferableSkills.map((skill, index) => (
                   <div key={index} className="bg-[#F9FAFB] px-3 py-2 rounded-[10px] text-sm sm:text-[14px] text-[#333333] flex items-start justify-start">
                     {skill}
                   </div>
@@ -150,7 +170,7 @@ export default function PreviewPage() {
             <h3 className="text-base sm:text-lg font-semibold text-[#111827] p-4 sm:p-6">Insights</h3>
             <div className="border-b border-[#E5E7EB] mb-4"></div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 sm:p-6">
-              {(insights.length ? insights : []).map((insight: any, idx: number) => (
+              {insights.length > 0 && insights.map((insight: any, idx: number) => (
                 <div key={insight.id} className={`${insight.bgColor} rounded-[10px] p-4`}>
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                     <div className="flex-1">

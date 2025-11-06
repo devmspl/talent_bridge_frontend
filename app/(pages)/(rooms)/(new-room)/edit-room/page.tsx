@@ -2,19 +2,17 @@
 import { updateUserData } from '@/app/store/slices/userSlice';
 import { RootState } from '@/app/store/store';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import React, { useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import { useDispatch, useSelector } from 'react-redux';
+import { lsGet, lsSet, ROOM_KEYS, NewRoomIntro } from '@/app/utils/roomStorage';
+import { useGetShowcaseRoomByIdQuery, useUpdateShowcaseRoomMutation, useUploadShowcaseCoverMutation, useUploadShowcaseVideoMutation } from '@/app/store/api/showcaseApi';
 
 const Page: React.FC = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.user);
-  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([
-    "Bachelor's Degree",
-    "Master's Degree",
-    "PhD",
-  ]);
+  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([]);
   
   const [errors, setErrors] = useState<{ qualification?: string }>({});
 
@@ -26,28 +24,152 @@ const Page: React.FC = () => {
       setErrors((prev) => ({ ...prev, qualification: "" }));
     }
 
-    if (value && !selectedQualifications.includes(value)) {
-      setSelectedQualifications([...selectedQualifications, value]);
+    if (value) {
+      setSelectedQualifications([value]);
+    } else {
+      setSelectedQualifications([]);
     }
   };
 
   const handleRemoveQualification = (qual: string) => {
     setSelectedQualifications(selectedQualifications.filter((q) => q !== qual));
+    if (user?.qualification === qual) {
+      dispatch(updateUserData({ qualification: "" }));
+    }
   };
 
   const router = useRouter();
+  const params = useSearchParams();
+  const roomId = params.get('id') || '';
+  const { data: roomData } = useGetShowcaseRoomByIdQuery(roomId, { skip: !roomId });
+  const [updateRoom, { isLoading: isUpdating }] = useUpdateShowcaseRoomMutation();
+  const [uploadCover] = useUploadShowcaseCoverMutation();
+  const [uploadVideo] = useUploadShowcaseVideoMutation();
 
-  const [roomName, setRoomName] = useState("Data Analytics Portfolio");
+  const [roomName, setRoomName] = useState("");
   const [roomSummary, setRoomSummary] = useState("");
-  const [role, setRole] = useState("Data Analyst");
+  const [role, setRole] = useState("");
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
-const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
 
-const handleCoverClick = () => coverInputRef.current?.click();
-const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.files && e.target.files[0]) setCoverImage(e.target.files[0]);
-};
+  const handleCoverClick = () => coverInputRef.current?.click();
+  const handleVideoClick = () => videoInputRef.current?.click();
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCoverImage(file);
+      const reader = new FileReader();
+      reader.onload = () => setCoverPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setVideoFile(file);
+      const url = URL.createObjectURL(file);
+      setVideoPreview(url);
+    }
+  };
+
+  // keep local chip state in sync with the selected qualification in store
+  useEffect(() => {
+    if (user?.qualification) {
+      setSelectedQualifications([user.qualification]);
+    } else {
+      setSelectedQualifications([]);
+    }
+  }, [user?.qualification]);
+
+  // hydrate from localStorage first
+  useEffect(() => {
+    const intro = lsGet<NewRoomIntro & { coverImageDataUrl?: string | null; videoDataUrl?: string | null }>(ROOM_KEYS.intro, {
+      roomName: '',
+      roomSummary: '',
+      role: '',
+      qualification: undefined,
+      coverImageDataUrl: null,
+      videoDataUrl: null,
+    });
+    if (intro.roomName) setRoomName(intro.roomName);
+    if (intro.roomSummary) setRoomSummary(intro.roomSummary);
+    if (intro.role) setRole(intro.role);
+    if (intro.coverImageDataUrl) setCoverPreview(intro.coverImageDataUrl);
+    if (intro.videoDataUrl) setVideoPreview(intro.videoDataUrl);
+  }, []);
+
+  // then hydrate from API for edit
+  useEffect(() => {
+    if (roomData && roomId) {
+      setRoomName(roomData.showcaseRoomName || '');
+      setRoomSummary(roomData.showcaseRoomSummary || '');
+      setRole(roomData.role || '');
+      if (roomData.coverImage) setCoverPreview(roomData.coverImage);
+      if (roomData.videoIntro) setVideoPreview(roomData.videoIntro);
+      const intro: NewRoomIntro & { coverImageDataUrl?: string | null; videoDataUrl?: string | null } = {
+        roomName: roomData.showcaseRoomName || '',
+        roomSummary: roomData.showcaseRoomSummary || '',
+        role: roomData.role || '',
+        qualification: user?.qualification,
+        coverImageDataUrl: roomData.coverImage || null,
+        videoDataUrl: roomData.videoIntro || null,
+      };
+      lsSet(ROOM_KEYS.intro, intro);
+      if (Array.isArray(roomData.coreCompetencies)) {
+        lsSet(ROOM_KEYS.competencies, roomData.coreCompetencies);
+      }
+      if (Array.isArray(roomData.insightsId)) {
+        const list = (roomData.insightsId || []);
+        const first = list[0] || {};
+        const existing = lsGet<any>(ROOM_KEYS.insights, {});
+        lsSet(ROOM_KEYS.insights, {
+          // top-level fields come from the first insight for editing
+          companyName: first.companyName || existing.companyName || '',
+          website: first.website || existing.website || '',
+          industry: first.industry || existing.industry || '',
+          duration: first.duration || existing.duration || '< 6 months',
+          teamSize: first.teamSize || existing.teamSize || '0-10',
+          summary: first.valueAddedSummary || existing.summary || '',
+          // skills
+          technicalSkills: Array.isArray(first.technicalSkills) ? first.technicalSkills : (roomData.coreCompetencies || []),
+          transferableSkills: Array.isArray(first.transferableSkills) ? first.transferableSkills : (roomData.coreCompetencies || []),
+          // cards list for preview
+          insights: list.map((it: any) => ({
+            title: it.companyName || '',
+            description: it.valueAddedSummary || '',
+            tag: it.industry || '',
+          })),
+        });
+      }
+    }
+  }, [roomData, roomId]);
+
+  // keep intro edits in localStorage
+  useEffect(() => {
+    const existing = lsGet<any>(ROOM_KEYS.intro, {});
+    lsSet(ROOM_KEYS.intro, { ...existing, roomName, roomSummary, role, qualification: user?.qualification });
+  }, [roomName, roomSummary, role, user?.qualification]);
+
+  // Do NOT persist media previews (cover/video) in localStorage during edit
+  // This avoids storing large data URLs and keeps update payloads small
+
+  // Persist media previews so they appear on the preview screen
+  useEffect(() => {
+    if (!coverPreview) return;
+    const existing = lsGet<any>(ROOM_KEYS.intro, {});
+    lsSet(ROOM_KEYS.intro, { ...existing, coverImageDataUrl: coverPreview });
+  }, [coverPreview]);
+
+  useEffect(() => {
+    if (!videoPreview) return;
+    const existing = lsGet<any>(ROOM_KEYS.intro, {});
+    lsSet(ROOM_KEYS.intro, { ...existing, videoDataUrl: videoPreview });
+  }, [videoPreview]);
 
 
   return (
@@ -58,10 +180,50 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         </div>
         <div className="flex gap-2">
           <button
-            className="absolute top-4 right-4 text-sm border border-gray-300 px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer"
-          // onClick={() => router.push("/competencies")}
+            className="absolute top-4 right-4 text-sm border border-gray-300 px-4 py-1.5 rounded-md hover:bg-gray-50 cursor-pointer disabled:opacity-60"
+            disabled={!roomId || isUpdating}
+            onClick={async () => {
+              try {
+                const intro = lsGet<any>(ROOM_KEYS.intro, {
+                  roomName: '', roomSummary: '', role: '', qualification: undefined, coverImageDataUrl: undefined, videoDataUrl: undefined,
+                });
+                const insights = lsGet<any>(ROOM_KEYS.insights, {
+                  companyName: '', website: '', industry: '', duration: '< 6 months', teamSize: '0-10', summary: '', technicalSkills: [], transferableSkills: [], insights: [],
+                });
+                const coreCompetencies = lsGet<string[]>(ROOM_KEYS.competencies, []);
+                // upload files if newly selected
+                if (coverImage) await uploadCover({ id: roomId, file: coverImage }).unwrap();
+                if (videoFile) await uploadVideo({ id: roomId, file: videoFile }).unwrap();
+                const body: any = {
+                  showcaseRoomName: intro.roomName || 'Untitled',
+                  showcaseRoomSummary: intro.roomSummary || '',
+                  coverImage: intro.coverImageDataUrl || roomData?.coverImage || undefined,
+                  videoIntro: intro.videoDataUrl || roomData?.videoIntro || undefined,
+                  role: intro.role || '',
+                  qualification: intro.qualification || undefined,
+                  coreCompetencies: Array.isArray(coreCompetencies) ? coreCompetencies : [],
+                  insightsId: [
+                    {
+                      companyName: insights.companyName || '',
+                      website: insights.website || '',
+                      industry: insights.industry || '',
+                      duration: insights.duration || '',
+                      teamSize: insights.teamSize || '',
+                      valueAddedSummary: insights.summary || '',
+                      technicalSkills: insights.technicalSkills || [],
+                      transferableSkills: insights.transferableSkills || [],
+                      insightsFile: [],
+                    },
+                  ],
+                };
+                await updateRoom({ id: roomId, body }).unwrap();
+                alert('Room updated successfully.');
+              } catch (e: any) {
+                alert(e?.data?.message || 'Failed to update room.');
+              }
+            }}
           >
-            Save as draft
+            {isUpdating ? 'Saving...' : 'Save as draft'}
           </button>
         </div>
       </div>
@@ -129,6 +291,10 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   className="hidden"
 />
                 </p>
+                {coverPreview && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={coverPreview} alt="Cover preview" className="mt-3 w-full max-h-48 object-cover rounded" />
+                )}
               </div>
             </div>
             <div className="mb-5">
@@ -140,7 +306,7 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                   {/* <span className="text-blue-600 font-medium cursor-pointer">choose file</span> */}
 
                    <span
-  onClick={handleCoverClick}  
+  onClick={handleVideoClick}  
   className="text-blue-600 font-medium cursor-pointer"
 >
   choose file
@@ -149,11 +315,14 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 <input
   type="file"
   accept="video/*"
-  ref={coverInputRef}          
-  onChange={handleCoverChange} 
+  ref={videoInputRef}          
+  onChange={handleVideoChange} 
   className="hidden"
 />
                 </p>
+                {videoPreview && (
+                  <video src={videoPreview} controls className="mt-3 w-full max-h-48 rounded" />
+                )}
               </div>
             </div>
             <div className="mb-2">
@@ -178,8 +347,9 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         onChange={handleQualificationChange}
       >
         <option value="">Select your qualification</option>
-        <option value="Bachelor's Degree">Bachelor's Degree</option>
-        <option value="Master's Degree">Master's Degree</option>
+        <option value="Power BI Data Analyst">Power BI Data Analyst</option>
+        <option value="Azure Data Engineer">Azure Data Engineer</option>
+        <option value="Data modeling & ETL processes">Data modeling & ETL processes</option>
         
       </select>
 
@@ -211,7 +381,7 @@ const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             
             <div className='flex justify-end mt-4'>
               <button className="review text-white px-4 py-2 h-[40px] rounded-md flex items-center gap-2 hover:bg-teal-600 cursor-pointer"
-                onClick={() => router.push("/edit-room1")}>
+                onClick={() => router.push(roomId ? `/edit-room1?id=${roomId}` : "/edit-room1") }>
                 Next
               </button>
             </div>

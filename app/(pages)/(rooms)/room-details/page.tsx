@@ -140,7 +140,7 @@ const Page = () => {
               <span className="text-gray-800 font-semibold">{roomName}</span>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-            <Link href="/edit-room">  <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
+            <Link href={`/edit-room?id=${id}`}>  <button className="flex-1 sm:flex-none bg-white text-gray-700 px-4 py-2 rounded-lg text-sm border hover:bg-gray-50 cursor-pointer transition font-medium">
                 Edit Room
               </button> </Link> 
               <button 

@@ -14,6 +14,7 @@ import deleted from "@/public/assets/icons/trash-3.svg"
 import Image from 'next/image';
 import { AiOutlineCloudUpload } from 'react-icons/ai';
 import PublishModal from '@/app/component/modals/showcase-modal/showcase-model';
+import { useGetInsightByIdQuery } from '@/app/store/api/showcaseApi';
 
 export default function CaseStudyPage() {
   const router = useRouter();
@@ -23,6 +24,13 @@ export default function CaseStudyPage() {
   const companyName = searchParams.get('title') || 'Pet World Co';
   const projectDescription = searchParams.get('description') || 'Data Analysis & Financial Reporting Project';
   const industryTag = searchParams.get('tag') || 'Finance';
+  const insightId = searchParams.get('insightId') || '';
+  useEffect(() => {
+    if (insightId) {
+      try { window.localStorage.setItem('editingInsightId', insightId); } catch {}
+    }
+  }, [insightId]);
+  const { data: insightData } = useGetInsightByIdQuery(insightId, { skip: !insightId });
   const [editingAchievement, setEditingAchievement] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingDescription, setEditingDescription] = useState("");
@@ -45,33 +53,24 @@ export default function CaseStudyPage() {
     }
   ]);
 
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      name: "Project Breakdown.mp4",
-      size: "300 KB"
-    },
-    {
-      id: 2,
-      name: "Redacted Solution Architecture.pdf",
-      size: "300 KB"
-    },
-    {
-        id: 3,
-        name: "Replica Dashboard for Credit Reporting.pbix",
-        size: "300 KB"
-      },
-      {
-        id: 4,
-        name: "Project Challanges and Devised Solution.docx",
-        size: "300 KB"
-      },
-      {
-        id: 5,
-        name: "Project Challanges.mp4",
-        size: "300 KB"
-      }
-  ]);
+  const [documents, setDocuments] = useState<Array<{ id: number|string; name: string; size?: string }>>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  useEffect(() => {
+    if (!insightData) return;
+    try {
+      const files = (insightData.insightsFile || insightData.insightsFiles || insightData.files || []) as any[];
+      const mapped = files.map((f: any, idx: number) => {
+        const name = (typeof f === 'string')
+          ? (f.split('/').pop() || f)
+          : (f.originalName || f.fileName || f.name || `file-${idx+1}`);
+        const size = (typeof f === 'object' && (f.size || f.filesize))
+          ? `${((f.size || f.filesize) / 1024).toFixed(1)} KB`
+          : undefined;
+        return { id: f._id || f.id || idx + 1, name, size };
+      });
+      setDocuments(mapped);
+    } catch {}
+  }, [insightData]);
 
   const handleDeleteAchievement = (id: number) => {
     setAchievements(achievements.filter(achievement => achievement.id !== id));
@@ -102,17 +101,19 @@ export default function CaseStudyPage() {
     setEditingDescription("");
   };
 
-  const handleDeleteDocument = (id: number) => {
-    setDocuments(documents.filter(doc => doc.id !== id));
+  const handleDeleteDocument = (id: number | string) => {
+    setDocuments((prev) => prev.filter((doc) => String(doc.id) !== String(id)));
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files).map((file) => ({
-        id: Date.now() + Math.random(), // Generate unique ID
+      const filesArr = Array.from(e.target.files);
+      const newDocs = filesArr.map((file) => ({
+        id: Date.now() + Math.random(),
         name: file.name,
         size: formatFileSize(file.size),
       }));
-      setDocuments([...documents, ...newFiles]);
+      setDocuments((prev) => [...prev, ...newDocs]);
+      setSelectedFiles((prev) => [...prev, ...filesArr]);
     }
   };
 
@@ -369,7 +370,7 @@ export default function CaseStudyPage() {
         </div>
       </div>
       
-      <PublishModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <PublishModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} insightFiles={selectedFiles} />
     </>
   );
 }

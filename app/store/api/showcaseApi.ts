@@ -46,6 +46,19 @@ export const showcaseApi = createApi({
       transformResponse: (response: any) => response?.data || response,
       providesTags: ["ShowcaseRoom"],
     }),
+    uploadInsightFiles: builder.mutation<any, { id: string; files: File[] }>({
+      query: ({ id, files }) => {
+        const form = new FormData();
+        files.forEach((f) => form.append("files", f));
+        return {
+          url: `insights/${id}/upload-files`,
+          method: "POST",
+          body: form,
+        };
+      },
+      transformResponse: (response: any) => response?.data || response,
+      invalidatesTags: ["ShowcaseRoom"],
+    }),
     getDraftsByUser: builder.query<any, string>({
       query: (userId) => ({
         url: `showcase-rooms/defaultAllbyuserId/${userId}`,
@@ -113,19 +126,24 @@ export const showcaseApi = createApi({
       transformResponse: (response: any) => response?.data || response,
       invalidatesTags: ["ShowcaseRoom"],
     }),
-    uploadInsightFile: builder.mutation<any, { insightId: string; file: File }>({
-      query: ({ insightId, file }) => {
-        const form = new FormData();
-        form.append("file", file);
-        return {
-          url: `insights/${insightId}/upload-files`,
-          method: "POST",
-          body: form,
-        };
-      },
+    updateShowcaseRoom: builder.mutation<any, { id: string; body: any }>({
+      query: ({ id, body }) => ({
+        url: `showcase-rooms/update/${id}`,
+        method: "PUT",
+        body,
+      }),
       transformResponse: (response: any) => response?.data || response,
       invalidatesTags: ["ShowcaseRoom"],
     }),
+    getInsightById: builder.query<any, string>({
+      query: (id) => ({
+        url: `insights/${id}`,
+        method: "GET",
+      }),
+      transformResponse: (response: any) => response?.data || response,
+      providesTags: ["ShowcaseRoom"],
+    }),
+ 
   }),
 });
 
@@ -138,6 +156,9 @@ export const {
   useUploadShowcaseCoverMutation,
   useDeleteShowcaseRoomMutation ,
   useUploadShowcaseVideoMutation,
-  useUploadInsightFileMutation
+  useUpdateShowcaseRoomMutation,
+  useGetInsightByIdQuery,
+  useUploadInsightFilesMutation,
+ 
 } = showcaseApi;
 export default showcaseApi;

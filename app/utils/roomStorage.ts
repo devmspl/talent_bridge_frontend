@@ -28,6 +28,7 @@ export const ROOM_KEYS = {
   intro: "newRoomIntro",
   competencies: "selectedCompetencies",
   insights: "insightsData",
+  currentRoomId: "currentRoomId",
 } as const;
 
 export type NewRoomIntro = {
@@ -37,16 +38,18 @@ export type NewRoomIntro = {
   qualification?: string;
 };
 
+export type CurrentFormFile = {
+  name: string;
+  size: number | string;
+  type: string;
+  data: string;
+};
+
 export type InsightItem = {
   title: string;
   description: string;
-  tag: string;
-  files?: Array<{
-    name: string;
-    size: number;
-    type: string;
-    data: string; // base64 data URL
-  }>;
+  tag: string; 
+  files?: CurrentFormFile[];
 };
 
 export type InsightsData = {
@@ -59,12 +62,7 @@ export type InsightsData = {
   technicalSkills: string[];
   transferableSkills: string[];
   insights: InsightItem[];
-  currentFormFiles?: Array<{
-    name: string;
-    size: number;
-    type: string;
-    data: string; // base64 data URL
-  }>; // Files in current form that haven't been added to an insight yet
+  currentFormFiles?: CurrentFormFile[];
 };
 
 // Clear all room-related localStorage data when starting a new room
@@ -74,9 +72,14 @@ export function clearRoomData(): void {
     window.localStorage.removeItem(ROOM_KEYS.intro);
     window.localStorage.removeItem(ROOM_KEYS.competencies);
     window.localStorage.removeItem(ROOM_KEYS.insights);
+    window.localStorage.removeItem(ROOM_KEYS.currentRoomId);
+    const keys = Object.keys(window.localStorage || {});
+    for (const k of keys) {
+      if (/^insight_\d+$/.test(k)) {
+        window.localStorage.removeItem(k);
+      }
+    }
   } catch {
     // ignore
   }
 }
-
-
