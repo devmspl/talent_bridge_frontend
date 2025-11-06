@@ -20,7 +20,7 @@ const ShowcasePage = () => {
   const limitFromUrl = Number(searchParams.get("limit") || 10);
 
   const { data, isLoading, isError, refetch } = useGetShowcaseRoomsQuery({
-    page: pageFromUrl,
+    page: pageFromUrl, 
     limit: limitFromUrl,
   });
 

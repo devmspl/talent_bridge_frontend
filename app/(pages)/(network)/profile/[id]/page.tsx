@@ -25,6 +25,7 @@ import { useGetUserByIdQuery } from "@/app/store/api/userApi";
 import profile from "@/public/assets/profile/Avatar.png";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function page() {
   const [showEmail, setShowEmail] = useState(false);
@@ -51,7 +52,7 @@ export default function page() {
 
     setIsCreatingRoom(true);
     try {
-      const response = await fetch("https://backend.webridgetalent.com/chat/rooms", {
+      const response = await fetch(`${BaseUrl}/chat/rooms`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

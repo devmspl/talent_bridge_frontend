@@ -33,6 +33,7 @@ import { useSendMessageMutation } from "@/app/store/api/chatApi";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 type Contact = {
   id: string;
@@ -85,7 +86,7 @@ export default function ChatPage() {
       .filter(apiUser => apiUser._id !== userId) // Exclude current user
       .map((apiUser, index) => ({
         id: apiUser._id,
-        profile: apiUser?.avatar ? `https://backend.webridgetalent.com/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
+        profile: apiUser?.avatar ? `${BaseUrl}/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
         name: apiUser.fullname || 'Unknown User',
         time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         message: "Available for chat",
