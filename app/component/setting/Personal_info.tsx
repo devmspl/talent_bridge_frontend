@@ -4,7 +4,7 @@ import Avatar from "@/app/component/Avatar";
 import React, { useEffect, useState, useRef } from "react";
 import logo from "@/public/assets/profile/Avatarlogo.png";
 import tick from "@/public/assets/tick.svg";
-import { FiChevronDown } from "react-icons/fi";
+import { FiChevronDown, FiUpload } from "react-icons/fi";
 import {
   useGetUserByIdQuery,
   useUpdateProfileMutation,
@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 
 const Personal_info = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragPreview, setDragPreview] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRefs = {
     country: useRef<HTMLDivElement>(null),
@@ -155,6 +157,56 @@ const Personal_info = () => {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    
+    // Show preview if image is being dragged
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      const item = e.dataTransfer.items[0];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            setDragPreview(event.target?.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    setDragPreview(null);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        setSelectedFile(file);
+        // Create and show preview
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setDragPreview(event.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        toast.error('Please upload an image file');
+      }
+    }
+    setDragPreview(null);
+  };
+
   const handleDropdownToggle = (dropdownName: string) => {
     setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
@@ -214,16 +266,43 @@ const Personal_info = () => {
     <div className="flex-1">
       {/* Profile Section - Responsive Layout */}
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex-shrink-0">
-          <Avatar
-            avatar={storedUser?.avatar}
-            avatarSvg={storedUser?.avatarSvg}
-            alt="Profile"
-            width={96}
-            height={96}
-            className="object-cover w-full h-full"
-            fallbackImage={logo}
-          />
+        <div 
+          className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden flex-shrink-0 group ${isDragging ? 'ring-4 ring-teal-500' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <div className={`absolute inset-0 bg-black bg-opacity-40 flex flex-col items-center justify-center text-white text-xs text-center p-2 opacity-0 group-hover:opacity-100 transition-opacity ${isDragging ? 'opacity-100' : ''}`}>
+            {isDragging && dragPreview ? (
+              <img 
+                src={dragPreview} 
+                alt="Preview" 
+                className="w-16 h-16 object-cover rounded-full mb-2"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center">
+                <FiUpload className="w-6 h-6 mb-1" />
+                {isDragging && <span className="text-xs mt-1">Drop image here</span>}
+              </div>
+            )}
+          </div>
+          {selectedFile && !isDragging ? (
+            <img
+              src={URL.createObjectURL(selectedFile)}
+              alt="Profile Preview"
+              className="object-cover w-full h-full"
+            />
+          ) : (
+            <Avatar
+              avatar={storedUser?.avatar}
+              avatarSvg={storedUser?.avatarSvg}
+              alt="Profile"
+              width={96}
+              height={96}
+              className={`object-cover w-full h-full ${isDragging ? 'opacity-60' : 'group-hover:opacity-80'} transition-opacity`}
+              fallbackImage={logo}
+            />
+          )}
         </div>
 
         <div className="flex-1 w-full sm:w-auto text-center sm:text-left">
@@ -242,6 +321,7 @@ const Personal_info = () => {
                 type="file"
                 className="hidden"
                 onChange={handleFileChange}
+                accept="image/*"
               />
             </label>
             <button className="px-3 sm:px-4 py-2 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer text-sm sm:text-base transition-colors">

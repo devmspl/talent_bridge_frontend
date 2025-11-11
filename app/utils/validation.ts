@@ -14,7 +14,9 @@ export const signupValidationSchema = yup.object({
   phone: yup
     .string()
     .required('Phone number is required')
-    .matches(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
+    .test('is-valid-phone', 'Please enter a valid 10-digit phone number', (value) => {
+      return value?.length === 10 && /^\d+$/.test(value);
+    }),
    country: yup
     .string()
     .required('Country is required')

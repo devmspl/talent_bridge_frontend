@@ -10,7 +10,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import { MdOutlineStar } from "react-icons/md";
-import user from "@/public/assets/profile/profileimage.png";
+import userprofile from "@/public/assets/profile/profileimage.png";
 import bitbucket from "@/public/assets/media/bitbucket.png";
 import { useParams, useRouter } from "next/navigation";
 import EmailModal from "@/app/component/modals/network/EmailModal";
@@ -22,6 +22,7 @@ import star from "@/public/assets/icons/Star.svg";
 import hafstar from "@/public/assets/icons/Star icon (1).png";
 import ReviewModal from "@/app/component/modals/network/ReviewModal";
 import { useGetUserByIdQuery } from "@/app/store/api/userApi";
+import { useGetAllRoomsQuery, useCreateChatRoomMutation } from "@/app/store/api/chatApi";
 import profile from "@/public/assets/profile/Avatar.png";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -43,7 +44,11 @@ export default function page() {
     pollingInterval: 10000,
   });
 
+  const { data: chatRooms } = useGetAllRoomsQuery();
+  const [createChatRoom] = useCreateChatRoomMutation();
+
   const handleSendMessage = async () => {
+    debugger
     if (!id || !userId) {
       console.error("Missing user ID or profile ID");
       return;
@@ -51,36 +56,49 @@ export default function page() {
 
     setIsCreatingRoom(true);
     try {
-      const response = await fetch("https://backend.webridgetalent.com/chat/rooms", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
+      // Check if a room already exists with this user
+      const existingRoom = chatRooms?.data?.find(room => 
+        room.members.some(member => member._id === id)
+      );
+      console.log("existingRoom", existingRoom);
+
+      if (existingRoom) {
+        // Navigate to existing chat
+        router.push(`/message?roomId=${existingRoom._id}`);
+        return;
+      }
+
+      // Create new chat room using chatApi
+      try {
+        const response = await createChatRoom({
           members: [id, userId],
-          type: "chat",
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.isSuccess && data.data) {
-        // Navigate to message page with user ID query param
-        router.push(`/message?userId=${id}`);
-      } else {
-        console.error("Failed to create room:", data);
-        // Still navigate to message page even if room creation fails
+          type: 'chat'
+        }).unwrap();
+        
+        console.log("Create room response:", response);
+        
+        if (response?.data?._id) {
+          // Navigate to the new chat room
+          router.push(`/message?roomId=${response.data._id}`);
+        } else {
+          console.error("Failed to create chat room:", response);
+          // Fallback to user ID based navigation if room ID is not available
+          router.push(`/message?userId=${id}`);
+        }
+      } catch (error) {
+        console.error("Error creating chat room:", error);
+        // Fallback to user ID based navigation on error
         router.push(`/message?userId=${id}`);
       }
     } catch (error) {
-      console.error("Error creating room:", error);
-      // Still navigate to message page on error
+      console.error("Error creating chat room:", error);
+      // Fallback to user ID based navigation on error
       router.push(`/message?userId=${id}`);
     } finally {
       setIsCreatingRoom(false);
     }
   };
+
 
   return (
     <>
@@ -129,7 +147,7 @@ export default function page() {
                 Talent Acquisition Lead • Technology
               </p>
               <div className="flex gap-1">
-                <Image src={bitbucket} alt="" width={24} />
+                <Image src={bitbucket} alt="bitbucket" width={24} />
                 <p className="text-sm text-gray-500 mt-1 font-medium">
                   BitBucket
                 </p>
@@ -142,11 +160,11 @@ export default function page() {
               onClick={handleSendMessage}
               disabled={isCreatingRoom || !id || !userId}
             >
-              <Image src={mail} alt="" width={20} /> 
+              <Image src={mail} alt="mail" width={20} />
               {isCreatingRoom ? "Creating..." : "Send Message"}
             </button>
             <button className="border border-gray-300 px-4 py-2 rounded-lg flex items-center gap-2 hover:cursor-pointer">
-              <Image src={call} alt=" " width={20} /> Request call
+              <Image src={call} alt="call " width={20} /> Request call
             </button>
           </div>
         </div>
@@ -159,19 +177,11 @@ export default function page() {
               Performance
             </h3>
             <div className="p-6">
-              {/* <div className="mb-2 text-[18px] font-medium text-[#4B5563] flex items-center gap-2">
-                Ghost Rating{" "}
-                <Image
-                  src={ghost}
-                  alt=""
-                  className="w-[13.33px] h-[16.67px] opacity-100 border-[1.67px] top-[1.67px] left-[3.33px]"
-                />
-              </div> */}
               <div className="mb-2 flex items-center gap-2 text-[18px] font-normal leading-[28px] tracking-[0] text-[#4B5563] font-inter">
                 Ghost Rating
                 <Image
                   src={ghost}
-                  alt="Ghost icon"
+                  alt="ghost icon"
                   className="w-[20px] h-[20px] opacity-100 rotate-0"
                 />
               </div>
@@ -220,7 +230,7 @@ export default function page() {
                     <p className="text-gray-400 text-sm">CloudTech Inc</p>
                   </div>
                   <div className="text-gray-500 text-sm flex items-center gap-1">
-                    <Image src={calender} alt="" width={16} /> Jan 2025
+                    <Image src={calender} alt="calender" width={16} /> Jan 2025
                   </div>
                 </div>
               ))}
@@ -233,30 +243,30 @@ export default function page() {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Candidate Reviews</h3>
             <div className="flex gap-2">
-   
-              <div className="mb-6 relative">
-  <select
-    value={reviewFilter}
-    onChange={(e) => setReviewFilter(e.target.value)}
-    className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
-  >
-    <option>All reviews</option>
-    <option>Top reviews</option>
-    <option>New to old</option>
-    <option>Highest to lowest</option>
-    <option>Lowest to highest</option>
-  </select>
 
-  <svg
-    className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-  </svg>
-</div>
+              <div className="mb-6 relative">
+                <select
+                  value={reviewFilter}
+                  onChange={(e) => setReviewFilter(e.target.value)}
+                  className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none appearance-none pr-8"
+                >
+                  <option>All reviews</option>
+                  <option>Top reviews</option>
+                  <option>New to old</option>
+                  <option>Highest to lowest</option>
+                  <option>Lowest to highest</option>
+                </select>
+
+                <svg
+                  className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
 
               <button
                 className="border border-gray-300 review text-white  px-4 py-2 h-[38px] rounded-lg flex items-center gap-2 hover:cursor-pointer"
@@ -271,7 +281,7 @@ export default function page() {
           <div className="review-1 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex gap-2">
-                <Image src={user} alt="" width={24} height={24} />
+                <Image src={userprofile} alt="user" width={24} height={24} />
                 <p className="font-semibold text-sm ">
                   Mike Zhang{" "}
                   <span className="text-gray-400 font-normal">
@@ -281,12 +291,11 @@ export default function page() {
               </div>
               <div>
                 <div className="text-yellow-400 flex gap-1">
-                  {/* {[...Array(5)].map((_, i) => <MdOutlineStar key={i} />)} */}
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={hafstar} alt="" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={hafstar} alt="hafstar" width={16} />
                 </div>
                 <p className="text-right text-xs text-gray-400">Feb 2025</p>
               </div>
@@ -302,7 +311,7 @@ export default function page() {
           <div className="review-1 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex gap-2">
-                <Image src={user} alt="" width={24} height={24} />
+                <Image src={userprofile} alt="user" width={24} height={24} />
                 <p className="font-semibold text-sm ">
                   Williams Doe{" "}
                   <span className="text-gray-400 font-normal">
@@ -313,11 +322,11 @@ export default function page() {
               <div>
                 <div className="text-yellow-400 flex gap-1">
                   {/* {[...Array(5)].map((_, i) => <MdOutlineStar key={i} />)} */}
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={hafstar} alt="" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={hafstar} alt="hafstar" width={16} />
                 </div>
                 <p className="text-right text-xs text-gray-400">Dec 2024</p>
               </div>
@@ -333,7 +342,7 @@ export default function page() {
           <div className="review-1 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex gap-2">
-                <Image src={user} alt="" width={24} height={24} />
+                <Image src={userprofile} alt="user" width={24} height={24} />
                 <p className="font-semibold text-sm ">
                   Michelle Carter{" "}
                   <span className="text-gray-400 font-normal">
@@ -344,11 +353,11 @@ export default function page() {
               <div>
                 <div className="text-yellow-400 flex gap-1">
                   {/* {[...Array(5)].map((_, i) => <MdOutlineStar key={i} />)} */}
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={hafstar} alt="" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={hafstar} alt="hafstar" width={16} />
                 </div>
                 <p className="text-right text-xs text-gray-400">Jan 2025</p>
               </div>
@@ -364,7 +373,7 @@ export default function page() {
           <div className="review-1 rounded-lg p-4 mb-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex gap-2">
-                <Image src={user} alt="" width={24} height={24} />
+                <Image src={userprofile} alt="user" width={24} height={24} />
                 <p className="font-semibold text-sm ">
                   Amanda Murphy{" "}
                   <span className="text-gray-400 font-normal">
@@ -374,12 +383,11 @@ export default function page() {
               </div>
               <div>
                 <div className="text-yellow-400 flex gap-1">
-                  {/* {[...Array(5)].map((_, i) => <MdOutlineStar key={i} />)} */}
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={star} alt="" width={16} />
-                  <Image src={hafstar} alt="" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={star} alt="star" width={16} />
+                  <Image src={hafstar} alt="hafstar" width={16} />
                 </div>
                 <p className="text-right text-xs text-gray-400">Feb 2025</p>
               </div>

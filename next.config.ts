@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "backend.webridgetalent.com",
         port: "",
-        pathname: "/assets/images/**",
+        pathname: "/**",
       },
       {
         protocol: "https",

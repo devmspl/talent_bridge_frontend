@@ -26,15 +26,18 @@ export default function Signup() {
 
   const fbReady = useFacebookSDK();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name } = e.target;
-    let { value } = e.target;
-    if (name === 'phone') {
-      // Keep only digits and limit to 10
-      value = value.replace(/\D/g, '').slice(0, 10);
-    }
-    dispatch(updateUserData({ [name]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    let processedValue = value;
     
+    if (name === 'phone') {
+      // Remove all non-digit characters and limit to 10 digits
+      processedValue = value.replace(/\D/g, '').slice(0, 10);
+    }
+    
+    dispatch(updateUserData({ [name]: processedValue }));
+    
+    // Clear error for this field if it exists
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -253,7 +256,9 @@ const loginWithFacebook = () => {
                       errors.phone ? "border-red-500" : "border-gray-300"
                     }`}
                     inputMode="numeric"
-                    pattern="\\d{10}"
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    title="Please enter a valid 10-digit phone number"
                   />
                 </div>
                 {errors.phone && (

@@ -20,19 +20,19 @@ import link from "@/public/assets/icons/link.png";
 import smile from "@/public/assets/icons/smile.png";
 import ArchiveModal from "@/app/component/modals/message/ArchiveModal";
 import { useAppDispatch, useAppSelector } from "@/app/store/reduxHook";
-import { 
-  addMessage, 
-  setMessages, 
-  setRooms, 
-  setCurrentRoom, 
-  type Message, 
-  type Room 
-} from "@/app/store/slices/socketSlice";
+
 import { useGetAllUsersQuery } from "@/app/store/api/userApi";
-import { useSendMessageMutation } from "@/app/store/api/chatApi";
+import {
+  useGetAllRoomsQuery,
+  useGetRoomMessagesQuery,
+  useSendMessageMutation,
+  type ChatRoom,
+  type Message as MessageType
+} from "@/app/store/api/chatApi";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 type Contact = {
   id: string;
@@ -50,12 +50,11 @@ type Contact = {
 
 export default function ChatPage() {
   const dispatch = useAppDispatch();
-  const { socket, messages, rooms, currentRoomId } = useAppSelector(state => state.socket);
   // Read userId directly from cookies as it's the source of truth
   const userId = Cookies.get("tb_userId");
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
-  
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
@@ -64,255 +63,129 @@ export default function ChatPage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Fetch users from API
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useGetAllUsersQuery({
-    page_no: 1,
-    page_size: 50
-  });
-
-  // Send message mutation
-  const [sendMessageApi, { isLoading: isSendingMessage }] = useSendMessageMutation();
+  // RTK Query hooks
+  const { data: roomsData, isLoading: isLoadingRooms } = useGetAllRoomsQuery();
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const { data: messagesData, isLoading: isLoadingMessages } = useGetRoomMessagesQuery(
+    selectedRoomId || '',
+    { skip: !selectedRoomId }
+  );
+  const [sendMessage, { isLoading: isSendingMessage }] = useSendMessageMutation();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Transform API users to contacts format
-  const transformUsersToContacts = (users: any[]): Contact[] => {
-    if (!users || !Array.isArray(users)) return [];
-    console.log("users==>",users);
-    return users
-      .filter(apiUser => apiUser._id !== userId) // Exclude current user
-      .map((apiUser, index) => ({
-        id: apiUser._id,
-        profile: apiUser?.avatar ? `https://backend.webridgetalent.com/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
-        name: apiUser.fullname || 'Unknown User',
-        time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        message: "Available for chat",
-        online: Math.random() > 0.5, // Random online status for demo
-        img: user,
-        unread: Math.random() > 0.7, // Random unread status
-        archived: false,
-        email: apiUser.email,
-      }));
-  };
+  useEffect(() => {
+    if (roomsData?.data) {
+      const formattedRooms = roomsData.data
 
-  const handleCreateRoom = async (user1: string, user2: string, members: string[]) => {
-    if (!socket) return;
+      setContacts(prev => {
+        const newContacts = [...prev];
+        formattedRooms.forEach((room: any) => {
+          const existingContact = newContacts.find(c => c.roomId === room.roomId);
+          if (!existingContact) {
+            newContacts.push({
+              id: room.members.find((m: any) => m._id !== userId)?._id || '',
+              roomId: room._id,
+              name: room.members.find((m: any) => m._id !== userId)?.fullname || 'Unknown User',
+              email: room.members.find((m: any) => m._id !== userId)?.email || '',
+              profile: room.members.find((m: any) => m._id !== userId)?.avatar || null,
+              time: new Date().toISOString(),
+              message: '',
+              online: false,
+              img: null,
+              unread: false,
+              archived: false
+            });
+          }
+        });
+        return newContacts;
+      });
 
-    socket.emit('set-room', {
-      name1: `${user1}-${user2}`,
-      name2: `${user2}-${user1}`,
-      members: members
-    }, (response: any) => {
-      console.log("Room created:", response);
-      if (response.roomId) {
-        setContacts(prev => prev.map(contact => 
-          contact.id === user2 ? { ...contact, roomId: response.roomId } : contact
-        ));
+      // Set the first room as selected by default if none is selected
+      if (formattedRooms.length > 0 && !selectedRoomId) {
+        setSelectedRoomId(formattedRooms[0]._id);
       }
+    }
+  }, [roomsData, userId]);
+
+  // Format message date for grouping
+  const formatMessageDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
-  const fetchRooms = async () => {
-    try {
-      const token = Cookies.get("tb_token");
-      const response = await fetch(`https://backend.webridgetalent.com/chat/rooms`, {
-        method: 'GET',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      const res = await response.json();
-      if (res.isSuccess && res.data) {
-        const formattedRooms: Room[] = res.data.map((room: any) => ({
-          _id: room._id,
-          roomId: room._id,
-          members: room.members,
-        }));
-
-        dispatch(setRooms(formattedRooms));
-        
-        setContacts(prev => prev.map(contact => {
-          const room = formattedRooms.find(r => 
-            r.members.includes(contact.id) && r.members.includes(userId!)
-          );
-          return room ? { ...contact, roomId: room._id } : contact;
-        }));
-      }
-    } catch (err) {
-      console.error("Failed to fetch rooms:", err);
-    } finally {
-      setIsLoading(false);
+  // Group messages by date
+  const groupedMessages = messagesData?.data?.reduce((groups: Record<string, any[]>, message: any) => {
+    const date = formatMessageDate(message.timestamp);
+    if (!groups[date]) {
+      groups[date] = [];
     }
-  };
+    groups[date].push({
+      ...message,
+      senderId: message.msgFrom._id,
+      senderName: message.msgFrom.fullname || message.msgFrom.email,
+      text: message.message,
+      timestamp: message.timestamp,
+      roomId: message.room,
+      attachments: message.attachments || []
+    });
+    return groups;
+  }, {}) || {};
 
-  const fetchMessages = async (roomId: string) => {
-    try {
-      const token = Cookies.get("tb_token");
-      const response = await fetch(`https://backend.webridgetalent.com/chat/getMessages/${roomId}`, {
-        method: 'GET',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
 
-      const res = await response.json();
-      if (res.isSuccess && res.data) {
-        const formattedMessages: Message[] = res.data.map((msg: any) => ({
-          _id: msg._id,
-          senderId: msg.senderId,
-          senderName: msg.senderName,
-          text: msg.text,
-          roomId: msg.roomId,
-          timestamp: msg.createdAt,
-          createdAt: msg.createdAt,
-        }));
-
-        dispatch(setMessages({ roomId, messages: formattedMessages }));
-      }
-    } catch (err) {
-      console.error("Failed to fetch messages:", err);
+  // Update messages when messages data is loaded
+  useEffect(() => {
+    if (messagesData?.data && selectedRoomId) {
+      const formattedMessages = messagesData.data.map((msg: any) => ({
+        _id: msg._id,
+        senderId: msg.msgFrom._id,
+        senderName: msg.msgFrom.fullname || msg.msgFrom.email,
+        text: msg.message,
+        roomId: msg.room,
+        timestamp: msg.timestamp,
+        createdAt: msg.timestamp,
+      }));
     }
-  };
+  }, [messagesData, selectedRoomId, dispatch]);
 
-  // const handleContactSelect = (contact: Contact) => {
-  //   setSelectedContact(contact);
-  //   if (contact.roomId) {
-  //     dispatch(setCurrentRoom(contact.roomId));
-  //     fetchMessages(contact.roomId);
-  //   }
-  // };
 
   const handleContactSelect = async (contact: Contact) => {
     setSelectedContact(contact);
-  
-    if (!socket || !userId) return;
-  
     if (contact.roomId) {
-      // Room already exists
-      dispatch(setCurrentRoom(contact.roomId));
-  
-      // **Join the room explicitly**
-      socket.emit("join-room", contact.roomId);
-  
-      // Fetch chat history
-      await fetchMessages(contact.roomId);
-  
-    } else {
-      // Room create karna hoga
-      socket.emit(
-        "set-room",
-        {
-          name1: `${userId}-${contact.id}`,
-          name2: `${contact.id}-${userId}`,
-          members: [userId, contact.id],
-        },
-        async (response: any) => {
-          if (response.roomId) {
-            dispatch(setCurrentRoom(response.roomId));
-            console.log("response.roomId",response.roomId);
-            // Update contacts
-            setContacts((prev) =>
-              prev.map((c) =>
-                c.id === contact.id ? { ...c, roomId: response.roomId } : c
-              )
-            );
-  
-            // **Join the new room**
-            socket.emit("join-room", response.roomId);
-  
-            // Fetch chat history
-            await fetchMessages(response.roomId);
-          }
-        }
-      );
+      setSelectedRoomId(contact.roomId);
     }
   };
-  
+
   const handleSendMessage = async () => {
-    if (!currentRoomId || !userId) {
-      console.error("Missing currentRoomId or userId:", { currentRoomId, userId });
-      return;
-    }
-    
-    // Check if there's at least text or attachments
-    const hasText = messageText.trim().length > 0;
-    const hasAttachments = attachments && attachments.length > 0;
-    
-    if (!hasText && !hasAttachments) {
-      console.log("No text or attachments to send");
-      return;
-    }
-
-    // Build dynamic payload - supports text only, attachments only, or both
-    const payload: { msg?: string; attachments?: any[] } = {};
-    
-    if (hasText) {
-      payload.msg = messageText.trim();
-    }
-    
-    if (hasAttachments) {
-      payload.attachments = attachments;
-    }
-
-    console.log("Sending message with payload:", payload, "to room:", currentRoomId);
+    if (!messageText.trim() || !selectedRoomId) return;
 
     try {
-      // Send message via REST API
-      const response = await sendMessageApi({
-        roomId: currentRoomId,
-        payload,
-      }).unwrap();
-
-    
-      const messageData = {
-        _id: response._id || Date.now().toString(),
-        roomId: response.room || currentRoomId,
-        senderId: response.msgFrom?._id || userId || "",
-        senderName: response.msgFrom?.email || selectedContact?.name || "",
-        text: response.msg || payload.msg || "",
-        timestamp: response.createdAt || new Date().toISOString(),
-        createdAt: response.createdAt || new Date().toISOString(),
+      const payload = {
+        msg: messageText,
+        attachments: attachments.map(attachment => ({
+          url: attachment.url,
+          name: attachment.name,
+          type: attachment.type
+        }))
       };
 
-      console.log("Mapped message data:", messageData);
-      console.log("Current roomId for dispatch:", currentRoomId);
-
-      // Also emit via socket for real-time updates
-      if (socket) {
-        socket.emit("chatMsg", {
-          roomId: currentRoomId,
-          senderId: userId,
-          text: payload.msg || "",
-          attachments: payload.attachments || [],
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      // Update local state immediately for optimistic UI
-      dispatch(
-        addMessage({
-          roomId: currentRoomId,
-          message: messageData,
-        })
-      );
-
-      console.log("Message added to Redux store");
-
-      // Clear inputs
-      setMessageText("");
+      await sendMessage({ roomId: selectedRoomId, payload }).unwrap();
+      setMessageText('');
       setAttachments([]);
-    } catch (error: any) {
-      console.error("Failed to send message:", error);
-      console.error("Error details:", error?.data || error?.message || error);
-      // You can add toast notification here if needed
+      
+      // Scroll to bottom after sending message
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('Failed to send message:', error);
     }
   };
-  
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -321,39 +194,8 @@ export default function ChatPage() {
     }
   };
 
-  // Update contacts when users data is available
-  useEffect(() => {
-    if (usersData && Array.isArray(usersData)) {
-      const transformedContacts = transformUsersToContacts(usersData);
-      console.log("transformedContacts",transformedContacts);
-      setContacts(transformedContacts);
-      
-      // Create rooms for each contact
-      if (socket && userId) {
-        transformedContacts.forEach(contact => {
-          handleCreateRoom(userId, contact.id, [userId, contact.id]);
-        });
-      }
 
-      // Auto-select contact if userId query param is present
-      if (targetUserId && transformedContacts.length > 0) {
-        const contactToSelect = transformedContacts.find(c => c.id === targetUserId);
-        if (contactToSelect) {
-          handleContactSelect(contactToSelect);
-        }
-      }
-    }
-  }, [usersData, socket, userId, targetUserId]);
 
-  useEffect(() => {
-    if (socket && userId) {
-      fetchRooms();
-    }
-  }, [socket, userId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, currentRoomId]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -365,84 +207,40 @@ export default function ChatPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!socket) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p>Connecting to chat server...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (usersLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
-          <p>Loading users...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (usersError) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center text-red-500">
-          <p>Error loading users. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
 
   const filteredContacts = contacts.filter((c) => {
     if (filter === "unread") return c.unread;
     if (filter === "archived") return c.archived;
     return true;
   });
-console.log("filteredContacts",filteredContacts);
 
 
-  const currentMessages = currentRoomId ? messages[currentRoomId] || [] : [];
-  
-  // Debug logging
-  console.log("Current roomId:", currentRoomId);
-  console.log("Current messages:", currentMessages);
-  console.log("All messages:", messages);
+  // Get messages for the selected room from the API response
+  const currentMessages = messagesData?.data || [];
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
-  const formatMessageDate = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return "Today";
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
 
   // Generate avatar with first letter fallback
   const generateAvatar = (contact: Contact) => {
     const firstLetter = contact.name.charAt(0).toUpperCase();
     const colors = [
-      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
+      'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500',
       'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500',
       'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-amber-500'
     ];
     const colorIndex = contact.name.length % colors.length;
     const bgColor = colors[colorIndex];
-    
+
     return (
       <div className={`w-full h-full rounded-full ${bgColor} flex items-center justify-center text-white font-semibold text-lg`}>
         {firstLetter}
@@ -459,16 +257,6 @@ console.log("filteredContacts",filteredContacts);
     }
   };
 
-  const groupedMessages = currentMessages.reduce((groups: Record<string, Message[]>, message : any) => {
-    const date = formatMessageDate(message.timestamp);
-    if (!groups[date]) groups[date] = [];
-    groups[date].push(message);
-    return groups;
-  }, {});
-
-  console.log("contacts",contacts);
-  // console.log(" contact.profile",contacts[0].profile);
-  
 
   return (
     <>
@@ -487,46 +275,44 @@ console.log("filteredContacts",filteredContacts);
             <div className="p-3 sm:p-4 bg-white">
               <div className="flex justify-start items-center mb-4">
                 <div className="flex gap-2 sm:gap-3 font-medium">
-                  {["all", "unread", "archived"].map((tab) => (
+                  {["all", "unread", "archived"].map((tab,index) => (
                     <span
-                      key={tab}
+                      key={index}
                       onClick={() => setFilter(tab as "all" | "unread" | "archived")}
-                      className={`cursor-pointer px-3 py-1.5 rounded-full capitalize text-xs sm:text-sm ${
-                        filter === tab ? "bg-teal-100 text-teal-700" : "text-gray-400"
-                      }`}
+                      className={`cursor-pointer px-3 py-1.5 rounded-full capitalize text-xs sm:text-sm ${filter === tab ? "bg-teal-100 text-teal-700" : "text-gray-400"
+                        }`}
                     >
                       {tab}
                     </span>
                   ))}
                 </div>
               </div>
-              
-              <input 
-                placeholder="Search contacts..." 
-                className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm" 
+
+              <input
+                placeholder="Search contacts..."
+                className="w-full mb-4 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm"
               />
-              
+
               <div className="space-y-2">
                 {filteredContacts.length === 0 ? (
                   <div className="text-center text-gray-400 text-sm mt-10">No contacts found</div>
                 ) : (
-                  contacts.map((contact) => (
+                  contacts.map((contact,index) => (
                     <div
-                      key={(contact as any)?.id}
-                      className={`flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors ${
-                        (selectedContact as any)?.id === (contact as any)?.id ? "bg-teal-50 border border-teal-200" : ""
-                      }`}
+                      key={`contact-${contact.id}`}
+                      className={`flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors ${(selectedContact as any)?.id === (contact as any)?.id ? "bg-teal-50 border border-teal-200" : ""
+                        }`}
                       onClick={() => handleContactSelect(contact)}
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="relative flex-shrink-0 w-12 h-12">
-                          <Image 
-                            src={typeof contact.profile === 'string' ? contact.profile : contact.profile.src || contact.profile} 
-                            className="rounded-full object-cover w-full h-full" 
-                            alt={contact.name} 
-                            width={48} 
-                            height={48} 
-                            onError={(e : any) => handleImageError(e, contact)}
+                          <Image
+                            src={contact.profile?.startsWith('http') ? contact.profile : `${BaseUrl}${contact.profile.startsWith('/') ? '' : '/'}${contact.profile}`}
+                            className="rounded-full object-cover w-full h-full"
+                            alt={contact.name}
+                            width={48}
+                            height={48}
+                            onError={(e: any) => handleImageError(e, contact)}
                           />
                           <div className="absolute inset-0 rounded-full hidden">
                             {generateAvatar(contact)}
@@ -553,20 +339,21 @@ console.log("filteredContacts",filteredContacts);
             {/* Mobile Chat Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <button 
+                <button
                   onClick={() => setSelectedContact(null)}
                   className="text-gray-500 hover:text-gray-700 p-1"
                 >
                   ←
                 </button>
                 <div className="relative w-10 h-10 flex-shrink-0">
-                  <Image 
-                    src={typeof selectedContact.profile === 'string' ? selectedContact.profile : selectedContact.profile.src || selectedContact.profile} 
-                    alt="avatar" 
-                    className="w-full h-full rounded-full object-cover" 
-                    width={40} 
-                    height={40} 
-                    onError={(e : any) => handleImageError(e, selectedContact)}
+                  <Image
+                    src={
+                      selectedContact.profile || user3}
+                    alt="avatar"
+                    className="w-full h-full rounded-full object-cover"
+                    width={40}
+                    height={40}
+                    onError={(e: any) => handleImageError(e, selectedContact)}
                   />
                   <div className="absolute inset-0 rounded-full hidden">
                     {generateAvatar(selectedContact)}
@@ -595,8 +382,8 @@ console.log("filteredContacts",filteredContacts);
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                     <ul className="py-1 text-sm text-gray-700">
-                      <li 
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                      <li
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => setModalOpen(true)}
                       >
                         Archive
@@ -616,9 +403,9 @@ console.log("filteredContacts",filteredContacts);
                   <div className="flex items-center justify-center my-3">
                     <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{date}</span>
                   </div>
-                  {msgs.map((message : any , i : any) => (
-                    <div 
-                      key={message._id || i} 
+                  {(msgs as any[]).map((message: any, i: number) => (
+                    <div
+                      key={`message-${message._id || message.timestamp}`}
                       className={`flex ${message.senderId === userId ? "justify-end" : "justify-start"} mb-3`}
                     >
                       <div className={`flex flex-col ${message.senderId === userId ? "items-end" : "items-start"} max-w-[85%]`}>
@@ -628,33 +415,58 @@ console.log("filteredContacts",filteredContacts);
                               <span>You {formatMessageTime(message.timestamp)}</span>
                               <Image src={user} alt="Your avatar" width={20} height={20} className="rounded-full" />
                             </>
-                            ) : (
-                              <>
-                                <div className="relative w-5 h-5">
-                                  <Image 
-                                    src={typeof selectedContact.profile === 'string' ? selectedContact.profile : selectedContact.profile.src || selectedContact.profile} 
-                                    alt="Sender avatar" 
-                                    width={20} 
-                                    height={20} 
-                                    className="w-full h-full rounded-full object-cover"
-                                    onError={(e:any) => handleImageError(e, selectedContact)}
-                                  />
-                                  <div className="absolute inset-0 rounded-full hidden">
-                                    <div className="w-full h-full rounded-full bg-teal-500 flex items-center justify-center text-white font-semibold text-xs">
-                                      {selectedContact.name.charAt(0).toUpperCase()}
-                                    </div>
+                          ) : (
+                            <>
+                              <div className="relative w-5 h-5">
+                                <Image
+                                  src={selectedContact.profile?.startsWith('http') ? selectedContact.profile : `${BaseUrl}${selectedContact.profile.startsWith('/') ? '' : '/'}${selectedContact.profile}`}
+                                  alt="Sender avatar"
+                                  width={20}
+                                  height={20}
+                                  className="w-full h-full rounded-full object-cover"
+                                  onError={(e: any) => handleImageError(e, selectedContact)}
+                                />
+                                <div className="absolute inset-0 rounded-full hidden">
+                                  <div className="w-full h-full rounded-full bg-teal-500 flex items-center justify-center text-white font-semibold text-xs">
+                                    {selectedContact.name.charAt(0).toUpperCase()}
                                   </div>
                                 </div>
-                                <span>{selectedContact.name} {formatMessageTime(message.timestamp)}</span>
-                              </>
-                            )}
+                              </div>
+                              <span>{selectedContact.name} {formatMessageTime(message.timestamp)}</span>
+                            </>
+                          )}
                         </div>
-                        <div className={`px-3 py-2 text-sm leading-relaxed ${
-                          message.senderId === userId 
-                            ? "bg-teal-600 text-white rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-lg" 
+                        <div className={`px-3 py-2 text-sm leading-relaxed ${message.msgFrom._id === userId
+                            ? "bg-teal-600 text-white rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-lg"
                             : "bg-gray-100 text-gray-900 rounded-tl-sm rounded-tr-lg rounded-br-lg rounded-bl-lg"
-                        }`}>
-                          {message.text}
+                          }`}>
+                          {message.message}
+                          {message.attachments?.length > 0 && (
+                            <div className="mt-2">
+                              {message.attachments.map((file: any, idx: number) => (
+                                <div key={`attachment-${idx}`} className="mt-1">
+                                  {file.type.startsWith('image/') ? (
+                                    <Image
+                                      src={file.url.startsWith('http') ? file.url : `${BaseUrl}${file.url.startsWith('/') ? '' : '/'}${file.url}`}
+                                      alt={file.name}
+                                      width={200}
+                                      height={150}
+                                      className="rounded-lg max-h-40 object-cover"
+                                    />
+                                  ) : (
+                                    <a
+                                      href={file.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline"
+                                    >
+                                      {file.name}
+                                    </a>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -675,12 +487,13 @@ console.log("filteredContacts",filteredContacts);
                   className="flex-1 h-12 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
                   rows={1}
                 />
-                <button 
+                <button
                   onClick={handleSendMessage}
                   disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
                   className="bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
                   <FiSend size={16} />
+                  {isSendingMessage ? "Sending..." : "Send"}
                 </button>
               </div>
             </div>
@@ -695,52 +508,47 @@ console.log("filteredContacts",filteredContacts);
           <div className="p-4 bg-white">
             <div className="flex justify-start items-center mb-4">
               <div className="flex gap-3 font-medium">
-                {["all", "unread", "archived"].map((tab) => (
+                {["all", "unread", "archived"].map((tab,index) => (
                   <span
-                    key={tab}
+                    key={index}
                     onClick={() => setFilter(tab as "all" | "unread" | "archived")}
-                    className={`cursor-pointer px-3 py-1.5 rounded-full capitalize text-sm ${
-                      filter === tab ? "bg-teal-100 text-teal-700" : "text-gray-400"
-                    }`}
+                    className={`cursor-pointer px-3 py-1.5 rounded-full capitalize text-sm ${filter === tab ? "bg-teal-100 text-teal-700" : "text-gray-400"
+                      }`}
                   >
                     {tab}
                   </span>
                 ))}
               </div>
             </div>
-            
-            <input 
-              placeholder="Search contacts..." 
-              className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm" 
+
+            <input
+              placeholder="Search contacts..."
+              className="w-full mb-4 px-4 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm"
             />
           </div>
-          
+
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             <div className="space-y-2">
               {filteredContacts.length === 0 ? (
                 <div className="text-center text-gray-400 text-sm mt-10">No contacts found</div>
               ) : (
-                contacts.map((contact) => (
+                filteredContacts.map((contact) => (
                   <div
-                    key={contact.id}
-                    className={`flex items-center justify-between cursor-pointer p-3 hover:bg-gray-50 transition-colors ${
-                      selectedContact?.id === contact.id ? "bg-teal-50 border-l-[4px] border-teal-300" : ""
-                    }`}
+                    key={`filtered-contact-${contact.id}`}
+                    className={`flex items-center justify-between cursor-pointer p-3 hover:bg-gray-50 transition-colors ${selectedContact?.id === contact.id ? "bg-teal-50 border-l-[4px] border-teal-300" : ""
+                      }`}
                     onClick={() => handleContactSelect(contact)}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="relative flex-shrink-0 w-12 h-12">
-                        <Image 
-                          src={typeof contact.profile === 'string' ? contact.profile : contact.profile.src || contact.profile} 
-                          className="rounded-full object-cover w-full h-full" 
-                          alt={contact.name} 
-                          width={48} 
-                          height={48} 
-                          onError={(e : any) => handleImageError(e, contact)}
+                        <Image
+                          src={`${BaseUrl}/assets/images/${contact.profile}`}
+                          className="rounded-full object-cover w-full h-full"
+                          alt={contact.name}
+                          width={48}
+                          height={48}
+                          onError={(e: any) => handleImageError(e, contact)}
                         />
-                        <div className="absolute inset-0 rounded-full hidden">
-                          {generateAvatar(contact)}
-                        </div>
                         {contact.online && (
                           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                         )}
@@ -750,7 +558,10 @@ console.log("filteredContacts",filteredContacts);
                         <div className="text-gray-500 text-sm truncate">{contact.message}</div>
                       </div>
                     </div>
-                    <div className="text-gray-400 text-xs flex-shrink-0 ml-2">{contact.time}</div>
+                    <div className="text-gray-400 text-xs flex-shrink-0 ml-2">
+                      {new Date(contact.time).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                    </div>
+
                   </div>
                 ))
               )}
@@ -766,22 +577,22 @@ console.log("filteredContacts",filteredContacts);
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <div className="relative w-12 h-12">
-                    <Image 
-                      src={typeof selectedContact.profile === 'string' ? selectedContact.profile : selectedContact.profile.src || selectedContact.profile} 
-                      alt="avatar" 
-                      className="w-full h-full rounded-full object-cover" 
-                      width={48} 
-                      height={48} 
-                      onError={(e : any) => handleImageError(e, selectedContact)}
+                    <Image
+                      src={`${BaseUrl}/assets/images/${selectedContact.profile}`}
+                      alt="avatar"
+                      className="w-full h-full rounded-full object-cover"
+                      width={48}
+                      height={48}
+                      onError={(e: any) => handleImageError(e, selectedContact)}
                     />
-                    <div className="absolute inset-0 rounded-full hidden">
+                    {/* <div className="absolute inset-0 rounded-full hidden">
                       {generateAvatar(selectedContact)}
-                    </div>
+                    </div> */}
                   </div>
                   <div>
                     <div className="font-semibold text-gray-900">{selectedContact.name}</div>
                     <div className="text-sm text-gray-500">
-                      {selectedContact.email || `${selectedContact.name.toLowerCase().replace(/\s+/g, "")}@gmail.com`}
+                      {selectedContact.email}
                     </div>
                   </div>
                 </div>
@@ -789,13 +600,13 @@ console.log("filteredContacts",filteredContacts);
                 <div className="relative" ref={dropdownRef}>
                   <div className="flex items-center gap-3 text-gray-500">
                     <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
-                      <Image  src={call} alt="Call" width={20} />
+                      <Image src={call} alt="Call" width={20} />
                     </button>
                     <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
                       <Image src={mail} alt="Mail" width={20} />
                     </button>
-                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => setModalOpen(true)}>
-                      <Image src={deleteIcon} alt="Delete" width={20 } />
+                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => setModalOpen(true)}>
+                      <Image src={deleteIcon} alt="Delete" width={20} />
                     </button>
                     {/* <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -807,8 +618,8 @@ console.log("filteredContacts",filteredContacts);
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                       <ul className="py-1 text-sm text-gray-700">
-                        <li 
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                        <li
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                           onClick={() => setModalOpen(true)}
                         >
                           Archive
@@ -824,13 +635,13 @@ console.log("filteredContacts",filteredContacts);
               {/* Messages */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
                 {Object.entries(groupedMessages).map(([date, msgs]) => (
-                  <div key={date}>
+                  <div key={`date-${date}`}>
                     <div className="flex items-center justify-center my-4">
                       <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">{date}</span>
                     </div>
-                    {msgs.map((message : any , i : any) => (
-                      <div 
-                        key={message._id || i} 
+                    {msgs.map((message: any, i: any) => (
+                      <div
+                        key={`message-${message._id || message.timestamp}`}
                         className={`flex ${message.senderId === userId ? "justify-end" : "justify-start"} mb-4`}
                       >
                         <div className={`flex flex-col ${message.senderId === userId ? "items-end" : "items-start"} max-w-md`}>
@@ -843,13 +654,13 @@ console.log("filteredContacts",filteredContacts);
                             ) : (
                               <>
                                 <div className="relative w-6 h-6">
-                                  <Image 
-                                    src={typeof selectedContact.profile === 'string' ? selectedContact.profile : selectedContact.profile.src || selectedContact.profile} 
-                                    alt="Sender avatar" 
-                                    width={24} 
-                                    height={24} 
+                                  <Image
+                                    src={selectedContact.profile || user3}
+                                    alt="Sender avatar"
+                                    width={24}
+                                    height={24}
                                     className="w-full h-full rounded-full object-cover"
-                                    onError={(e:any) => handleImageError(e, selectedContact)}
+                                    onError={(e: any) => handleImageError(e, selectedContact)}
                                   />
                                   <div className="absolute inset-0 rounded-full hidden">
                                     <div className="w-full h-full rounded-full bg-teal-500 flex items-center justify-center text-white font-semibold text-xs">
@@ -861,11 +672,10 @@ console.log("filteredContacts",filteredContacts);
                               </>
                             )}
                           </div>
-                          <div className={`px-4 py-3 text-sm leading-relaxed ${
-                            message.senderId === userId 
-                              ? "bg-teal-600 text-white rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-lg" 
+                          <div className={`px-4 py-3 text-sm leading-relaxed ${message.senderId === userId
+                              ? "bg-teal-600 text-white rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-lg"
                               : "bg-gray-100 text-gray-900 rounded-tl-sm rounded-tr-lg rounded-br-lg rounded-bl-lg"
-                          }`}>
+                            }`}>
                             {message.text}
                           </div>
                         </div>
@@ -895,7 +705,7 @@ console.log("filteredContacts",filteredContacts);
                     className="flex-1 h-12 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
                     rows={1}
                   />
-                  <button 
+                  <button
                     onClick={handleSendMessage}
                     disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
                     className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
@@ -918,7 +728,7 @@ console.log("filteredContacts",filteredContacts);
         </div>
       </div>
 
-      {modalOpen && <ArchiveModal onClose={() => setModalOpen(false)} />}
+      {/* {modalOpen && <ArchiveModal onClose={() => setModalOpen(false)} />} */}
     </>
   );
 }

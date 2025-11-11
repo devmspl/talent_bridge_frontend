@@ -33,6 +33,39 @@ const chatSlice = createSlice({
       setMessages(state, action: PayloadAction<Message[]>) {
         state.messages = action.payload;
       },
+      updateMessageStatus(
+        state,
+        action: PayloadAction<{ roomId: string; messageId: string; status: string }>
+      ) {
+        const { roomId, messageId, status } = action.payload;
+        
+        // Update message in messages array
+        const messageIndex = state.messages.findIndex(
+          (msg) => msg._id === messageId
+        );
+        
+        if (messageIndex !== -1) {
+          state.messages[messageIndex] = {
+            ...state.messages[messageIndex],
+            status: status
+          };
+        }
+        
+        // If the message is in a room's messages, update it there as well
+        const roomIndex = state.rooms.findIndex(room => room._id === roomId);
+        if (roomIndex !== -1) {
+          const roomMessageIndex = state.rooms[roomIndex].messages.findIndex(
+            msg => msg._id === messageId
+          );
+          
+          if (roomMessageIndex !== -1) {
+            state.rooms[roomIndex].messages[roomMessageIndex] = {
+              ...state.rooms[roomIndex].messages[roomMessageIndex],
+              status: status
+            };
+          }
+        }
+      },
     },
     extraReducers: (builder) => {
       // getChats
