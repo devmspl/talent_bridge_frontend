@@ -37,6 +37,7 @@ const DeleteShowcaseRoom: React.FC<DeleteShowcaseRoomProps> = ({
         </div>
 
         {/* Warning Icon */}
+    
         <div className="flex justify-center mb-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-red-100 rounded-full flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -85,7 +86,8 @@ const DeleteShowcaseRoom: React.FC<DeleteShowcaseRoomProps> = ({
             Cancel
           </button>
           <button
-            onClick={onDelete}
+            onClick={
+              onDelete}
             disabled={!isConfirmed}
             className={`w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm font-medium text-white rounded-lg transition ${
               isConfirmed 

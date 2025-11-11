@@ -75,9 +75,31 @@ export default function ChatPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+<<<<<<< HEAD
   useEffect(() => {
     if (roomsData?.data) {
       const formattedRooms = roomsData.data
+=======
+  // Transform API users to contacts format
+  const transformUsersToContacts = (users: any[]): Contact[] => {
+    if (!users || !Array.isArray(users)) return [];
+    console.log("users==>",users);
+    return users
+      .filter(apiUser => apiUser._id !== userId) // Exclude current user
+      .map((apiUser, index) => ({
+        id: apiUser._id,
+        profile: apiUser?.avatar ? `${BaseUrl}/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
+        name: apiUser.fullname || 'Unknown User',
+        time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        message: "Available for chat",
+        online: Math.random() > 0.5, // Random online status for demo
+        img: user,
+        unread: Math.random() > 0.7, // Random unread status
+        archived: false,
+        email: apiUser.email,
+      }));
+  };
+>>>>>>> 6dd8142f35f330855707846d4501a5cbf21c3505
 
       setContacts(prev => {
         const newContacts = [...prev];

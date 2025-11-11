@@ -77,6 +77,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Cookies from "js-cookie";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function LinkedInCallback() {
   const router = useRouter();
@@ -108,7 +109,7 @@ export default function LinkedInCallback() {
         }
 
         // Step 2: Tumhari API ko token bhejna
-        const res = await axios.post("https://backend.webridgetalent.com/User/login/linkedin", {
+        const res = await axios.post(`${BaseUrl}/User/login/linkedin`, {
           token: accessToken
         });
 

@@ -10,7 +10,7 @@ import Link from "next/link";
 import Tool from "@/public/assets/icons/Tooltip.svg"
 import Doc from "@/public/assets/icons/doc.svg"
 import cut from "@/public/assets/icons/cutt.svg"
-import { lsGet, lsSet, ROOM_KEYS, InsightsData } from "@/app/utils/roomStorage";
+import { lsGet, lsSet, ROOM_KEYS, InsightsData, InsightItem } from "@/app/utils/roomStorage";
 const InsightsPage: React.FC = () => {
   const [skills] = useState(["SQL", "Tableau", "Python", "Power Automate", "DAX",
       "Power BI "
@@ -40,7 +40,7 @@ const InsightsPage: React.FC = () => {
     const [teamSize, setTeamSize] = useState("0-10");
     const routes =useRouter()
 
-    const [insightsList, setInsightsList] = useState<{title:string; description:string; tag:string;}[]>([]);
+    const [insightsList, setInsightsList] = useState<InsightItem[]>([]);
 
     // hydrate dynamic insights list from localStorage
     useEffect(() => {
@@ -58,7 +58,7 @@ const InsightsPage: React.FC = () => {
       setInsightsList(saved.insights || []);
     }, []);
 
-    const persistInsights = (next: {title:string; description:string; tag:string;}[]) => {
+    const persistInsights = (next: InsightItem[]) => {
       setInsightsList(next);
       const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
         companyName: companyName,
@@ -69,20 +69,36 @@ const InsightsPage: React.FC = () => {
         summary: "",
         technicalSkills: [],
         transferableSkills: [],
-        insights: [],
+        insights: next,
       });
       lsSet(ROOM_KEYS.insights, { ...saved, insights: next });
     };
 
     // When navigating to Preview, also append current form as a new insight
     const handlePreview = () => {
+      const saved = lsGet<InsightsData>(ROOM_KEYS.insights, {
+        companyName: "",
+        website: "",
+        industry: "Finance",
+        duration: "< 6 months",
+        teamSize: "0-10",
+        summary: "",
+        technicalSkills: [],
+        transferableSkills: [],
+        insights: [],
+      });
+      const filesFromStorage = saved.currentFormFiles || [];
       const newItem = {
         title: companyName.trim() || "Untitled",
         description: "",
         tag: industry || "",
+        files: filesFromStorage,
       };
       const next = [...insightsList, newItem];
-      persistInsights(next);
+      // clear temp files from storage after attaching to the new insight
+      const { currentFormFiles, ...rest } = saved as any;
+      lsSet(ROOM_KEYS.insights, { ...rest, insights: next } as any);
+      setInsightsList(next);
       routes.push("/insight-preview");
     };
 
@@ -136,6 +152,23 @@ const InsightsPage: React.FC = () => {
                                         <h3 className="font-semibold text-gray-800 mb-1">{item.title}</h3>
                                         <p className="text-sm text-gray-500 mb-2">{item.description}</p>
                                         <span className="text-xs bg-[#F0FDFA] border border-[#99F6E4] text-[#0F766E] px-2 py-0.5 rounded-full font-medium">{item.tag}</span>
+                                        {Array.isArray(item.files) && item.files.length > 0 && (
+                                          <div className="mt-3 flex gap-2 flex-wrap">
+                                            {item.files.map((f: any, i: number) => (
+                                              f?.type?.startsWith("image/") ? (
+                                                // eslint-disable-next-line @next/next/no-img-element
+                                                <img key={i} src={f.data} alt={f.name} className="w-16 h-16 object-cover rounded border" />
+                                              ) : f?.type?.startsWith("video/") ? (
+                                                <video key={i} src={f.data} className="w-16 h-16 rounded border" />
+                                              ) : (
+                                                <div key={i} className="flex items-center gap-1 text-xs text-gray-600 border rounded px-2 py-1">
+                                                  <Image src={Doc} alt="doc" className="w-4 h-4" />
+                                                  <span className="truncate max-w-[100px]">{f?.name}</span>
+                                                </div>
+                                              )
+                                            ))}
+                                          </div>
+                                        )}
                                     </div>
                                     <div className="text-sm text-red-500 space-y-1">
                                         <div>

@@ -1,5 +1,5 @@
 "use client"
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AiOutlineCheck } from "react-icons/ai";
 import { FaRegEdit } from "react-icons/fa";
 import Tool from "@/public/assets/icons/Tooltip.svg"
@@ -7,7 +7,8 @@ import TextIcon from "@/public/assets/icons/Tect.svg"
 import Image from "next/image";
 import check from "@/public/assets/icons/Vector (1).svg"
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { lsGet, lsSet, ROOM_KEYS } from "@/app/utils/roomStorage";
 
 export default function page() {
   const [competencies, setCompetencies] = useState([
@@ -21,7 +22,10 @@ export default function page() {
   const [hoveredSkill, setHoveredSkill] = useState<string | null>(null);
   const [editingSkill, setEditingSkill] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
   const routes = useRouter();
+  const params = useSearchParams();
+  const roomId = params.get("id") || "";
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     e.dataTransfer.setData("text/plain", index.toString());
@@ -68,6 +72,21 @@ export default function page() {
     } else if (e.key === 'Escape') {
       handleCancelEdit();
     }
+  };
+
+  // hydrate selected from localStorage
+  useEffect(() => {
+    const saved = lsGet<string[]>(ROOM_KEYS.competencies, []);
+    if (saved.length) setSelected(saved);
+  }, []);
+
+  // when competencies list changes (due to edit/reorder), keep selected in sync
+  useEffect(() => {
+    setSelected(prev => prev.filter(s => competencies.includes(s)));
+  }, [competencies]);
+
+  const toggleSelect = (skill: string) => {
+    setSelected(prev => prev.includes(skill) ? prev.filter(s => s !== skill) : [...prev, skill]);
   };
 
   return (
@@ -127,6 +146,7 @@ export default function page() {
                   <span 
                     className="text-gray-800 text-sm flex gap-3 items-center cursor-pointer"
                     onDoubleClick={() => handleDoubleClick(skill)}
+                    onClick={() => toggleSelect(skill)}
                   >
                     {editingSkill === skill ? (
                       <input
@@ -180,12 +200,12 @@ export default function page() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button className="text-gray-600 bg-gray-100 px-4 py-2 rounded-md hover:bg-gray-200 cursor-pointer"
-              onClick={() => routes.push("/edit-room")}
+              onClick={() => routes.push(roomId ? `/edit-room?id=${roomId}` : "/edit-room")}
               >
                 Back
               </button>
               <button className="review text-white px-6 py-2 rounded-md hover:bg-teal-600 cursor-pointer"
-                onClick={() => routes.push("/edit-insights")}
+                onClick={() => { lsSet(ROOM_KEYS.competencies, selected); routes.push(roomId ? `/edit-insights?id=${roomId}` : "/edit-insights"); }}
               >
                 Next
               </button>

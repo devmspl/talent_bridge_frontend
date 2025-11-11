@@ -26,6 +26,7 @@ import { useGetAllRoomsQuery, useCreateChatRoomMutation } from "@/app/store/api/
 import profile from "@/public/assets/profile/Avatar.png";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function page() {
   const [showEmail, setShowEmail] = useState(false);
@@ -56,6 +57,7 @@ export default function page() {
 
     setIsCreatingRoom(true);
     try {
+<<<<<<< HEAD
       // Check if a room already exists with this user
       const existingRoom = chatRooms?.data?.find(room => 
         room.members.some(member => member._id === id)
@@ -71,6 +73,15 @@ export default function page() {
       // Create new chat room using chatApi
       try {
         const response = await createChatRoom({
+=======
+      const response = await fetch(`${BaseUrl}/chat/rooms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({
+>>>>>>> 6dd8142f35f330855707846d4501a5cbf21c3505
           members: [id, userId],
           type: 'chat'
         }).unwrap();

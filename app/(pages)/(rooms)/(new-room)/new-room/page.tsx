@@ -12,11 +12,7 @@ import { useCreateDefaultShowcaseRoomMutation } from '@/app/store/api/showcaseAp
 const Page: React.FC = () => {
   const dispatch = useDispatch();
   const { user, userId } = useSelector((state: RootState) => state.user);
-  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([
-    "Bachelor's Degree",
-    "Master's Degree",
-    "PhD",
-  ]);
+  const [selectedQualifications, setSelectedQualifications] = useState<string[]>([]);
   
   const [errors, setErrors] = useState<{ qualification?: string }>({});
 
@@ -28,21 +24,27 @@ const Page: React.FC = () => {
       setErrors((prev) => ({ ...prev, qualification: "" }));
     }
 
-    if (value && !selectedQualifications.includes(value)) {
-      setSelectedQualifications([...selectedQualifications, value]);
+    if (value) {
+      setSelectedQualifications([value]);
+    } else {
+      setSelectedQualifications([]);
     }
   };
 
   const handleRemoveQualification = (qual: string) => {
     setSelectedQualifications(selectedQualifications.filter((q) => q !== qual));
+    // Also clear the selected qualification in the store so the select resets
+    if (user?.qualification === qual) {
+      dispatch(updateUserData({ qualification: "" }));
+    }
   };
 
   const router = useRouter();
   const [createDefaultRoom, { isLoading: isSavingDraft }] = useCreateDefaultShowcaseRoomMutation();
 
-  const [roomName, setRoomName] = useState("Data Analytics Portfolio");
+  const [roomName, setRoomName] = useState("");
   const [roomSummary, setRoomSummary] = useState("");
-  const [role, setRole] = useState("Data Analyst");
+  const [role, setRole] = useState("");
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -96,6 +98,15 @@ const Page: React.FC = () => {
     };
     lsSet(ROOM_KEYS.intro, intro);
   }, [roomName, roomSummary, role, user?.qualification, coverPreview, videoPreview]);
+
+  // keep local chip state in sync with the selected qualification in store
+  useEffect(() => {
+    if (user?.qualification) {
+      setSelectedQualifications([user.qualification]);
+    } else {
+      setSelectedQualifications([]);
+    }
+  }, [user?.qualification]);
 
 
   return (
@@ -151,7 +162,7 @@ const Page: React.FC = () => {
                       valueAddedSummary: insights.summary || '',
                       technicalSkills: insights.technicalSkills || [],
                       transferableSkills: insights.transferableSkills || [],
-                      insightsFile: [],
+                  
                     },
                   ],
                 };
@@ -162,6 +173,7 @@ const Page: React.FC = () => {
                 }
                 await createDefaultRoom(body).unwrap();
                 alert('Draft saved successfully.');
+                router.push('/showcase-rooms');
               } catch (e: any) {
                 alert(e?.data?.message || 'Failed to save draft.');
               }
@@ -308,8 +320,10 @@ const Page: React.FC = () => {
                 onChange={handleQualificationChange}
               >
                 <option value="">Select your qualification</option>
-                <option value="Bachelor's Degree">Bachelor's Degree</option>
-                <option value="Master's Degree">Master's Degree</option>
+                <option value="Power BI Data Analyst">Power BI Data Analyst</option>
+                <option value="Azure Data Engineer">Azure Data Engineer</option>
+                <option value="Data modeling & ETL processes">Data modeling & ETL processes</option>
+                
               </select>
 
               {/* Arrow icon */}

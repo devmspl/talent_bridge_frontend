@@ -35,6 +35,9 @@ const PortfolioPage = () => {
   const [industry, setIndustry] = useState<string>("");
   const [coverDataUrl, setCoverDataUrl] = useState<string | null>(null);
   const [videoDataUrl, setVideoDataUrl] = useState<string | null>(null);
+  const [insightFiles, setInsightFiles] = useState<File[]>([]);
+  console.log("videoDataUrl", videoDataUrl);
+  console.log("coverDataUrl", coverDataUrl);
 
   useEffect(() => {
     const intro = lsGet<any>(ROOM_KEYS.intro, { roomName: "Data Analytics Portfolio", roomSummary: "", role: "" });
@@ -56,7 +59,17 @@ const PortfolioPage = () => {
     });
     setCoreSkills(insights.technicalSkills || []);
     setTransferableSkills(insights.transferableSkills || []);
-    setCaseStudies((insights.insights || []).map(i => ({ title: i.title, description: i.description, tag: i.tag })));
+
+    let perKey: { title: string; description: string; tag: string }[] = [];
+    try {
+      const keys = Object.keys(window.localStorage || {}).filter(k => /^insight_\d+$/.test(k));
+      const sorted = keys.sort((a,b)=> parseInt(a.split('_')[1]||'0',10) - parseInt(b.split('_')[1]||'0',10));
+      perKey = sorted.map(k => {
+        try { const v = JSON.parse(window.localStorage.getItem(k) || 'null'); return { title: v?.title || '', description: v?.description || '', tag: v?.tag || '' }; } catch { return { title: '', description: '', tag: '' }; }
+      }).filter(x => x.title || x.description || x.tag);
+    } catch {}
+    const list = perKey.length ? perKey : (insights.insights || []).map(i => ({ title: i.title, description: i.description, tag: i.tag }));
+    setCaseStudies(list);
     setCompanyName(insights.companyName || "");
     setIndustry(insights.industry || "");
   }, []);
@@ -379,7 +392,7 @@ const PortfolioPage = () => {
         </div>
       </div>
       
-      <PublishModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <PublishModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} insightFiles={insightFiles} />
     </>
   );
 };

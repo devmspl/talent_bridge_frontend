@@ -10,6 +10,7 @@ import { useGetShowcaseRoomsQuery, useGetDraftsByUserQuery } from "@/app/store/a
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { clearRoomData } from "@/app/utils/roomStorage";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 const ShowcasePage = () => {
   const routes = useRouter();
@@ -19,7 +20,7 @@ const ShowcasePage = () => {
   const limitFromUrl = Number(searchParams.get("limit") || 10);
 
   const { data, isLoading, isError, refetch } = useGetShowcaseRoomsQuery({
-    page: pageFromUrl,
+    page: pageFromUrl, 
     limit: limitFromUrl,
   });
 
@@ -63,7 +64,7 @@ const ShowcasePage = () => {
               <button 
                 className="w-full sm:w-auto bg-teal-500 text-white px-3 sm:px-4 py-2 h-[36px] sm:h-[40px] rounded-md flex items-center justify-center gap-2 hover:bg-teal-600 cursor-pointer transition-colors duration-200 "
                 onClick={() => {
-                  // Clear localStorage when starting a new room
+                 
                   clearRoomData();
                   routes.push("/new-room");
                 }}
@@ -143,7 +144,7 @@ const ShowcasePage = () => {
             let imageSrc = src;
             if (!isDataOrBlob && !isHttp && src) {
               // If it's just a filename, prefix with base URL
-              imageSrc = `https://backend.webridgetalent.com/assets/images/${src}`;
+              imageSrc = `${BaseUrl}/assets/images/${src}`;
             }
             
             if (isDataOrBlob) {
@@ -206,13 +207,20 @@ const ShowcasePage = () => {
               --
             </div>
             <div className="flex items-center gap-1">
-              <FiHeart />
+              <FiHeart /> 
               {/* Likes not provided by API */}
               --
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1 hover:text-gray-700">
+            <button
+              className="flex items-center gap-1 hover:text-gray-700"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (room._id) routes.push(`/edit-room?id=${room._id}`);
+              }}
+            >
               <FiEdit />
               Edit
             </button>
