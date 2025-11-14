@@ -38,9 +38,9 @@ export const showcaseApi = createApi({
   }),
   tagTypes: ["ShowcaseRoom"],
   endpoints: (builder) => ({
-    getShowcaseRooms: builder.query<any, { page?: number; limit?: number }>({
-      query: ({ page = 1, limit = 10 } = {}) => ({
-        url: `showcase-rooms?page=${page}&limit=${limit}`,
+    getShowcaseRooms: builder.query<any, { userId: string; page?: number; limit?: number }>({
+      query: ({ userId, page = 1, limit = 10 } = { userId: '' }) => ({
+        url: `showcase-rooms?userId=${userId}&page=${page}&limit=${limit}`,
         method: "GET",
       }),
       transformResponse: (response: any) => response?.data || response,

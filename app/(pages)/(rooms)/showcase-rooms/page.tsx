@@ -19,12 +19,13 @@ const ShowcasePage = () => {
   const pageFromUrl = Number(searchParams.get("page") || 1);
   const limitFromUrl = Number(searchParams.get("limit") || 10);
 
+  const { userId } = useSelector((state: RootState) => state.user);
+  
   const { data, isLoading, isError, refetch } = useGetShowcaseRoomsQuery({
+    userId: userId || '',
     page: pageFromUrl, 
     limit: limitFromUrl,
   });
-
-  const { userId } = useSelector((state: RootState) => state.user);
   const { data: draftsData, isLoading: isDraftsLoading, isError: isDraftsError, refetch: refetchDrafts } = useGetDraftsByUserQuery(userId as string, { skip: !userId });
 
   const filteredRooms = useMemo(() => {
@@ -118,13 +119,36 @@ const ShowcasePage = () => {
       )}
 
       {activeTab === 'draft' && !userId && (
-        <div className="text-sm text-gray-600">You don’t have any drafts yet.</div>
+        <div className="col-span-2 text-center py-8">
+          <p className="text-gray-500">You don't have any drafts yet.</p>
+        </div>
       )}
       {activeTab === 'draft' && userId && isDraftsLoading && (
-        <div className="text-sm text-gray-500">Loading drafts...</div>
+        <div className="col-span-2 text-center py-8">
+          <p className="text-gray-500">Loading drafts...</p>
+        </div>
       )}
       {activeTab === 'draft' && userId && isDraftsError && (
-        <div className="text-sm text-red-600">Failed to load drafts. <button className="underline" onClick={()=>refetchDrafts()}>Retry</button></div>
+        <div className="col-span-2 text-center py-8">
+          <p className="text-red-600">Failed to load drafts. <button className="underline" onClick={()=>refetchDrafts()}>Retry</button></p>
+        </div>
+      )}
+      {activeTab === 'draft' && userId && !isDraftsLoading && !isDraftsError && currentRooms.length === 0 && (
+        <div className="col-span-2 text-center py-8">
+          <p className="text-gray-500">No draft rooms yet</p>
+        </div>
+      )}
+      
+      {activeTab === 'active' && !isLoading && !isError && currentRooms.length === 0 && (
+        <div className="col-span-2 text-center py-8">
+          <p className="text-gray-500">No active rooms yet</p>
+        </div>
+      )}
+      
+      {activeTab === 'archived' && !isLoading && !isError && currentRooms.length === 0 && (
+        <div className="col-span-2 text-center py-8">
+          <p className="text-gray-500">No archived rooms yet</p>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
