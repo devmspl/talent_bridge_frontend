@@ -118,7 +118,7 @@ const ShowcasePage = () => {
       )}
 
       {activeTab === 'draft' && !userId && (
-        <div className="text-sm text-gray-600">Sign in to view your drafts.</div>
+        <div className="text-sm text-gray-600">You don’t have any drafts yet.</div>
       )}
       {activeTab === 'draft' && userId && isDraftsLoading && (
         <div className="text-sm text-gray-500">Loading drafts...</div>

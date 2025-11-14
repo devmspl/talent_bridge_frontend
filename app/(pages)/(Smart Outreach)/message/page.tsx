@@ -75,11 +75,6 @@ export default function ChatPage() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-<<<<<<< HEAD
-  useEffect(() => {
-    if (roomsData?.data) {
-      const formattedRooms = roomsData.data
-=======
   // Transform API users to contacts format
   const transformUsersToContacts = (users: any[]): Contact[] => {
     if (!users || !Array.isArray(users)) return [];
@@ -99,7 +94,10 @@ export default function ChatPage() {
         email: apiUser.email,
       }));
   };
->>>>>>> 6dd8142f35f330855707846d4501a5cbf21c3505
+
+  useEffect(() => {
+    if (roomsData?.data) {
+      const formattedRooms = roomsData.data;
 
       setContacts(prev => {
         const newContacts = [...prev];
