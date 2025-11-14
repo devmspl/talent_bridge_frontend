@@ -13,7 +13,7 @@ import drop from '@/public/assets/icons/Dropdown.svg'
 import Image from "next/image";
 import ups from "@/public/assets/icons/green up.svg"
 import avatar from "@/public/assets/profile/Avatar.svg"
-
+//data  
 const data = [
   { date: 'Jan 11', analyst: 10, pianist: 50 },
   { date: 'Jan 12', analyst: 60, pianist: 70 },
