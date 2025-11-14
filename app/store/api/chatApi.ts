@@ -13,6 +13,7 @@ export interface ChatRoom {
   _id: string;
   name: string;
   members: RoomMember[];
+  messages: Message[];
   lastMessage?: string;
   createdAt: string;
   updatedAt: string;
@@ -52,6 +53,7 @@ export interface Message {
     avatar?: string;
   };
   room: string;
+  status?: string;
 }
 
 export interface Message {
@@ -70,6 +72,7 @@ export interface Message {
     avatar?: string;
   };
   room: string;
+  status?: string;
 }
 
 export const chatApi = createApi({

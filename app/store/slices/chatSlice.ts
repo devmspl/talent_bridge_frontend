@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Chat, chatApi } from "../api/chatApi";
-import { Message, Room } from "./socketSlice";
+import { Chat, ChatRoom, Message, chatApi } from "../api/chatApi";
 
 interface ChatState {
   loadingChats: boolean;
@@ -8,7 +7,7 @@ interface ChatState {
   loadingMessages: boolean;
   messages: Message[];
   currentRoomId: string | null;
-  rooms: Room[];
+  rooms: ChatRoom[];
 }
 
 const initialState: ChatState = {
@@ -89,11 +88,18 @@ const chatSlice = createSlice({
         }
       );
   
-      // createChat
+      // createChatRoom
       builder.addMatcher(
-        chatApi.endpoints.createChat.matchFulfilled,
+        chatApi.endpoints.createChatRoom.matchFulfilled,
         (state, action) => {
-          state.chats.push(action.payload); // add new chat to state
+          const chatRoom = action.payload.data;
+          const newChat: Chat = {
+            id: chatRoom._id,
+            name: chatRoom.name,
+            lastMessage: chatRoom.lastMessage || ''
+          };
+          state.chats.push(newChat);
+          state.rooms.push(chatRoom);
         }
       );
   
@@ -101,7 +107,22 @@ const chatSlice = createSlice({
       builder.addMatcher(
         chatApi.endpoints.sendMessage.matchFulfilled,
         (state, action) => {
-          state.messages.push(action.payload); // add new message to state
+          const message = action.payload;
+          state.messages.push(message);
+          
+          // Update last message in the corresponding room
+          const roomIndex = state.rooms.findIndex(room => room._id === message.room);
+          if (roomIndex !== -1) {
+            state.rooms[roomIndex].lastMessage = message.message;
+            state.rooms[roomIndex].messages = state.rooms[roomIndex].messages || [];
+            state.rooms[roomIndex].messages.push(message);
+            
+            // Update last message in chats list
+            const chatIndex = state.chats.findIndex(chat => chat.id === message.room);
+            if (chatIndex !== -1) {
+              state.chats[chatIndex].lastMessage = message.message;
+            }
+          }
         }
       );
     },
