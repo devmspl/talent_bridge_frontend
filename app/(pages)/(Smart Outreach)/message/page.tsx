@@ -64,14 +64,19 @@ export default function ChatPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+console.log("11111111", contacts);
   // Initialize socket connection
   useEffect(() => {
     if (userId) {
       const token = Cookies.get("tb_token");
+      console.log("🔑 Token check:", token ? "Token exists" : "No token found");
+      console.log("👤 User ID:", userId);
       
       const socket = socketService.connect(userId);
       setIsSocketConnected(true);
       setSocketInstance(socket);
+
+      console.log("🔌 Socket connecting for user:", userId);
 
       // Listen for incoming messages
       socket.on('new_message', (data: any) => {
@@ -79,69 +84,61 @@ export default function ChatPage() {
         
         const message = data.message || data; // Handle both direct message and wrapped message
         const roomId = data.roomId || message.roomId;
-        const senderId = message.msgFrom?._id || message.sender;
-        const isCurrentUser = senderId === userId;
+        
+        console.log("📩 Message room:", roomId);
+        console.log("📩 Selected room ID:", selectedRoomId);
         
         // Format the message to match the expected structure
-        const formattedMessage = {
+        const formattedMessage: MessageType = {
           _id: message._id,
           room: roomId,
-          senderId: senderId,
+          sender: message.msgFrom?._id || message.sender,
           message: message.msg || message.message,
           timestamp: message.createdAt || new Date().toISOString(),
           status: message.read ? 'read' : 'delivered',
           isEdited: message.isEdited || false,
           isDeleted: message.isDeleted || false,
           attachments: message.attachments || [],
-          msgFrom: {
-            _id: senderId,
+          senderInfo: {
+            _id: message.msgFrom?._id || message.sender,
             fullname: message.msgFrom?.fullname || 'Unknown',
             email: message.msgFrom?.email || '',
             avatar: message.msgFrom?.avatar || message.msgFrom?.photo || ''
-          },
-          // Add fields that might be used in the UI
-          senderName: message.msgFrom?.fullname || 'Unknown',
-          text: message.msg || message.message,
-          roomId: roomId,
-          createdAt: message.createdAt || new Date().toISOString()
+          }
         };
         
-        console.log("formattedMessage", formattedMessage);
-        
-        // Always update the contact's last message
-        setContacts(prev => prev.map(contact => {
-          if (contact.roomId === roomId || contact.id === senderId) {
-            return {
-              ...contact,
-              message: formattedMessage.message,
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              unread: !isCurrentUser && (!selectedRoomId || selectedRoomId !== roomId)
-            };
+        // Add message if it's for the current selected room
+        if (selectedRoomId && roomId === selectedRoomId) {
+          console.log("✅ New message for current room, adding to messages");
+          setMessages(prev => [...prev, formattedMessage]);
+          
+          // Mark as read if this is the current user's room
+          if (socket && message.msgFrom?._id !== userId) {
+            socket.emit('mark_as_read', { 
+              messageId: message._id, 
+              roomId: roomId 
+            });
           }
-          return contact;
-        }));
-        
-        // Update messages state
-        setMessages(prev => {
-          // Check if message already exists to prevent duplicates
-          const messageExists = prev.some(msg => msg._id === formattedMessage._id);
-          if (!messageExists) {
-            return [...prev, formattedMessage];
-          }
-          return prev;
-        });
-        
-        // Mark as read if this is the current user's room and message is from someone else
-        if (selectedRoomId === roomId && !isCurrentUser) {
-          socket.emit('mark_as_read', { 
-            messageId: message._id, 
-            roomId: roomId 
-          });
+        } else {
+          // Message is for another room - update the contact's last message
+          console.log("📬 Message for another room, updating contact list");
+          setContacts(prev => prev.map(contact => {
+            if (contact.roomId === roomId) {
+              return {
+                ...contact,
+                message: formattedMessage.message,
+                time: new Date(formattedMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                unread: true
+              };
+            }
+            return contact;
+          }));
         }
       });
 
       // Listen for message delivery updates
       socket.on('message_delivery_updated', (data: any) => {
+        console.log("📨 Message delivery updated:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, status: data.status } : msg
@@ -244,6 +241,7 @@ export default function ChatPage() {
 
       // Listen for user connection events
       socket.on('user_connected', (user: any) => {
+        console.log("👋 User connected:", user);
         // Update UI to show user is online
         setContacts(prev => prev.map(contact => {
           if (contact.id === user._id || contact.email === user.email) {
@@ -311,7 +309,7 @@ export default function ChatPage() {
         
         // Check if this is a new_message event with the expected structure
         if (socketMessage.message) {
-          const message = socketMessage;
+          const message = socketMessage.message;
           console.log("Formatted message:", message);
           
           // Add message if it's for the current selected room
@@ -331,7 +329,8 @@ export default function ChatPage() {
               senderInfo: message.msgFrom,
               // Include any other fields your UI expects
             };
-            setMessages((prevMessages: any) => [...prevMessages, formattedMessage]);
+            
+            setMessages(prevMessages => [...prevMessages, formattedMessage]);
             
             // Scroll to bottom after adding new message
             setTimeout(() => {
@@ -395,6 +394,12 @@ export default function ChatPage() {
 
         // Listen for all possible room list events
         socket.on('rooms_list', (rooms: ChatRoom[]) => {
+          console.log("📋 Received rooms_list:", rooms);
+          console.log("📋 Type of rooms:", typeof rooms);
+          console.log("📋 Is array:", Array.isArray(rooms));
+          if (rooms && rooms.length > 0) {
+            console.log("📋 First room structure:", rooms[0]);
+          }
           setRooms(rooms);
           // Auto-join all rooms to ensure we receive messages
           rooms.forEach(room => {
@@ -524,6 +529,14 @@ export default function ChatPage() {
         messageReceived = true;
         setMessages(messages);
       });
+      
+      // Add timeout to check if messages were received
+      setTimeout(() => {
+        if (!messageReceived) {
+          console.log("⚠️ No messages received for room:", selectedRoomId);
+          console.log("⚠️ Room might not exist or user might not have access");
+        }
+      }, 3000);
     }
   }, [selectedRoomId, isSocketConnected]);
 
@@ -573,25 +586,26 @@ export default function ChatPage() {
   };
 
   // Transform API users to contacts format
-const transformUsersToContacts = (users: any[]): Contact[] => {
-  if (!users || !Array.isArray(users)) return [];
-  console.log("users==>", users);
-  return users
-    .filter(apiUser => apiUser._id !== userId) // Exclude current user
-    .map((apiUser, index) => ({
-      id: apiUser._id,
-      profile: apiUser?.avatar ? `${BaseUrl}/assets/images/${apiUser?.avatar}` : user1,
-      name: apiUser.fullname || 'Unknown User',
-      time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      message: "Available for chat",
-      online: Math.random() > 0.5,
-      img: user,
-      unread: false,
-      archived: false,
-      email: apiUser.email,
-      roomId: apiUser.roomId || undefined // Change this line
-    }));
-};
+  const transformUsersToContacts = (users: any[]): Contact[] => {
+    if (!users || !Array.isArray(users)) return [];
+    console.log("users==>", users);
+    return users
+      .filter(apiUser => apiUser._id !== userId) // Exclude current user
+      .map((apiUser, index) => ({
+        id: apiUser._id,
+        profile: apiUser?.avatar ? `${BaseUrl}/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
+        name: apiUser.fullname || 'Unknown User',
+        time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        message: "Available for chat",
+        online: Math.random() > 0.5, // Random online status for demo
+        img: user,
+        unread: Math.random() > 0.7, // Random unread status
+        archived: false,
+        email: apiUser.email,
+        roomId: null // Will be set when room is created
+      }));
+  };
+
 // ... (rest of the code remains the same)
   useEffect(() => {
     console.log("🔄 Processing rooms:", rooms);
@@ -646,45 +660,24 @@ const transformUsersToContacts = (users: any[]): Contact[] => {
   };
 
   // Group messages by date
+  console.log("messages===========|>",messages);
+  
   const groupedMessages = messages?.reduce((groups: Record<string, any[]>, message: any) => {
-    // Use createdAt if available, otherwise fall back to timestamp
-    const messageDate = message.createdAt || message.timestamp;
-    const date = formatMessageDate(messageDate);
-    
+    const date = formatMessageDate(message.timestamp);
     if (!groups[date]) {
       groups[date] = [];
     }
-
-    // Handle both message formats (socket message vs existing message)
-    const formattedMessage = {
+    groups[date].push({
       ...message,
-      // If it's a socket message, map the fields
-      ...(message.msg && {
-        text: message.msg,  // socket message uses 'msg' instead of 'message'
-        timestamp: message.createdAt
-      }),
-      // Handle sender info consistently
-      senderId: message.sender || (message.msgFrom?._id) || message.senderId,
-      senderName: message.senderInfo?.fullname || 
-                 message.msgFrom?.fullname || 
-                 message.senderName || 
-                 'Unknown',
-      // Ensure we have a text field
-      text: message.text || message.msg || message.message,
-      // Ensure timestamp is set
-      timestamp: message.timestamp || message.createdAt
-    };
-
-    // Check for duplicates before adding
-    const messageExists = groups[date].some((msg: any) => msg._id === formattedMessage._id);
-    if (!messageExists) {
-      groups[date].push(formattedMessage);
-    }
-    
+      senderId: message.msgFrom._id,
+      senderName: message.msgFrom.fullname || message.msgFrom.email,
+      text: message.message,
+      timestamp: message.timestamp,
+      roomId: message.room,
+      attachments: message.attachments || []
+    });
     return groups;
   }, {}) || {};
-
-  console.log("groupedMessages===>", groupedMessages);
 
   // Update messages when messages data is loaded
   useEffect(() => {
@@ -751,7 +744,7 @@ const transformUsersToContacts = (users: any[]): Contact[] => {
             msgFrom: {
               _id: userId,
               email: '',
-              avatar: ''
+              avatar: null
             },
             room: newRoom._id
           };
@@ -780,7 +773,7 @@ const transformUsersToContacts = (users: any[]): Contact[] => {
           msgFrom: {
             _id: userId,
             email: '',
-            avatar: ''
+            avatar: null
           },
           room: currentRoomId
         };
@@ -1120,14 +1113,13 @@ const transformUsersToContacts = (users: any[]): Contact[] => {
                     >
                       <div className={`flex flex-col ${message.senderId === userId ? "items-end" : "items-start"} max-w-[85%]`}>
                         <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                          {message.senderId === userId || message.msgFrom?._id === userId ? (
-                            <div className="flex items-center gap-1">
-                              <span>You</span>
-                              <span className="text-gray-400 text-xs">{formatMessageTime(message.timestamp || message.createdAt)}</span>
-                              <Image src={user} alt="Your avatar" width={20} height={20} className="rounded-full ml-1" />
-                            </div>
+                          {message.senderId === userId ? (
+                            <>
+                              <span>You {formatMessageTime(message.timestamp)}</span>
+                              <Image src={user} alt="Your avatar" width={20} height={20} className="rounded-full" />
+                            </>
                           ) : (
-                            <div className="flex items-center gap-1">
+                            <>
                               <div className="relative w-5 h-5">
                                 <Image
                                   src={selectedContact.profile?.startsWith('http') ? selectedContact.profile : `${BaseUrl}${selectedContact.profile?.startsWith('/') ? '' : '/'}${selectedContact.profile}`}
@@ -1143,16 +1135,15 @@ const transformUsersToContacts = (users: any[]): Contact[] => {
                                   </div>
                                 </div>
                               </div>
-                              <span className="font-medium">{selectedContact.name}</span>
-                              <span className="text-gray-400 text-xs">{formatMessageTime(message.timestamp || message.createdAt)}</span>
-                            </div>
+                              <span>{selectedContact.name} {formatMessageTime(message.timestamp)}</span>
+                            </>
                           )}
                         </div>
-                        <div className={`px-3 py-2 text-sm leading-relaxed ${message.msgFrom?._id === userId || message.senderId === userId
+                        <div className={`px-3 py-2 text-sm leading-relaxed ${message.msgFrom._id === userId
                             ? "bg-teal-600 text-white rounded-tl-lg rounded-tr-sm rounded-br-lg rounded-bl-lg"
                             : "bg-gray-100 text-gray-900 rounded-tl-sm rounded-tr-lg rounded-br-lg rounded-bl-lg"
                           }`}>
-                          {message.message || message.text || message.msg}
+                          {message.message}
                           {message.attachments?.length > 0 && (
                             <div className="mt-2">
                               {message.attachments.map((file: any, idx: number) => (
