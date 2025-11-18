@@ -37,6 +37,7 @@ export interface ChatRoom {
 export interface Message {
   _id: string;
   message: string;
+  
   attachments: Array<{
     url: string;
     name: string;
@@ -48,9 +49,27 @@ export interface Message {
     _id: string;
     email: string;
     avatar?: string;
+    fullname?: string;
+    photo?: string;
   };
   room: string;
   status?: string;
+  read?: boolean;
+  isEdited?: boolean;
+  isDeleted?: boolean;
+  msgTo?: {
+    _id: string;
+    email: string;
+    avatar?: string;
+    fullname?: string;
+    photo?: string;
+  };
+  delivered?: boolean;
+  deliveryStatus?: Record<string, boolean>;
+  readStatus?: Record<string, boolean>;
+  __v?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Attachment {
@@ -200,7 +219,34 @@ class SocketService {
   // Event listeners
   onMessage(callback: (message: Message) => void) {
     if (this.socket) {
-      this.socket.on('new_message', callback);
+      this.socket.on('new_message', (data: any) => {
+        console.log(" Raw message received:", data);
+        
+        // Extract the message from the data object
+        const messageData = data.message || data;
+        const roomId = data.roomId || messageData.roomId;
+        
+        // Format the message to match the expected structure
+        const formattedMessage: Message = {
+          _id: messageData._id,
+          message: messageData.msg || messageData.message || '',
+          attachments: messageData.attachments || [],
+          timestamp: messageData.createdAt || new Date().toISOString(),
+          msgFrom: {
+            _id: messageData.msgFrom?._id || messageData.sender,
+            email: messageData.msgFrom?.email || '',
+            avatar: messageData.msgFrom?.avatar || messageData.msgFrom?.photo || ''
+          },
+          room: roomId,
+          status: messageData.delivered ? 'delivered' : 'sent',
+          read: messageData.read || false,
+          isEdited: messageData.isEdited || false,
+          isDeleted: messageData.isDeleted || false
+        };
+        
+        console.log(" Formatted message:", formattedMessage);
+        callback(formattedMessage);
+      });
     }
   }
 
