@@ -60,6 +60,7 @@ export default function ChatPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [socketInstance, setSocketInstance] = useState<any>(null);
+  const [typingUsers, setTypingUsers] = useState<any[]>([]);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,13 +90,13 @@ console.log("11111111", contacts);
           setMessages(prev => [...prev, message]);
         } else {
           // Message is for another room - update the contact's last message
-          console.log("📩 New message for another room:", message.room);
+          console.log("📬 Message for another room, updating contact list");
           setContacts(prev => prev.map(contact => {
             if (contact.roomId === message.room) {
               return {
                 ...contact,
                 message: message.message,
-                time: message.timestamp,
+                time: new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 unread: true
               };
             }
@@ -106,23 +107,161 @@ console.log("11111111", contacts);
 
       // Listen for message delivery updates
       socket.on('message_delivery_updated', (data: any) => {
-        console.log("📩 Message delivery updated:", data);
-        console.log("📩 This indicates a message was sent but we might not have received it yet");
-        
-        // Try to fetch the message for this room
-        if (data.roomId && data.roomId === selectedRoomId) {
-          console.log("🔄 Fetching messages for room after delivery update:", data.roomId);
-          socketService.getChat(data.roomId, (messages: MessageType[]) => {
-            console.log("📩 Fetched messages after delivery update:", messages);
-            setMessages(messages);
-          });
+        console.log("📨 Message delivery updated:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => prev.map(msg => 
+            msg._id === data.messageId ? { ...msg, status: data.status } : msg
+          ));
         }
       });
 
-      // Listen for chat history (when we request it)
+      // Listen for message read events (both current and legacy)
+      socket.on('message_readed', (data: any) => {
+        console.log("👁️ Message read:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => prev.map(msg => 
+            msg._id === data.messageId ? { ...msg, status: 'read' } : msg
+          ));
+        }
+      });
+
+      socket.on('massage_readed', (data: any) => {
+        console.log("👁️ Legacy message read:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => prev.map(msg => 
+            msg._id === data.messageId ? { ...msg, status: 'read' } : msg
+          ));
+        }
+      });
+
+      // Listen for message edits
+      socket.on('message_edited', (data: any) => {
+        console.log("✏️ Message edited:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => prev.map(msg => 
+            msg._id === data.messageId ? { ...msg, message: data.content, status: 'edited' } : msg
+          ));
+        }
+      });
+
+      // Listen for message deletions
+      socket.on('message_deleted', (data: any) => {
+        console.log("🗑️ Message deleted:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+        }
+      });
+
+      // Listen for message replies
+      socket.on('message_replied', (data: any) => {
+        console.log("💬 Message replied:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setMessages(prev => [...prev, data.replyMessage]);
+        }
+      });
+
+      // Listen for chat history
       socket.on('chat_history', (messages: MessageType[]) => {
-        console.log("📩 Received chat_history:", messages);
-        setMessages(messages);
+        console.log("📚 Chat history received:", messages);
+        if (selectedRoomId && messages.length > 0 && messages[0].room === selectedRoomId) {
+          setMessages(messages);
+        }
+      });
+
+      // Listen for typing indicators
+      socket.on('user_typing', (data: any) => {
+        console.log("⌨️ User typing:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setTypingUsers(prev => [...prev.filter(u => u._id !== data.user._id), data.user]);
+        }
+      });
+
+      socket.on('user_stopped_typing', (data: any) => {
+        console.log("⏹️ User stopped typing:", data);
+        if (selectedRoomId && data.roomId === selectedRoomId) {
+          setTypingUsers(prev => prev.filter(u => u._id !== data.user._id));
+        }
+      });
+
+      // Listen for archive events
+      socket.on('archive_created', (data: any) => {
+        console.log("📁 Archive created:", data);
+        // Refresh rooms list
+        socketService.getMyRooms((roomsList: ChatRoom[]) => {
+          setRooms(roomsList);
+        });
+      });
+
+      socket.on('room_unarchived', (data: any) => {
+        console.log("📂 Room unarchived:", data);
+        // Refresh rooms list
+        socketService.getMyRooms((roomsList: ChatRoom[]) => {
+          setRooms(roomsList);
+        });
+      });
+
+      // Listen for user connection events
+      socket.on('user_connected', (user: any) => {
+        console.log("👋 User connected:", user);
+        // Update UI to show user is online
+        setContacts(prev => prev.map(contact => {
+          if (contact.id === user._id || contact.email === user.email) {
+            return { ...contact, isOnline: true };
+          }
+          return contact;
+        }));
+      });
+
+      socket.on('user_disconnected', (user: any) => {
+        console.log("👋 User disconnected:", user);
+        // Update UI to show user is offline
+        setContacts(prev => prev.map(contact => {
+          if (contact.id === user._id || contact.email === user.email) {
+            return { ...contact, isOnline: false };
+          }
+          return contact;
+        }));
+      });
+
+      // Listen for room events
+      socket.on('rooms_joined', (data: any) => {
+        console.log("🏠 Rooms joined:", data);
+        // Update rooms list if needed
+      });
+
+      socket.on('room_created', (room: ChatRoom) => {
+        console.log("🆕 Room created:", room);
+        setRooms(prev => [...prev, room]);
+      });
+
+      socket.on('room_joined', (data: any) => {
+        console.log("🚪 Room joined:", data);
+        // Update room members or UI state
+      });
+
+      socket.on('room_left', (data: any) => {
+        console.log("🚪 Room left:", data);
+        // Update UI state
+        if (data.roomId === selectedRoomId) {
+          setSelectedRoomId(null);
+          setMessages([]);
+        }
+      });
+
+      socket.on('room_deleted', (data: any) => {
+        console.log("🗑️ Room deleted:", data);
+        // Remove room from list and update UI
+        setRooms(prev => prev.filter(room => room._id !== data.roomId));
+        if (data.roomId === selectedRoomId) {
+          setSelectedRoomId(null);
+          setMessages([]);
+        }
+      });
+
+      // Listen for errors
+      socket.on('error', (error: any) => {
+        console.error("❌ Socket error:", error);
+        // Handle error appropriately
       });
 
       // Also keep the socketService.onMessage for compatibility
@@ -226,7 +365,7 @@ console.log("11111111", contacts);
           
           setTimeout(() => {
             console.log("🔄 Emitting get_my_rooms request...");
-            socketService.getRooms((roomsList: ChatRoom[]) => {
+            socketService.getMyRooms((roomsList: ChatRoom[]) => {
               console.log("🏠 Received rooms via callback:", roomsList);
               setRooms(roomsList);
             });
@@ -589,6 +728,11 @@ console.log("11111111", contacts);
       setMessageText('');
       setAttachments([]);
       
+      // Stop typing indicator
+      if (selectedRoomId) {
+        socketService.stopTyping(selectedRoomId);
+      }
+      
       // Scroll to bottom after sending message
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -597,6 +741,65 @@ console.log("11111111", contacts);
     } catch (error) {
       console.error("❌ Error sending message:", error);
     }
+  };
+
+  // Function to handle typing indicators
+  const handleTypingStart = () => {
+    if (selectedRoomId && messageText.trim()) {
+      socketService.startTyping(selectedRoomId);
+    }
+  };
+
+  const handleTypingStop = () => {
+    if (selectedRoomId) {
+      socketService.stopTyping(selectedRoomId);
+    }
+  };
+
+  // Function to mark message as read
+  const markMessageAsRead = (messageId: string) => {
+    if (selectedRoomId) {
+      socketService.readMessage(messageId, selectedRoomId);
+    }
+  };
+
+  // Function to edit message
+  const editMessage = (messageId: string, newContent: string) => {
+    if (selectedRoomId) {
+      socketService.editMessage(messageId, newContent, selectedRoomId);
+    }
+  };
+
+  // Function to delete message
+  const deleteMessage = (messageId: string) => {
+    if (selectedRoomId) {
+      socketService.deleteMessage(messageId, selectedRoomId);
+    }
+  };
+
+  // Function to reply to message
+  const replyToMessage = (messageId: string, content: string) => {
+    if (selectedRoomId) {
+      socketService.replyMessage(messageId, content, selectedRoomId);
+    }
+  };
+
+  // Function to create archive
+  const createArchive = (roomIds: string[]) => {
+    socketService.createArchive(roomIds);
+  };
+
+  // Function to unarchive room
+  const unarchiveRoom = (roomId: string) => {
+    socketService.unarchiveRoom(roomId);
+  };
+
+  // Function to get archived rooms
+  const getArchivedRooms = () => {
+    socketService.getArchiveRooms((rooms: ChatRoom[]) => {
+      console.log("📁 Archived rooms:", rooms);
+      // Handle archived rooms as needed
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -916,6 +1119,15 @@ console.log("11111111", contacts);
                   ))}
                 </div>
               ))}
+              {/* Typing Indicators */}
+              {typingUsers.length > 0 && (
+                <div className="px-4 py-2 text-sm text-gray-500 italic">
+                  {typingUsers.length === 1 
+                    ? `${typingUsers[0].name || typingUsers[0].email} is typing...`
+                    : `${typingUsers.map(u => u.name || u.email).join(', ')} are typing...`
+                  }
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -924,7 +1136,11 @@ console.log("11111111", contacts);
               <div className="flex items-end gap-2">
                 <textarea
                   value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
+                  onChange={(e) => {
+                    setMessageText(e.target.value);
+                    handleTypingStart();
+                  }}
+                  onBlur={handleTypingStop}
                   onKeyPress={handleKeyPress}
                   placeholder="Type a message..."
                   className="flex-1 h-12 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"
@@ -1128,6 +1344,15 @@ console.log("11111111", contacts);
                     ))}
                   </div>
                 ))}
+                {/* Typing Indicators */}
+                {typingUsers.length > 0 && (
+                  <div className="px-4 py-2 text-sm text-gray-500 italic">
+                    {typingUsers.length === 1 
+                      ? `${typingUsers[0].name || typingUsers[0].email} is typing...`
+                      : `${typingUsers.map(u => u.name || u.email).join(', ')} are typing...`
+                    }
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -1144,7 +1369,11 @@ console.log("11111111", contacts);
                   </div>
                   <textarea
                     value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
+                    onChange={(e) => {
+                      setMessageText(e.target.value);
+                      handleTypingStart();
+                    }}
+                    onBlur={handleTypingStop}
                     onKeyPress={handleKeyPress}
                     placeholder="Type a message..."
                     className="flex-1 h-12 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm resize-none"

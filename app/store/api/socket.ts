@@ -113,79 +113,229 @@ class SocketService {
     }
   }
 
-  // Room operations
+  // Room operations - Client → Server
   joinRoom(roomId: string) {
     if (this.socket) {
-      this.socket.emit('join_room', roomId);
+      this.socket.emit('join_room', { roomId });
     }
   }
 
   leaveRoom(roomId: string) {
     if (this.socket) {
-      this.socket.emit('leave_room', roomId);
+      this.socket.emit('leave_room', { roomId });
     }
   }
 
-  // Message operations
+  createRoom(userId: string, toUserId: string, callback?: (room: ChatRoom) => void) {
+    if (this.socket) {
+      const payload = { userId, toUserId };
+      this.socket.emit('create_room', payload);
+      if (callback) {
+        this.socket.once('room_created', callback);
+      }
+    }
+  }
+
+  deleteRoom(roomId: string) {
+    if (this.socket) {
+      this.socket.emit('delete_room', { roomId });
+    }
+  }
+
+  getMyRooms(callback?: (rooms: ChatRoom[]) => void) {
+    if (this.socket) {
+      this.socket.emit('get_my_rooms');
+      if (callback) {
+        this.socket.once('rooms_list', callback);
+      }
+    }
+  }
+
+  // Message operations - Client → Server
   sendMessage(payload: SendMessagePayload) {
     if (this.socket) {
       this.socket.emit('send_message', payload);
     }
   }
 
-  // Event listeners
-  onMessage(callback: (message: Message) => void) {
+  readMessage(messageId: string, roomId: string) {
     if (this.socket) {
-      this.socket.on('receive_message', callback);
+      this.socket.emit('read_message', { messageId, roomId });
     }
   }
 
-  onRoomJoined(callback: (roomId: string) => void) {
+  readMassageLegacy(messageId: string, roomId: string) {
+    if (this.socket) {
+      this.socket.emit('read_massage', { messageId, roomId });
+    }
+  }
+
+  editMessage(messageId: string, content: string, roomId: string) {
+    if (this.socket) {
+      this.socket.emit('edit_message', { messageId, content, roomId });
+    }
+  }
+
+  deleteMessage(messageId: string, roomId: string) {
+    if (this.socket) {
+      this.socket.emit('delete_message', { messageId, roomId });
+    }
+  }
+
+  replyMessage(messageId: string, content: string, roomId: string) {
+    if (this.socket) {
+      this.socket.emit('reply_message', { messageId, content, roomId });
+    }
+  }
+
+  getChat(roomId: string, callback?: (messages: Message[]) => void) {
+    if (this.socket) {
+      this.socket.emit('get_chat', { roomId });
+      if (callback) {
+        this.socket.once('chat_history', callback);
+      }
+    }
+  }
+
+  // Event listeners
+  onMessage(callback: (message: Message) => void) {
+    if (this.socket) {
+      this.socket.on('new_message', callback);
+    }
+  }
+
+  onMessageDeliveryUpdated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message_delivery_updated', callback);
+    }
+  }
+
+  onMessageRead(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message_readed', callback);
+      // Handle legacy event
+      this.socket.on('massage_readed', callback);
+    }
+  }
+
+  onMessageEdited(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message_edited', callback);
+    }
+  }
+
+  onMessageDeleted(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message_deleted', callback);
+    }
+  }
+
+  onMessageReplied(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('message_replied', callback);
+    }
+  }
+
+  onChatHistory(callback: (messages: Message[]) => void) {
+    if (this.socket) {
+      this.socket.on('chat_history', callback);
+    }
+  }
+
+  onUserConnected(callback: (user: any) => void) {
+    if (this.socket) {
+      this.socket.on('user_connected', callback);
+    }
+  }
+
+  onUserDisconnected(callback: (user: any) => void) {
+    if (this.socket) {
+      this.socket.on('user_disconnected', callback);
+    }
+  }
+
+  onRoomsJoined(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('rooms_joined', callback);
+    }
+  }
+
+  onRoomsList(callback: (rooms: ChatRoom[]) => void) {
+    if (this.socket) {
+      this.socket.on('rooms_list', callback);
+    }
+  }
+
+  onRoomCreated(callback: (room: ChatRoom) => void) {
+    if (this.socket) {
+      this.socket.on('room_created', callback);
+    }
+  }
+
+  onRoomJoined(callback: (data: any) => void) {
     if (this.socket) {
       this.socket.on('room_joined', callback);
     }
   }
 
-  onRoomLeft(callback: (roomId: string) => void) {
+  onRoomLeft(callback: (data: any) => void) {
     if (this.socket) {
       this.socket.on('room_left', callback);
     }
   }
 
-  onUserJoined(callback: (user: RoomMember, roomId: string) => void) {
+  onRoomDeleted(callback: (data: any) => void) {
     if (this.socket) {
-      this.socket.on('user_joined', callback);
+      this.socket.on('room_deleted', callback);
     }
   }
 
-  onUserLeft(callback: (userId: string, roomId: string) => void) {
-    if (this.socket) {
-      this.socket.on('user_left', callback);
-    }
-  }
-
-  onTyping(callback: (user: RoomMember, roomId: string) => void) {
+  onUserTyping(callback: (data: any) => void) {
     if (this.socket) {
       this.socket.on('user_typing', callback);
     }
   }
 
-  onStopTyping(callback: (user: RoomMember, roomId: string) => void) {
+  onUserStoppedTyping(callback: (data: any) => void) {
     if (this.socket) {
-      this.socket.on('user_stop_typing', callback);
+      this.socket.on('user_stopped_typing', callback);
     }
   }
 
-  // Typing indicators
+  onArchiveCreated(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('archive_created', callback);
+    }
+  }
+
+  onAllArchivedRooms(callback: (rooms: ChatRoom[]) => void) {
+    if (this.socket) {
+      this.socket.on('all_archived_rooms', callback);
+    }
+  }
+
+  onRoomUnarchived(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on('room_unarchived', callback);
+    }
+  }
+
+  onError(callback: (error: any) => void) {
+    if (this.socket) {
+      this.socket.on('error', callback);
+    }
+  }
+
+  // Typing indicators - Client → Server
   startTyping(roomId: string) {
     if (this.socket) {
-      this.socket.emit('typing', roomId);
+      this.socket.emit('typing_start', { roomId });
     }
   }
 
   stopTyping(roomId: string) {
     if (this.socket) {
-      this.socket.emit('stop_typing', roomId);
+      this.socket.emit('typing_stop', { roomId });
     }
   }
 
@@ -209,46 +359,45 @@ class SocketService {
     }
   }
 
-  // Get all rooms (emit request and listen for response)
+  // Legacy methods for backward compatibility
   getRooms(callback: (rooms: ChatRoom[]) => void) {
-    if (this.socket) {
-      // Use the correct event name that backend expects
-      this.socket.emit('get_my_rooms');
-      // Listen for the correct event name that backend emits
-      this.socket.once('rooms_list', callback);
-    }
+    this.getMyRooms(callback);
   }
 
-  // Get room messages (emit request and listen for response)
   getRoomMessages(roomId: string, callback: (messages: Message[]) => void) {
+    this.getChat(roomId, callback);
+  }
+
+  // Create chat room (legacy)
+  createRoomLegacy(userId: string, toUserId: string, callback: (room: ChatRoom) => void) {
+    this.createRoom(userId, toUserId, callback);
+  }
+
+  // Archive operations
+  createArchive(roomIds: string[]) {
     if (this.socket) {
-      this.socket.emit('get_room_messages', roomId);
-      this.socket.once('room_messages', callback);
+      this.socket.emit('create_archive', { roomIds });
     }
   }
 
-  // Get chat history for a room
-  getChat(roomId: string, callback: (messages: Message[]) => void) {
+  getArchiveRooms(callback: (rooms: ChatRoom[]) => void) {
     if (this.socket) {
-      this.socket.emit('get_chat', roomId);
-      this.socket.once('chat_history', callback);
+      this.socket.emit('get_archive_rooms');
+      this.socket.once('all_archived_rooms', callback);
     }
   }
 
-  // Create chat room
-  createRoom(userId: string, toUserId: string, callback: (room: ChatRoom) => void) {
+  unarchiveRoom(roomId: string) {
     if (this.socket) {
-      const payload = { userId, toUserId };
-      this.socket.emit('create_room', payload);
-      this.socket.once('room_created', callback);
+      this.socket.emit('unarchive_room', { roomId });
     }
   }
 
-  // Archive room
+  // Legacy archive method
   archiveRoom(roomId: string, callback: (success: boolean) => void) {
     if (this.socket) {
-      this.socket.emit('archive_room', roomId);
-      this.socket.once('room_archived', callback);
+      this.createArchive([roomId]);
+      this.socket.once('archive_created', callback);
     }
   }
 }
