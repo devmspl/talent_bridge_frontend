@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Avatar from "@/app/component/Avatar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaMapMarkerAlt,
   FaCalendarAlt,
@@ -26,6 +26,7 @@ import { useGetAllRoomsQuery, useCreateChatRoomMutation } from "@/app/store/api/
 import profile from "@/public/assets/profile/Avatar.png";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import socketService, { ChatRoom } from "@/app/store/api/socket";
 import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function page() {
@@ -48,56 +49,25 @@ export default function page() {
   const { data: chatRooms } = useGetAllRoomsQuery();
   const [createChatRoom] = useCreateChatRoomMutation();
 
-  const handleSendMessage = async () => {
-    debugger
-    if (!id || !userId) {
-      console.error("Missing user ID or profile ID");
-      return;
+  // Initialize socket connection
+  useEffect(() => {
+    if (userId) {
+      socketService.connect(userId);
     }
+  }, [userId]);
 
+  const handleSendMessage = () => {
+    if (!id || !userId) return;
+    
     setIsCreatingRoom(true);
-    try {
-      // Check if a room already exists with this user
-      const existingRoom = chatRooms?.data?.find(room => 
-        room.members.some(member => member._id === id)
-      );
-      console.log("existingRoom", existingRoom);
-
-      if (existingRoom) {
-        // Navigate to existing chat
-        router.push(`/message?roomId=${existingRoom._id}`);
-        return;
-      }
-
-      // Create new chat room using chatApi
-      try {
-        const response = await createChatRoom({
-          members: [id, userId],
-          type: 'chat'
-        }).unwrap();
-        
-        console.log("Create room response:", response);
-        
-        if (response?.data?._id) {
-          // Navigate to the new chat room
-          router.push(`/message?roomId=${response.data._id}`);
-        } else {
-          console.error("Failed to create chat room:", response);
-          // Fallback to user ID based navigation if room ID is not available
-          router.push(`/message?userId=${id}`);
-        }
-      } catch (error) {
-        console.error("Error creating chat room:", error);
-        // Fallback to user ID based navigation on error
-        router.push(`/message?userId=${id}`);
-      }
-    } catch (error) {
-      console.error("Error creating chat room:", error);
-      // Fallback to user ID based navigation on error
-      router.push(`/message?userId=${id}`);
-    } finally {
+    
+    // Create room using socket.io
+    socketService.createRoom(userId, id, (room) => {
+      console.log("Room created:", room);
+      // Navigate to the chat room
+      router.push(`/message?roomId=${room.roomId}`);
       setIsCreatingRoom(false);
-    }
+    });
   };
 
 

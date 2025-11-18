@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { FiSend } from "react-icons/fi";
-import { BsThreeDotsVertical } from "react-icons/bs";
+// import { FiSend } from "react-icons/fi";
+// import { BsThreeDotsVertical } from "react-icons/bs";
 import Image from "next/image";
 import user from "@/public/assets/profile/user.png";
 import user1 from "@/public/assets/profile/Avatar (1).png";
@@ -18,20 +18,12 @@ import mail from "@/public/assets/icons/mail12.svg";
 import deleteIcon from "@/public/assets/icons/un-archive.svg";
 import link from "@/public/assets/icons/link.png";
 import smile from "@/public/assets/icons/smile.png";
-import ArchiveModal from "@/app/component/modals/message/ArchiveModal";
-import { useAppDispatch, useAppSelector } from "@/app/store/reduxHook";
-
-import { useGetAllUsersQuery } from "@/app/store/api/userApi";
-import {
-  useGetAllRoomsQuery,
-  useGetRoomMessagesQuery,
-  useSendMessageMutation,
-  type ChatRoom,
-  type Message as MessageType
-} from "@/app/store/api/chatApi";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useAppDispatch } from "@/app/store/reduxHook";
+import socketService from "@/app/store/api/socket";
+import type { ChatRoom, Message as MessageType } from "@/app/store/api/socket";
 import Cookies from "js-cookie";
+import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { BaseUrl } from "@/app/store/BaseUrl";
 
 type Contact = {
@@ -51,7 +43,7 @@ type Contact = {
 export default function ChatPage() {
   const dispatch = useAppDispatch();
   // Read userId directly from cookies as it's the source of truth
-  const userId = Cookies.get("tb_userId");
+  const userId: string = Cookies.get("tb_userId") || "";
   const searchParams = useSearchParams();
   const targetUserId = searchParams.get("userId");
 
@@ -63,22 +55,332 @@ export default function ChatPage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  // RTK Query hooks
-  const { data: roomsData, isLoading: isLoadingRooms } = useGetAllRoomsQuery();
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const { data: messagesData, isLoading: isLoadingMessages } = useGetRoomMessagesQuery(
-    selectedRoomId || '',
-    { skip: !selectedRoomId }
-  );
-  const [sendMessage, { isLoading: isSendingMessage }] = useSendMessageMutation();
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [socketInstance, setSocketInstance] = useState<any>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+console.log("11111111", contacts);
+  // Initialize socket connection
+  useEffect(() => {
+    if (userId) {
+      const token = Cookies.get("tb_token");
+      console.log("🔑 Token check:", token ? "Token exists" : "No token found");
+      console.log("👤 User ID:", userId);
+      
+      const socket = socketService.connect(userId);
+      setIsSocketConnected(true);
+      setSocketInstance(socket);
+
+      console.log("🔌 Socket connecting for user:", userId);
+
+      // Listen for incoming messages - using the correct events from your list
+      socket.on('new_message', (message: MessageType) => {
+        console.log("📩 Received new_message event:", message);
+        console.log("📩 Message room:", message.room);
+        console.log("📩 Selected room ID:", selectedRoomId);
+        
+        // Add message if it's for the current selected room
+        if (selectedRoomId && message.room === selectedRoomId) {
+          console.log("✅ New message for current room, adding to messages");
+          setMessages(prev => [...prev, message]);
+        } else {
+          // Message is for another room - update the contact's last message
+          console.log("📩 New message for another room:", message.room);
+          setContacts(prev => prev.map(contact => {
+            if (contact.roomId === message.room) {
+              return {
+                ...contact,
+                message: message.message,
+                time: message.timestamp,
+                unread: true
+              };
+            }
+            return contact;
+          }));
+        }
+      });
+
+      // Listen for message delivery updates
+      socket.on('message_delivery_updated', (data: any) => {
+        console.log("📩 Message delivery updated:", data);
+        console.log("📩 This indicates a message was sent but we might not have received it yet");
+        
+        // Try to fetch the message for this room
+        if (data.roomId && data.roomId === selectedRoomId) {
+          console.log("🔄 Fetching messages for room after delivery update:", data.roomId);
+          socketService.getChat(data.roomId, (messages: MessageType[]) => {
+            console.log("📩 Fetched messages after delivery update:", messages);
+            setMessages(messages);
+          });
+        }
+      });
+
+      // Listen for chat history (when we request it)
+      socket.on('chat_history', (messages: MessageType[]) => {
+        console.log("📩 Received chat_history:", messages);
+        setMessages(messages);
+      });
+
+      // Also keep the socketService.onMessage for compatibility
+      socketService.onMessage((message: MessageType) => {
+        console.log("📩 Received message via socketService:", message);
+        
+        // Add message if it's for the current selected room
+        if (selectedRoomId && message.room === selectedRoomId) {
+          console.log("✅ SocketService message for current room, adding to messages");
+          setMessages(prev => [...prev, message]);
+        } else {
+          // Message is for another room - update the contact's last message
+          console.log("📩 SocketService message for another room:", message.room);
+          setContacts(prev => prev.map(contact => {
+            if (contact.roomId === message.room) {
+              return {
+                ...contact,
+                message: message.message,
+                time: message.timestamp,
+                unread: true
+              };
+            }
+            return contact;
+          }));
+        }
+      });
+
+      // Listen for room join events
+      socketService.onRoomJoined((roomId: string) => {
+        console.log("✅ Successfully joined room:", roomId);
+      });
+
+      socketService.onRoomLeft((roomId: string) => {
+        console.log("🚪 Left room:", roomId);
+      });
+
+      // Listen for room creation events
+      if (socket) {
+        socket.on('room_created', (newRoom: ChatRoom) => {
+          console.log("🏠 Room created notification:", newRoom);
+          setRooms(prev => {
+            const exists = prev.find(r => r._id === newRoom._id);
+            if (!exists) {
+              return [...prev, newRoom];
+            }
+            return prev;
+          });
+        });
+      }
+
+      // Add event listeners for debugging
+      if (socket) {
+        socket.onAny((event, data) => {
+          console.log("🔔 Socket event:", event, data);
+          
+          // Catch any room-related events that might be missed
+          if (event.includes('room') || event.includes('Room')) {
+            console.log("🏠 Room-related event detected:", event, data);
+          }
+        });
+
+        // Listen for all possible room list events
+        socket.on('rooms_list', (rooms: ChatRoom[]) => {
+          console.log("📋 Received rooms_list:", rooms);
+          console.log("📋 Type of rooms:", typeof rooms);
+          console.log("📋 Is array:", Array.isArray(rooms));
+          if (rooms && rooms.length > 0) {
+            console.log("📋 First room structure:", rooms[0]);
+          }
+          setRooms(rooms);
+          // Auto-join all rooms to ensure we receive messages
+          rooms.forEach(room => {
+            if (room._id) {
+              console.log("🔗 Auto-joining room:", room._id);
+              socketService.joinRoom(room._id);
+            }
+          });
+        });
+        
+        socket.on('rooms', (rooms: ChatRoom[]) => {
+          console.log("📋 Received rooms:", rooms);
+          setRooms(rooms);
+        });
+        
+        socket.on('all_rooms', (rooms: ChatRoom[]) => {
+          console.log("📋 Received all_rooms:", rooms);
+          setRooms(rooms);
+        });
+        
+        socket.on('user_rooms', (rooms: ChatRoom[]) => {
+          console.log("📋 Received user_rooms:", rooms);
+          setRooms(rooms);
+        });
+
+        // Wait for connection then get rooms
+        socket.on("connect", () => {
+          console.log("✅ Socket connected, getting rooms...");
+          console.log("✅ Socket ID:", socket.id);
+          console.log("✅ Socket connected status:", socket.connected);
+          setIsSocketConnected(true);
+          
+          setTimeout(() => {
+            console.log("🔄 Emitting get_my_rooms request...");
+            socketService.getRooms((roomsList: ChatRoom[]) => {
+              console.log("🏠 Received rooms via callback:", roomsList);
+              setRooms(roomsList);
+            });
+          }, 1000);
+        });
+
+        // Listen for room-related events using your exact event names
+        socket.on('rooms_joined', (data: any) => {
+          console.log("🤝 Rooms joined event:", data);
+          if (data.roomIds && data.roomIds.length > 0) {
+            // Refresh rooms list after joining
+            socketService.getRooms((roomsList: ChatRoom[]) => {
+              console.log("🏠 Refreshed rooms after join:", roomsList);
+              setRooms(roomsList);
+            });
+          }
+        });
+
+        socket.on('rooms_list', (rooms: ChatRoom[]) => {
+          console.log("📋 Received rooms_list:", rooms);
+          console.log("📋 Type of rooms:", typeof rooms);
+          console.log("📋 Is array:", Array.isArray(rooms));
+          if (rooms && rooms.length > 0) {
+            console.log("📋 First room structure:", rooms[0]);
+          }
+          setRooms(rooms);
+          // Auto-join all rooms to ensure we receive messages
+          rooms.forEach(room => {
+            if (room._id) {
+              console.log("🔗 Auto-joining room:", room._id);
+              socketService.joinRoom(room._id);
+            }
+          });
+        });
+
+        socket.on('room_created', (newRoom: ChatRoom) => {
+          console.log("🆕 New room created event:", newRoom);
+          
+          setRooms(prev => {
+            const updatedRooms = [...prev, newRoom];
+            console.log("📝 Updated rooms list with new room:", updatedRooms);
+            return updatedRooms;
+          });
+          
+          // Auto-join the new room to receive messages
+          if (newRoom._id) {
+            console.log("🔗 Auto-joining newly created room:", newRoom._id);
+            socketService.joinRoom(newRoom._id);
+          }
+        });
+
+        socket.on('room_joined', (data: any) => {
+          console.log("🤝 Room joined event:", data);
+          if (data.roomId) {
+            console.log("✅ Successfully joined room:", data.roomId);
+          }
+        });
+
+        socket.on('room_left', (data: any) => {
+          console.log("🚪 Room left event:", data);
+          if (data.roomId) {
+            console.log("🚪 Left room:", data.roomId);
+          }
+        });
+      }
+
+      return () => {
+        socketService.disconnect();
+        setIsSocketConnected(false);
+        setSocketInstance(null);
+      };
+    }
+  }, [userId]);
+
+  // Get room messages when room is selected
+  useEffect(() => {
+    if (selectedRoomId && isSocketConnected) {
+      console.log("📨 Fetching messages for room:", selectedRoomId);
+      
+      // Clear previous messages first
+      setMessages([]);
+      
+      // Join the room to receive live messages
+      socketService.joinRoom(selectedRoomId);
+      console.log("🔗 Joined room:", selectedRoomId);
+      
+      // Get existing messages with timeout
+      let messageReceived = false;
+      
+      socketService.getChat(selectedRoomId, (messages: MessageType[]) => {
+        console.log("📩 Received chat history:", messages);
+        messageReceived = true;
+        setMessages(messages);
+      });
+      
+      // Add timeout to check if messages were received
+      setTimeout(() => {
+        if (!messageReceived) {
+          console.log("⚠️ No messages received for room:", selectedRoomId);
+          console.log("⚠️ Room might not exist or user might not have access");
+        }
+      }, 3000);
+    }
+  }, [selectedRoomId, isSocketConnected]);
+
+  // Manual refresh rooms function
+  const refreshRooms = () => {
+    if (isSocketConnected && socketInstance) {
+      console.log("🔄 Manually refreshing rooms...");
+      console.log("🔍 Socket instance:", socketInstance);
+      console.log("🔍 Socket connected:", socketInstance.connected);
+      console.log("🔍 Socket ID:", socketInstance.id);
+      
+      // Use the correct event name that backend expects
+      console.log("📤 Emitting get_my_rooms...");
+      socketInstance.emit('get_my_rooms');
+      
+      // Listen for the response
+      socketInstance.once('rooms_list', (rooms: ChatRoom[]) => {
+        console.log("📥 Received rooms_list response:", rooms);
+        console.log("📥 Type of rooms:", typeof rooms);
+        console.log("📥 Is array:", Array.isArray(rooms));
+        if (rooms && rooms.length > 0) {
+          console.log("📥 First room structure:", rooms[0]);
+        }
+        setRooms(rooms);
+        
+        // Re-join all rooms after refresh
+        if (rooms && rooms.length > 0) {
+          console.log("🔄 Re-joining all rooms after refresh...");
+          rooms.forEach(room => {
+            console.log("🔄 Re-joining room:", room._id);
+            socketService.joinRoom(room._id);
+          });
+        }
+      });
+      
+      socketService.getRooms((roomsList: ChatRoom[]) => {
+        console.log("🏠 Manual refresh - received rooms via callback:", roomsList);
+        setRooms(roomsList);
+      });
+      
+      // Also try to get rooms after a short delay
+      setTimeout(() => {
+        console.log("🔄 Second attempt to get rooms...");
+        socketInstance.emit('get_my_rooms');
+      }, 2000);
+    }
+  };
 
   // Transform API users to contacts format
   const transformUsersToContacts = (users: any[]): Contact[] => {
     if (!users || !Array.isArray(users)) return [];
-    console.log("users==>",users);
+    console.log("users==>", users);
     return users
       .filter(apiUser => apiUser._id !== userId) // Exclude current user
       .map((apiUser, index) => ({
@@ -92,33 +394,43 @@ export default function ChatPage() {
         unread: Math.random() > 0.7, // Random unread status
         archived: false,
         email: apiUser.email,
+        roomId: null // Will be set when room is created
       }));
   };
 
+// ... (rest of the code remains the same)
   useEffect(() => {
-    if (roomsData?.data) {
-      const formattedRooms = roomsData.data;
-
+    console.log("🔄 Processing rooms:", rooms);
+    if (rooms && rooms.length > 0) {
+      const formattedRooms = rooms;
       setContacts(prev => {
         const newContacts = [...prev];
         formattedRooms.forEach((room: any) => {
-          const existingContact = newContacts.find(c => c.roomId === room.roomId);
-          if (!existingContact) {
-            newContacts.push({
-              id: room.members.find((m: any) => m._id !== userId)?._id || '',
-              roomId: room._id,
-              name: room.members.find((m: any) => m._id !== userId)?.fullname || 'Unknown User',
-              email: room.members.find((m: any) => m._id !== userId)?.email || '',
-              profile: room.members.find((m: any) => m._id !== userId)?.avatar || null,
-              time: new Date().toISOString(),
-              message: '',
-              online: false,
-              img: null,
-              unread: false,
-              archived: false
-            });
+          console.log("🏠 Processing room:", room);
+          const existingContact = newContacts.find(c => c.roomId === room._id);
+          if (!existingContact && room.users && room.users.length === 2) {
+            // Find the other user (not the current user)
+            const otherUser = room.users.find((user: any) => user._id !== userId);
+            if (otherUser) {
+              const newContact = {
+                id: otherUser._id || '',
+                roomId: room._id,
+                name: otherUser.fullname || 'Unknown User',
+                email: otherUser.email || '',
+                profile: otherUser.avatar || null,
+                time: room.lastActive || new Date().toISOString(),
+                message: '',
+                online: false,
+                img: null,
+                unread: room.unreadCount > 0,
+                archived: room.is_archived || false
+              };
+              console.log("➕ Adding new contact:", newContact);
+              newContacts.push(newContact);
+            }
           }
         });
+        console.log("📋 Updated contacts:", newContacts);
         return newContacts;
       });
 
@@ -127,7 +439,7 @@ export default function ChatPage() {
         setSelectedRoomId(formattedRooms[0]._id);
       }
     }
-  }, [roomsData, userId]);
+  }, [rooms, userId]);
 
   // Format message date for grouping
   const formatMessageDate = (timestamp: string) => {
@@ -140,7 +452,7 @@ export default function ChatPage() {
   };
 
   // Group messages by date
-  const groupedMessages = messagesData?.data?.reduce((groups: Record<string, any[]>, message: any) => {
+  const groupedMessages = messages?.reduce((groups: Record<string, any[]>, message: any) => {
     const date = formatMessageDate(message.timestamp);
     if (!groups[date]) {
       groups[date] = [];
@@ -157,11 +469,10 @@ export default function ChatPage() {
     return groups;
   }, {}) || {};
 
-
   // Update messages when messages data is loaded
   useEffect(() => {
-    if (messagesData?.data && selectedRoomId) {
-      const formattedMessages = messagesData.data.map((msg: any) => ({
+    if (messages && messages.length > 0 && selectedRoomId) {
+      const formattedMessages = messages.map((msg: any) => ({
         _id: msg._id,
         senderId: msg.msgFrom._id,
         senderName: msg.msgFrom.fullname || msg.msgFrom.email,
@@ -171,7 +482,7 @@ export default function ChatPage() {
         createdAt: msg.timestamp,
       }));
     }
-  }, [messagesData, selectedRoomId, dispatch]);
+  }, [messages, selectedRoomId, dispatch]);
 
 
   const handleContactSelect = async (contact: Contact) => {
@@ -182,19 +493,99 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !selectedRoomId) return;
-
+    if (!messageText.trim() || !selectedContact) return;
+    
     try {
-      const payload = {
-        msg: messageText,
-        attachments: attachments.map(attachment => ({
-          url: attachment.url,
-          name: attachment.name,
-          type: attachment.type
-        }))
-      };
-
-      await sendMessage({ roomId: selectedRoomId, payload }).unwrap();
+      let currentRoomId = selectedRoomId;
+      
+      // If no room exists, create one first
+      if (!currentRoomId && selectedContact.id && userId) {
+        socketService.createRoom(userId, selectedContact.id, (newRoom: ChatRoom) => {
+          console.log("🏠 New room created:", newRoom);
+          setSelectedRoomId(newRoom._id);
+          setRooms(prev => {
+            console.log("📝 Adding room to rooms list:", [...prev, newRoom]);
+            return [...prev, newRoom];
+          });
+          
+          // Refresh room list to ensure all users get the new room
+          setTimeout(() => {
+            console.log("🔄 Refreshing room list after room creation...");
+            refreshRooms();
+          }, 1000);
+          
+          // Send the message after room is created
+          const payload = {
+            msg: messageText,
+            attachments: attachments.map(attachment => ({
+              url: attachment.url,
+              name: attachment.name,
+              type: attachment.type
+            })),
+            roomId: newRoom._id
+          };
+          
+          console.log("📤 Sending message to new room:", payload);
+          socketService.sendMessage(payload);
+          
+          // Add message to UI immediately for better UX
+          const tempMessage: MessageType = {
+            _id: Date.now().toString(),
+            message: messageText,
+            attachments: attachments.map(attachment => ({
+              url: attachment.url,
+              name: attachment.name,
+              type: attachment.type
+            })),
+            timestamp: new Date().toISOString(),
+            msgFrom: {
+              _id: userId,
+              email: '', // Will be filled from user data if needed
+              avatar: null
+            },
+            room: newRoom._id
+          };
+          
+          setMessages(prev => [...prev, tempMessage]);
+          console.log("✅ Message sent successfully to new room");
+        });
+      } else if (currentRoomId) {
+        // Send message to existing room
+        const payload = {
+          msg: messageText,
+          attachments: attachments.map(attachment => ({
+            url: attachment.url,
+            name: attachment.name,
+            type: attachment.type
+          })),
+          roomId: currentRoomId
+        };
+        
+        console.log("📤 Sending message to existing room:", payload);
+        socketService.sendMessage(payload);
+        
+        // Add message to UI immediately for better UX
+        const tempMessage: MessageType = {
+          _id: Date.now().toString(),
+          message: messageText,
+          attachments: attachments.map(attachment => ({
+            url: attachment.url,
+            name: attachment.name,
+            type: attachment.type
+          })),
+          timestamp: new Date().toISOString(),
+          msgFrom: {
+            _id: userId,
+            email: '', // Will be filled from user data if needed
+            avatar: null
+          },
+          room: currentRoomId
+        };
+        
+        setMessages(prev => [...prev, tempMessage]);
+        console.log("✅ Message sent successfully to existing room");
+      }
+      
       setMessageText('');
       setAttachments([]);
       
@@ -202,8 +593,9 @@ export default function ChatPage() {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
+      
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("❌ Error sending message:", error);
     }
   };
 
@@ -236,8 +628,8 @@ export default function ChatPage() {
   });
 
 
-  // Get messages for the selected room from the API response
-  const currentMessages = messagesData?.data || [];
+  // Get messages for the selected room from socket state
+  const currentMessages = messages || [];
 
   const formatMessageTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -285,6 +677,36 @@ export default function ChatPage() {
         <div>
           <Link href="/smart-outreach" className="text-gray-800 font-semibold">Smart Outreach</Link> <span className="text-gray-800 font-semibold">/ Messages</span>
         </div>
+        <div className="flex gap-2">
+          <button
+            onClick={refreshRooms}
+            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Refresh Rooms
+          </button>
+          <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
+            Rooms: {rooms.length}
+          </div>
+        </div>
+      </div>
+
+      {/* Debug Section */}
+      <div className="mb-4 p-2 bg-gray-50 rounded text-xs">
+        <div className="font-semibold mb-1">Debug Info:</div>
+        <div>Socket Connected: {isSocketConnected ? '✅' : '❌'}</div>
+        <div>User ID: {userId}</div>
+        <div>Rooms Count: {rooms.length}</div>
+        <div>Contacts Count: {contacts.length}</div>
+        {rooms.length > 0 && (
+          <div className="mt-2">
+            <div className="font-semibold">Current Rooms:</div>
+            {rooms.map((room, index) => (
+              <div key={index} className="ml-2">
+                Room {index + 1}: {room._id} - {room.users?.find((u: any) => u._id !== userId)?.fullname}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Mobile Layout (xs to md) */}
@@ -327,7 +749,7 @@ export default function ChatPage() {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="relative flex-shrink-0 w-12 h-12">
                           <Image
-                            src={contact.profile?.startsWith('http') ? contact.profile : `${BaseUrl}${contact.profile.startsWith('/') ? '' : '/'}${contact.profile}`}
+                            src={contact.profile?.startsWith('http') ? contact.profile : `${BaseUrl}${contact.profile?.startsWith('/') ? '' : '/'}${contact.profile}`}
                             className="rounded-full object-cover w-full h-full"
                             alt={contact.name}
                             width={48}
@@ -396,7 +818,8 @@ export default function ChatPage() {
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="p-2 text-gray-500 hover:text-gray-700"
                   >
-                    <BsThreeDotsVertical />
+                    {/* <BsThreeDotsVertical /> */}
+                  <span>⋮</span>
                   </button>
                 </div>
                 {dropdownOpen && (
@@ -439,7 +862,7 @@ export default function ChatPage() {
                             <>
                               <div className="relative w-5 h-5">
                                 <Image
-                                  src={selectedContact.profile?.startsWith('http') ? selectedContact.profile : `${BaseUrl}${selectedContact.profile.startsWith('/') ? '' : '/'}${selectedContact.profile}`}
+                                  src={selectedContact.profile?.startsWith('http') ? selectedContact.profile : `${BaseUrl}${selectedContact.profile?.startsWith('/') ? '' : '/'}${selectedContact.profile}`}
                                   alt="Sender avatar"
                                   width={20}
                                   height={20}
@@ -465,10 +888,10 @@ export default function ChatPage() {
                             <div className="mt-2">
                               {message.attachments.map((file: any, idx: number) => (
                                 <div key={`attachment-${idx}`} className="mt-1">
-                                  {file.type.startsWith('image/') ? (
+                                  {file.type?.startsWith('image/') ? (
                                     <Image
-                                      src={file.url.startsWith('http') ? file.url : `${BaseUrl}${file.url.startsWith('/') ? '' : '/'}${file.url}`}
-                                      alt={file.name}
+                                      src={file.url?.startsWith('http') ? file.url : `${BaseUrl}${file.url?.startsWith('/') ? '' : '/'}${file.url}`}
+                                      alt={file.name || 'Attachment'}
                                       width={200}
                                       height={150}
                                       className="rounded-lg max-h-40 object-cover"
@@ -509,11 +932,12 @@ export default function ChatPage() {
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
+                  disabled={(!messageText.trim() && (!attachments || attachments.length === 0))}
                   className="bg-teal-600 text-white p-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                 >
-                  <FiSend size={16} />
-                  {isSendingMessage ? "Sending..." : "Send"}
+                  {/* <FiSend size={16} /> */}
+                  <span>Send</span>
+                  {/* {isSendingMessage ? "Sending..." : "Send"} */}
                 </button>
               </div>
             </div>
@@ -628,12 +1052,13 @@ export default function ChatPage() {
                     <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => setModalOpen(true)}>
                       <Image src={deleteIcon} alt="Delete" width={20} />
                     </button>
-                    {/* <button
+                    <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                     >
-                      <BsThreeDotsVertical />
-                    </button> */}
+                      {/* <BsThreeDotsVertical /> */}
+                      <span>⋮</span>
+                    </button>
                   </div>
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
@@ -727,11 +1152,12 @@ export default function ChatPage() {
                   />
                   <button
                     onClick={handleSendMessage}
-                    disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) || isSendingMessage}
+                    disabled={(!messageText.trim() && (!attachments || attachments.length === 0)) }
                     className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
                   >
-                    <FiSend size={16} />
-                    {isSendingMessage ? "Sending..." : "Send"}
+                    {/* <FiSend size={16} /> */}
+                  <span>Send</span>
+                    {/* {isSendingMessage ? "Sending..." : "Send"} */}
                   </button>
                 </div>
               </div>
