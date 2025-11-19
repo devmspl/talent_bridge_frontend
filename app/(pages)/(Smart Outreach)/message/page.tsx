@@ -1221,7 +1221,11 @@ const scrollToBottom = useCallback((force = false) => {
                       </div>
                     </div>
                     <div className="text-gray-400 text-xs flex-shrink-0 ml-2">
-                      {new Date(contact.time).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                     {new Date(contact.time).toLocaleDateString("en-US", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric"
+                        })} 
                     </div>
 
                   </div>
@@ -1312,13 +1316,13 @@ const scrollToBottom = useCallback((force = false) => {
                             {message.senderId === userId ? (
                               <>
                                 <span>{formatMessageTime(message.timestamp)} You</span>
-                                <Image src={user} alt="Your avatar" width={24} height={24} className="rounded-full" />
+                                <Image src={`${BaseUrl}/assets/images/${message?.msgFrom?.avatar || user}`} alt="Your avatar" width={24} height={24} className="rounded-full" />
                               </>
                             ) : (
                               <>
                                 <div className="relative w-6 h-6">
                                   <Image
-                                    src={selectedContact.profile || user3}
+                                    src={`${BaseUrl}/assets/images/${selectedContact.profile}`}
                                     alt="Sender avatar"
                                     width={24}
                                     height={24}
