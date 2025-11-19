@@ -65,7 +65,7 @@ export default function page() {
     socketService.createRoom(userId, id, (room) => {
       console.log("Room created:", room);
       // Navigate to the chat room
-      router.push(`/message?roomId=${room.roomId}`);
+      router.push(`/message?roomId=${room._id}`);
       setIsCreatingRoom(false);
     });
   };
