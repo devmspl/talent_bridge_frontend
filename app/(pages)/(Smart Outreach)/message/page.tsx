@@ -86,6 +86,7 @@ console.log("11111111", contacts);
         const roomId = data.roomId || message.roomId;
         
         console.log("📩 Message room:", roomId);
+        console.log("test===>>>>>>>>", message);
         console.log("📩 Selected room ID:", selectedRoomId);
         
         // Format the message to match the expected structure
@@ -106,6 +107,9 @@ console.log("11111111", contacts);
             avatar: message.msgFrom?.avatar || message.msgFrom?.photo || ''
           }
         };
+        console.log("formattedMessage===>", formattedMessage);
+        console.log("selectedRoomId===>", selectedRoomId);
+        console.log("roomId===>", roomId);
         
         // Add message if it's for the current selected room
         if (selectedRoomId && roomId === selectedRoomId) {
@@ -309,7 +313,7 @@ console.log("11111111", contacts);
         
         // Check if this is a new_message event with the expected structure
         if (socketMessage.message) {
-          const message = socketMessage.message;
+          const message = socketMessage;
           console.log("Formatted message:", message);
           
           // Add message if it's for the current selected room
@@ -330,7 +334,7 @@ console.log("11111111", contacts);
               // Include any other fields your UI expects
             };
             
-            setMessages(prevMessages => [...prevMessages, formattedMessage]);
+            setMessages((prevMessages :any) => [...prevMessages, formattedMessage]);
             
             // Scroll to bottom after adding new message
             setTimeout(() => {
@@ -338,9 +342,10 @@ console.log("11111111", contacts);
             }, 100);
           } else {
             // Message is for another room - update the contact's last message
-            console.log("📩 SocketService message for another room:", message.roomId);
+            console.log("roommmmmmmmm:", message);
+            console.log("📩 SocketService message for another room:", message.room);
             setContacts(prev => prev.map(contact => {
-              if (contact.roomId === message.roomId) {
+              if (contact.roomId === message.room) {
                 return {
                   ...contact,
                   message: message.msg,
@@ -394,48 +399,33 @@ console.log("11111111", contacts);
 
         // Listen for all possible room list events
         socket.on('rooms_list', (rooms: ChatRoom[]) => {
-          console.log("📋 Received rooms_list:", rooms);
-          console.log("📋 Type of rooms:", typeof rooms);
-          console.log("📋 Is array:", Array.isArray(rooms));
-          if (rooms && rooms.length > 0) {
-            console.log("📋 First room structure:", rooms[0]);
-          }
           setRooms(rooms);
           // Auto-join all rooms to ensure we receive messages
           rooms.forEach(room => {
             if (room._id) {
-              console.log("🔗 Auto-joining room:", room._id);
               socketService.joinRoom(room._id);
             }
           });
         });
         
         socket.on('rooms', (rooms: ChatRoom[]) => {
-          console.log("📋 Received rooms:", rooms);
           setRooms(rooms);
         });
         
         socket.on('all_rooms', (rooms: ChatRoom[]) => {
-          console.log("📋 Received all_rooms:", rooms);
           setRooms(rooms);
         });
         
         socket.on('user_rooms', (rooms: ChatRoom[]) => {
-          console.log("📋 Received user_rooms:", rooms);
           setRooms(rooms);
         });
 
         // Wait for connection then get rooms
         socket.on("connect", () => {
-          console.log("✅ Socket connected, getting rooms...");
-          console.log("✅ Socket ID:", socket.id);
-          console.log("✅ Socket connected status:", socket.connected);
           setIsSocketConnected(true);
           
           setTimeout(() => {
-            console.log("🔄 Emitting get_my_rooms request...");
             socketService.getMyRooms((roomsList: ChatRoom[]) => {
-              console.log("🏠 Received rooms via callback:", roomsList);
               setRooms(roomsList);
             });
           }, 1000);
@@ -443,35 +433,25 @@ console.log("11111111", contacts);
 
         // Listen for room-related events using your exact event names
         socket.on('rooms_joined', (data: any) => {
-          console.log("🤝 Rooms joined event:", data);
           if (data.roomIds && data.roomIds.length > 0) {
             // Refresh rooms list after joining
             socketService.getRooms((roomsList: ChatRoom[]) => {
-              console.log("🏠 Refreshed rooms after join:", roomsList);
               setRooms(roomsList);
             });
           }
         });
 
         socket.on('rooms_list', (rooms: ChatRoom[]) => {
-          console.log("📋 Received rooms_list:", rooms);
-          console.log("📋 Type of rooms:", typeof rooms);
-          console.log("📋 Is array:", Array.isArray(rooms));
-          if (rooms && rooms.length > 0) {
-            console.log("📋 First room structure:", rooms[0]);
-          }
           setRooms(rooms);
           // Auto-join all rooms to ensure we receive messages
           rooms.forEach(room => {
             if (room._id) {
-              console.log("🔗 Auto-joining room:", room._id);
               socketService.joinRoom(room._id);
             }
           });
         });
 
         socket.on('room_created', (newRoom: ChatRoom) => {
-          console.log("🆕 New room created event:", newRoom);
           
           setRooms(prev => {
             const updatedRooms = [...prev, newRoom];
@@ -481,22 +461,17 @@ console.log("11111111", contacts);
           
           // Auto-join the new room to receive messages
           if (newRoom._id) {
-            console.log("🔗 Auto-joining newly created room:", newRoom._id);
             socketService.joinRoom(newRoom._id);
           }
         });
 
         socket.on('room_joined', (data: any) => {
-          console.log("🤝 Room joined event:", data);
           if (data.roomId) {
-            console.log("✅ Successfully joined room:", data.roomId);
           }
         });
 
         socket.on('room_left', (data: any) => {
-          console.log("🚪 Room left event:", data);
           if (data.roomId) {
-            console.log("🚪 Left room:", data.roomId);
           }
         });
       }
@@ -512,65 +487,59 @@ console.log("11111111", contacts);
   // Get room messages when room is selected
   useEffect(() => {
     if (selectedRoomId && isSocketConnected) {
-      console.log("📨 Fetching messages for room:", selectedRoomId);
       
       // Clear previous messages first
       setMessages([]);
       
       // Join the room to receive live messages
       socketService.joinRoom(selectedRoomId);
-      console.log("🔗 Joined room:", selectedRoomId);
       
       // Get existing messages with timeout
       let messageReceived = false;
       
       socketService.getChat(selectedRoomId, (messages: MessageType[]) => {
-        console.log("📩 Received chat history:", messages);
         messageReceived = true;
         setMessages(messages);
+        
+        // Scroll to bottom after messages are loaded
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 100);
       });
       
       // Add timeout to check if messages were received
       setTimeout(() => {
         if (!messageReceived) {
-          console.log("⚠️ No messages received for room:", selectedRoomId);
-          console.log("⚠️ Room might not exist or user might not have access");
+        } else if (messagesEndRef.current) {
+          // One more scroll attempt after timeout to ensure we're at the bottom
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 3000);
+      }, 300);
     }
   }, [selectedRoomId, isSocketConnected]);
 
   // Manual refresh rooms function
   const refreshRooms = () => {
     if (isSocketConnected && socketInstance) {
-      console.log("🔄 Manually refreshing rooms...");
-      console.log("🔍 Socket instance:", socketInstance);
-      console.log("🔍 Socket connected:", socketInstance.connected);
-      console.log("🔍 Socket ID:", socketInstance.id);
       
       // Use the correct event name that backend expects
-      console.log("📤 Emitting get_my_rooms...");
       socketInstance.emit('get_my_rooms');
       
       // Listen for the response
       socketInstance.once('rooms_list', (rooms: ChatRoom[]) => {
-        console.log("📥 Received rooms_list response:", rooms);
-        console.log("📥 Type of rooms:", typeof rooms);
-        console.log("📥 Is array:", Array.isArray(rooms));
         if (rooms && rooms.length > 0) {
-          console.log("📥 First room structure:", rooms[0]);
-        }
         setRooms(rooms);
         
         // Re-join all rooms after refresh
         if (rooms && rooms.length > 0) {
-          console.log("🔄 Re-joining all rooms after refresh...");
           rooms.forEach(room => {
-            console.log("🔄 Re-joining room:", room._id);
             socketService.joinRoom(room._id);
           });
         }
-      });
+      }
+      })
       
       socketService.getRooms((roomsList: ChatRoom[]) => {
         console.log("🏠 Manual refresh - received rooms via callback:", roomsList);
@@ -644,6 +613,7 @@ console.log("11111111", contacts);
 
       // Set the first room as selected by default if none is selected
       if (formattedRooms.length > 0 && !selectedRoomId) {
+        console.log("Selected room iddddd",formattedRooms[0]._id);
         setSelectedRoomId(formattedRooms[0]._id);
       }
     }
@@ -744,7 +714,7 @@ console.log("11111111", contacts);
             msgFrom: {
               _id: userId,
               email: '',
-              avatar: null
+              avatar: ''
             },
             room: newRoom._id
           };
