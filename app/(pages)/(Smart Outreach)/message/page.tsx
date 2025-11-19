@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 // import { FiSend } from "react-icons/fi";
 // import { BsThreeDotsVertical } from "react-icons/bs";
 import Image from "next/image";
@@ -64,57 +64,72 @@ export default function ChatPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-console.log("11111111", contacts);
+
+// Function to scroll to bottom of chat
+const scrollToBottom = useCallback((force = false) => {
+  if (!messagesEndRef.current) return;
+  
+  const chatContainer = messagesEndRef.current.parentElement;
+  if (!chatContainer) return;
+  
+  // Only auto-scroll if forced or if already near bottom
+  const isNearBottom = chatContainer.scrollHeight - chatContainer.scrollTop <= chatContainer.clientHeight + 100;
+  if (force || isNearBottom) {
+    messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }
+}, []);
+
+
   // Initialize socket connection
   useEffect(() => {
     if (userId) {
       const token = Cookies.get("tb_token");
-      console.log("🔑 Token check:", token ? "Token exists" : "No token found");
-      console.log("👤 User ID:", userId);
-      
       const socket = socketService.connect(userId);
       setIsSocketConnected(true);
       setSocketInstance(socket);
 
-      console.log("🔌 Socket connecting for user:", userId);
 
       // Listen for incoming messages
       socket.on('new_message', (data: any) => {
-        console.log("📩 Received new_message event:", data);
         
         const message = data.message || data; // Handle both direct message and wrapped message
         const roomId = data.roomId || message.roomId;
         
-        console.log("📩 Message room:", roomId);
-        console.log("test===>>>>>>>>", message);
-        console.log("📩 Selected room ID:", selectedRoomId);
-        
         // Format the message to match the expected structure
         const formattedMessage: MessageType = {
           _id: message._id,
-          room: roomId,
-          sender: message.msgFrom?._id || message.sender,
           message: message.msg || message.message,
+          attachments: message.attachments || [],
           timestamp: message.createdAt || new Date().toISOString(),
+          msgFrom: {
+            _id: message.msgFrom?._id,
+            email: message.msgFrom?.email || '',
+            fullname: message.msgFrom?.fullname || 'Unknown',
+            avatar: message.msgFrom?.avatar || message.msgFrom?.photo || ''
+          },
+          room: roomId,
           status: message.read ? 'read' : 'delivered',
           isEdited: message.isEdited || false,
-          isDeleted: message.isDeleted || false,
-          attachments: message.attachments || [],
-          senderInfo: {
-            _id: message.msgFrom?._id || message.sender,
-            fullname: message.msgFrom?.fullname || 'Unknown',
-            email: message.msgFrom?.email || '',
-            avatar: message.msgFrom?.avatar || message.msgFrom?.photo || ''
-          }
+          isDeleted: message.isDeleted || false
         };
-        console.log("formattedMessage===>", formattedMessage);
-        console.log("selectedRoomId===>", selectedRoomId);
-        console.log("roomId===>", roomId);
+       
         
         // Add message if it's for the current selected room
         if (selectedRoomId && roomId === selectedRoomId) {
-          console.log("✅ New message for current room, adding to messages");
-          setMessages(prev => [...prev, formattedMessage]);
+          setMessages(prev => {
+            // Check if message already exists (by ID or by content + timestamp)
+            const messageExists = prev.some(m => 
+              m._id === formattedMessage._id || 
+              (m.message === formattedMessage.message && 
+               m.timestamp === formattedMessage.timestamp)
+            );
+            
+            if (messageExists) {
+              return prev;
+            }
+            
+            return [...prev, formattedMessage];
+          });
           
           // Mark as read if this is the current user's room
           if (socket && message.msgFrom?._id !== userId) {
@@ -125,7 +140,6 @@ console.log("11111111", contacts);
           }
         } else {
           // Message is for another room - update the contact's last message
-          console.log("📬 Message for another room, updating contact list");
           setContacts(prev => prev.map(contact => {
             if (contact.roomId === roomId) {
               return {
@@ -142,7 +156,6 @@ console.log("11111111", contacts);
 
       // Listen for message delivery updates
       socket.on('message_delivery_updated', (data: any) => {
-        console.log("📨 Message delivery updated:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, status: data.status } : msg
@@ -152,7 +165,6 @@ console.log("11111111", contacts);
 
       // Listen for message read events (both current and legacy)
       socket.on('message_readed', (data: any) => {
-        console.log("👁️ Message read:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, status: 'read' } : msg
@@ -161,7 +173,6 @@ console.log("11111111", contacts);
       });
 
       socket.on('massage_readed', (data: any) => {
-        console.log("👁️ Legacy message read:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, status: 'read' } : msg
@@ -171,7 +182,6 @@ console.log("11111111", contacts);
 
       // Listen for message edits
       socket.on('message_edited', (data: any) => {
-        console.log("✏️ Message edited:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, message: data.content, status: 'edited' } : msg
@@ -181,7 +191,6 @@ console.log("11111111", contacts);
 
       // Listen for message deletions
       socket.on('message_deleted', (data: any) => {
-        console.log("🗑️ Message deleted:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => prev.filter(msg => msg._id !== data.messageId));
         }
@@ -189,7 +198,6 @@ console.log("11111111", contacts);
 
       // Listen for message replies
       socket.on('message_replied', (data: any) => {
-        console.log("💬 Message replied:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setMessages(prev => [...prev, data.replyMessage]);
         }
@@ -197,7 +205,6 @@ console.log("11111111", contacts);
 
       // Listen for chat history
       socket.on('get_chat', (messages: MessageType[]) => {
-        console.log("📚 Chat history received:", messages);
         if (selectedRoomId && messages.length > 0 && messages[0].room === selectedRoomId) {
           setMessages(messages);
         }
@@ -205,7 +212,6 @@ console.log("11111111", contacts);
       
       // For backward compatibility
       socket.on('chat_history', (messages: MessageType[]) => {
-        console.log("📚 Legacy chat history received:", messages);
         if (selectedRoomId && messages.length > 0 && messages[0].room === selectedRoomId) {
           setMessages(messages);
         }
@@ -213,14 +219,12 @@ console.log("11111111", contacts);
 
       // Listen for typing indicators
       socket.on('user_typing', (data: any) => {
-        console.log("⌨️ User typing:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setTypingUsers(prev => [...prev.filter(u => u._id !== data.user._id), data.user]);
         }
       });
 
       socket.on('user_stopped_typing', (data: any) => {
-        console.log("⏹️ User stopped typing:", data);
         if (selectedRoomId && data.roomId === selectedRoomId) {
           setTypingUsers(prev => prev.filter(u => u._id !== data.user._id));
         }
@@ -228,7 +232,6 @@ console.log("11111111", contacts);
 
       // Listen for archive events
       socket.on('archive_created', (data: any) => {
-        console.log("📁 Archive created:", data);
         // Refresh rooms list
         socketService.getMyRooms((roomsList: ChatRoom[]) => {
           setRooms(roomsList);
@@ -236,7 +239,6 @@ console.log("11111111", contacts);
       });
 
       socket.on('room_unarchived', (data: any) => {
-        console.log("📂 Room unarchived:", data);
         // Refresh rooms list
         socketService.getMyRooms((roomsList: ChatRoom[]) => {
           setRooms(roomsList);
@@ -245,7 +247,6 @@ console.log("11111111", contacts);
 
       // Listen for user connection events
       socket.on('user_connected', (user: any) => {
-        console.log("👋 User connected:", user);
         // Update UI to show user is online
         setContacts(prev => prev.map(contact => {
           if (contact.id === user._id || contact.email === user.email) {
@@ -256,7 +257,6 @@ console.log("11111111", contacts);
       });
 
       socket.on('user_disconnected', (user: any) => {
-        console.log("👋 User disconnected:", user);
         // Update UI to show user is offline
         setContacts(prev => prev.map(contact => {
           if (contact.id === user._id || contact.email === user.email) {
@@ -268,22 +268,18 @@ console.log("11111111", contacts);
 
       // Listen for room events
       socket.on('rooms_joined', (data: any) => {
-        console.log("🏠 Rooms joined:", data);
         // Update rooms list if needed
       });
 
       socket.on('room_created', (room: ChatRoom) => {
-        console.log("🆕 Room created:", room);
         setRooms(prev => [...prev, room]);
       });
 
       socket.on('room_joined', (data: any) => {
-        console.log("🚪 Room joined:", data);
         // Update room members or UI state
       });
 
       socket.on('room_left', (data: any) => {
-        console.log("🚪 Room left:", data);
         // Update UI state
         if (data.roomId === selectedRoomId) {
           setSelectedRoomId(null);
@@ -292,7 +288,6 @@ console.log("11111111", contacts);
       });
 
       socket.on('room_deleted', (data: any) => {
-        console.log("🗑️ Room deleted:", data);
         // Remove room from list and update UI
         setRooms(prev => prev.filter(room => room._id !== data.roomId));
         if (data.roomId === selectedRoomId) {
@@ -303,22 +298,17 @@ console.log("11111111", contacts);
 
       // Listen for errors
       socket.on('error', (error: any) => {
-        console.error("❌ Socket error:", error);
         // Handle error appropriately
       });
 
       // Handle incoming messages from socket
       socketService.onMessage((socketMessage: any) => {
-        console.log("📩 Received message via socketService:", socketMessage);
         
         // Check if this is a new_message event with the expected structure
         if (socketMessage.message) {
-          const message = socketMessage;
-          console.log("Formatted message:", message);
-          
+          const message = socketMessage; 
           // Add message if it's for the current selected room
-          if (selectedRoomId && message.roomId === selectedRoomId) {
-            console.log("✅ SocketService message for current room, adding to messages");
+          if (selectedRoomId && message.room === selectedRoomId) {
             
             // Format the message to match your expected structure
             const formattedMessage = {
@@ -342,8 +332,6 @@ console.log("11111111", contacts);
             }, 100);
           } else {
             // Message is for another room - update the contact's last message
-            console.log("roommmmmmmmm:", message);
-            console.log("📩 SocketService message for another room:", message.room);
             setContacts(prev => prev.map(contact => {
               if (contact.roomId === message.room) {
                 return {
@@ -357,6 +345,7 @@ console.log("11111111", contacts);
                   lastMessageSender: message.msgFrom?.fullname || 'Unknown'
                 };
               }
+              setMessages((prevMessages :any) => [...prevMessages, message]);
               return contact;
             }));
           }
@@ -365,17 +354,14 @@ console.log("11111111", contacts);
 
       // Listen for room join events
       socketService.onRoomJoined((roomId: string) => {
-        console.log("✅ Successfully joined room:", roomId);
       });
 
       socketService.onRoomLeft((roomId: string) => {
-        console.log("🚪 Left room:", roomId);
       });
 
       // Listen for room creation events
       if (socket) {
         socket.on('room_created', (newRoom: ChatRoom) => {
-          console.log("🏠 Room created notification:", newRoom);
           setRooms(prev => {
             const exists = prev.find(r => r._id === newRoom._id);
             if (!exists) {
@@ -389,11 +375,9 @@ console.log("11111111", contacts);
       // Add event listeners for debugging
       if (socket) {
         socket.onAny((event, data) => {
-          console.log("🔔 Socket event:", event, data);
           
           // Catch any room-related events that might be missed
           if (event.includes('room') || event.includes('Room')) {
-            console.log("🏠 Room-related event detected:", event, data);
           }
         });
 
@@ -455,7 +439,6 @@ console.log("11111111", contacts);
           
           setRooms(prev => {
             const updatedRooms = [...prev, newRoom];
-            console.log("📝 Updated rooms list with new room:", updatedRooms);
             return updatedRooms;
           });
           
@@ -501,12 +484,10 @@ console.log("11111111", contacts);
         messageReceived = true;
         setMessages(messages);
         
-        // Scroll to bottom after messages are loaded
-        setTimeout(() => {
-          if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-          }
-        }, 100);
+        // Scroll to bottom when messages change or room changes
+        useEffect(() => {
+          scrollToBottom();
+        }, [messages, selectedRoomId]);
       });
       
       // Add timeout to check if messages were received
@@ -542,7 +523,6 @@ console.log("11111111", contacts);
       })
       
       socketService.getRooms((roomsList: ChatRoom[]) => {
-        console.log("🏠 Manual refresh - received rooms via callback:", roomsList);
         setRooms(roomsList);
       });
       
@@ -557,7 +537,6 @@ console.log("11111111", contacts);
   // Transform API users to contacts format
   const transformUsersToContacts = (users: any[]): Contact[] => {
     if (!users || !Array.isArray(users)) return [];
-    console.log("users==>", users);
     return users
       .filter(apiUser => apiUser._id !== userId) // Exclude current user
       .map((apiUser, index) => ({
@@ -571,19 +550,17 @@ console.log("11111111", contacts);
         unread: Math.random() > 0.7, // Random unread status
         archived: false,
         email: apiUser.email,
-        roomId: null // Will be set when room is created
+        roomId: undefined // Will be set when room is created
       }));
   };
 
 // ... (rest of the code remains the same)
   useEffect(() => {
-    console.log("🔄 Processing rooms:", rooms);
     if (rooms && rooms.length > 0) {
       const formattedRooms = rooms;
       setContacts(prev => {
         const newContacts = [...prev];
         formattedRooms.forEach((room: any) => {
-          console.log("🏠 Processing room:", room);
           const existingContact = newContacts.find(c => c.roomId === room._id);
           if (!existingContact && room.users && room.users.length === 2) {
             // Find the other user (not the current user)
@@ -602,18 +579,15 @@ console.log("11111111", contacts);
                 unread: room.unreadCount > 0,
                 archived: room.is_archived || false
               };
-              console.log("➕ Adding new contact:", newContact);
               newContacts.push(newContact);
             }
           }
         });
-        console.log("📋 Updated contacts:", newContacts);
         return newContacts;
       });
 
       // Set the first room as selected by default if none is selected
       if (formattedRooms.length > 0 && !selectedRoomId) {
-        console.log("Selected room iddddd",formattedRooms[0]._id);
         setSelectedRoomId(formattedRooms[0]._id);
       }
     }
@@ -630,22 +604,41 @@ console.log("11111111", contacts);
   };
 
   // Group messages by date
-  console.log("messages===========|>",messages);
+  
+  
+  // Track message IDs to prevent duplicates
+  const seenMessageIds = new Set();
   
   const groupedMessages = messages?.reduce((groups: Record<string, any[]>, message: any) => {
-    const date = formatMessageDate(message.timestamp);
+    if (!message || !message._id) return groups;
+    
+    // Skip if we've already seen this message ID
+    if (seenMessageIds.has(message._id)) {
+      return groups;
+    }
+    
+    // Add message ID to the set of seen messages
+    seenMessageIds.add(message._id);
+    
+    const date = formatMessageDate(message.timestamp || message.createdAt);
     if (!groups[date]) {
       groups[date] = [];
     }
-    groups[date].push({
+    
+    const senderInfo = message.msgFrom || message.senderInfo || {};
+    const formattedMessage = {
       ...message,
-      senderId: message.msgFrom._id,
-      senderName: message.msgFrom.fullname || message.msgFrom.email,
-      text: message.message,
-      timestamp: message.timestamp,
-      roomId: message.room,
-      attachments: message.attachments || []
-    });
+      _id: message._id,
+      senderId: senderInfo._id || message.sender,
+      senderName: senderInfo.fullname || senderInfo.email || 'Unknown',
+      text: message.message || message.text || '',
+      timestamp: message.timestamp || message.createdAt,
+      roomId: message.room || message.roomId,
+      attachments: message.attachments || [],
+      status: message.status || 'sent'
+    };
+    
+    groups[date].push(formattedMessage);
     return groups;
   }, {}) || {};
 
@@ -681,16 +674,13 @@ console.log("11111111", contacts);
       // If no room exists, create one first
       if (!currentRoomId && selectedContact.id && userId) {
         socketService.createRoom(userId, selectedContact.id, (newRoom: ChatRoom) => {
-          console.log("🏠 New room created:", newRoom);
           setSelectedRoomId(newRoom._id);
           setRooms(prev => {
-            console.log("📝 Adding room to rooms list:", [...prev, newRoom]);
             return [...prev, newRoom];
           });
           
           // Refresh room list to ensure all users get the new room
           setTimeout(() => {
-            console.log("🔄 Refreshing room list after room creation...");
             refreshRooms();
           }, 1000);
           
@@ -700,7 +690,6 @@ console.log("11111111", contacts);
             message: messageText
           };
           
-          console.log("📤 Sending message to new room:", payload);
           if (socketInstance) {
             socketInstance.emit('send_message', payload);
           }
@@ -720,7 +709,6 @@ console.log("11111111", contacts);
           };
           
           setMessages(prev => [...prev, tempMessage]);
-          console.log("✅ Message sent successfully to new room");
         });
       } else if (currentRoomId) {
         // Send message to existing room
@@ -729,27 +717,25 @@ console.log("11111111", contacts);
           message: messageText
         };
         
-        console.log("📤 Sending message to existing room:", payload);
         if (socketInstance) {
           socketInstance.emit('send_message', payload);
         }
         
         // Add message to UI immediately for better UX
-        const tempMessage: MessageType = {
-          _id: Date.now().toString(),
-          message: messageText,
-          attachments: [],
-          timestamp: new Date().toISOString(),
-          msgFrom: {
-            _id: userId,
-            email: '',
-            avatar: null
-          },
-          room: currentRoomId
-        };
+        // const tempMessage: MessageType = {
+        //   _id: Date.now().toString(),
+        //   message: messageText,
+        //   attachments: [],
+        //   timestamp: new Date().toISOString(),
+        //   msgFrom: {
+        //     _id: userId,
+        //     email: '',
+        //     avatar: ""
+        //   },
+        //   room: currentRoomId
+        // };
         
-        setMessages(prev => [...prev, tempMessage]);
-        console.log("✅ Message sent successfully to existing room");
+        // setMessages(prev => [...prev, tempMessage]);
       }
       
       setMessageText('');
@@ -762,7 +748,7 @@ console.log("11111111", contacts);
       
       // Scroll to bottom after sending message
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollToBottom();
       }, 100);
       
     } catch (error) {
@@ -824,7 +810,6 @@ console.log("11111111", contacts);
   // Function to get archived rooms
   const getArchivedRooms = () => {
     socketService.getArchiveRooms((rooms: ChatRoom[]) => {
-      console.log("📁 Archived rooms:", rooms);
       // Handle archived rooms as needed
     });
   };

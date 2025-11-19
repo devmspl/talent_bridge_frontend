@@ -220,7 +220,7 @@ class SocketService {
   onMessage(callback: (message: Message) => void) {
     if (this.socket) {
       this.socket.on('new_message', (data: any) => {
-        console.log(" Raw message received:", data);
+        // console.log(" Raw message received:", data);
         
         // Extract the message from the data object
         const messageData = data.message || data;
@@ -244,7 +244,6 @@ class SocketService {
           isDeleted: messageData.isDeleted || false
         };
         
-        console.log(" Formatted message:", formattedMessage);
         callback(formattedMessage);
       });
     }
