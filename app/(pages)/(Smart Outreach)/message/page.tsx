@@ -887,43 +887,6 @@ const scrollToBottom = useCallback((force = false) => {
 
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-500 flex justify-between items-center">
-        <div>
-          <Link href="/smart-outreach" className="text-gray-800 font-semibold">Smart Outreach</Link> <span className="text-gray-800 font-semibold">/ Messages</span>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={refreshRooms}
-            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Refresh Rooms
-          </button>
-          <div className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
-            Rooms: {rooms.length}
-          </div>
-        </div>
-      </div>
-
-      {/* Debug Section */}
-      {/* <div className="mb-4 p-2 bg-gray-50 rounded text-xs">
-        <div className="font-semibold mb-1">Debug Info:</div>
-        <div>Socket Connected: {isSocketConnected ? '✅' : '❌'}</div>
-        <div>User ID: {userId}</div>
-        <div>Rooms Count: {rooms.length}</div>
-        <div>Contacts Count: {contacts.length}</div>
-        {rooms.length > 0 && (
-          <div className="mt-2">
-            <div className="font-semibold">Current Rooms:</div>
-            {rooms.map((room, index) => (
-              <div key={index} className="ml-2">
-                Room {index + 1}: {room._id} - {room.users?.find((u: any) => u._id !== userId)?.fullname}
-              </div>
-            ))}
-          </div>
-        )}
-      </div> */}
-
       {/* Mobile Layout (xs to md) */}
       <div className="block md:hidden">
         {!selectedContact ? (
