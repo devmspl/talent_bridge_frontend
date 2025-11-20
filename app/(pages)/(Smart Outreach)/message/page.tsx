@@ -1098,7 +1098,7 @@ const scrollToBottom = useCallback((force = false) => {
                 {filteredContacts.length === 0 ? (
                   <div className="text-center text-gray-400 text-sm mt-10">No contacts found</div>
                 ) : (
-                  contacts.map((contact,index) => (
+                  filteredContacts.map((contact,index) => (
                     <div
                       key={`contact-${contact.id}`}
                       className={`flex items-center justify-between cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors ${(selectedContact as any)?.id === (contact as any)?.id ? "bg-teal-50 border border-teal-200" : ""
@@ -1108,7 +1108,7 @@ const scrollToBottom = useCallback((force = false) => {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="relative flex-shrink-0 w-12 h-12">
                           <Image
-                            src={contact.profile?.startsWith('http') ? contact.profile : `${BaseUrl}${contact.profile?.startsWith('/') ? '' : '/'}${contact.profile}`}
+                            src={`${BaseUrl}/assets/images/${contact.profile}`}
                             className="rounded-full object-cover w-full h-full"
                             alt={contact.name}
                             width={48}
@@ -1134,13 +1134,13 @@ const scrollToBottom = useCallback((force = false) => {
                             {contact.unreadCount || 0}
                           </div>
                         )}
-                        {/* Archive button for quick archiving without selecting */}
+                        {/* Archive button for quick archiving without selecting (icon for parity with desktop) */}
                         <button
                           onClick={(e) => { e.stopPropagation(); if (contact.roomId) createArchive([contact.roomId]); }}
                           className="ml-2 text-xs text-gray-500 hover:text-teal-600 px-2 py-1 rounded"
                           title="Archive"
                         >
-                          Archive
+                          <Image src={deleteIcon} alt="Archive" width={18} height={18} />
                         </button>
                       </div>
                     </div>
@@ -1164,7 +1164,7 @@ const scrollToBottom = useCallback((force = false) => {
                 <div className="relative w-10 h-10 flex-shrink-0">
                   <Image
                     src={
-                      selectedContact.profile || user3}
+                      selectedContact.profile ? `${BaseUrl}/assets/images/${selectedContact.profile}` : user3}
                     alt="avatar"
                     className="w-full h-full rounded-full object-cover"
                     width={40}
@@ -1188,6 +1188,16 @@ const scrollToBottom = useCallback((force = false) => {
                   <button className="p-2 text-gray-500 hover:text-gray-700">
                     <Image src={call} alt="Call" width={20} />
                   </button>
+                  <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => {
+                      const rid = selectedContact?.roomId || selectedRoomId;
+                      if (rid && isRoomArchived(rid)) {
+                        handleUnarchive(rid);
+                      } else {
+                        handleArchive();
+                      }
+                    }} title="Archive">
+                    <Image src={deleteIcon} alt="Archive" width={20} />
+                  </button>
                   <button
                     onClick={() => setDropdownOpen(!dropdownOpen)}
                     className="p-2 text-gray-500 hover:text-gray-700"
@@ -1202,12 +1212,12 @@ const scrollToBottom = useCallback((force = false) => {
                       <li
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
-                          const rid = selectedContact?.roomId || selectedRoomId;
-                          if (rid && isRoomArchived(rid)) {
-                            handleUnarchive(rid);
-                          } else {
-                            handleArchive();
-                          }
+                           const rid = selectedContact?.roomId || selectedRoomId;
+                            if (rid && isRoomArchived(rid)) {
+                              handleUnarchive(rid);
+                            } else {
+                              handleArchive();
+                            }
                         }}
                       >
                         { (selectedContact?.roomId && isRoomArchived(selectedContact.roomId)) || (selectedRoomId && isRoomArchived(selectedRoomId)) ? 'Unarchive' : 'Archive' }
@@ -1237,13 +1247,13 @@ const scrollToBottom = useCallback((force = false) => {
                           {message.senderId === userId ? (
                             <>
                               <span>You {formatMessageTime(message.timestamp)}</span>
-                              <Image src={user} alt="Your avatar" width={20} height={20} className="rounded-full" />
+                              <Image src={`${BaseUrl}/assets/images/${message?.msgFrom?.avatar || user}`} alt="Your avatar" width={20} height={20} className="rounded-full" />
                             </>
                           ) : (
                             <>
                               <div className="relative w-5 h-5">
                                 <Image
-                                  src={selectedContact.profile?.startsWith('http') ? selectedContact.profile : `${BaseUrl}${selectedContact.profile?.startsWith('/') ? '' : '/'}${selectedContact.profile}`}
+                                  src={selectedContact.profile ? `${BaseUrl}/assets/images/${selectedContact.profile}` : user3}
                                   alt="Sender avatar"
                                   width={20}
                                   height={20}
@@ -1403,13 +1413,6 @@ const scrollToBottom = useCallback((force = false) => {
                             {contact.unreadCount || 0}
                           </div>
                         )}
-                        {/* <button
-                          onClick={(e) => { e.stopPropagation(); if (contact.roomId) createArchive([contact.roomId]); }}
-                          className="ml-2 text-xs text-gray-500 hover:text-teal-600 px-2 py-1 rounded"
-                          title="Archive"
-                        >
-                          Archive
-                        </button> */}
                     </div>
 
                   </div>
@@ -1428,7 +1431,7 @@ const scrollToBottom = useCallback((force = false) => {
                 <div className="flex items-center gap-3">
                   <div className="relative w-12 h-12">
                     <Image
-                      src={`${BaseUrl}/assets/images/${selectedContact.profile}`}
+                      src={selectedContact.profile ? `${BaseUrl}/assets/images/${selectedContact.profile}` : user3}
                       alt="avatar"
                       className="w-full h-full rounded-full object-cover"
                       width={48}
