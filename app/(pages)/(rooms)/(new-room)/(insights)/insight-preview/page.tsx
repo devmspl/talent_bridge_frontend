@@ -36,8 +36,7 @@ const PortfolioPage = () => {
   const [coverDataUrl, setCoverDataUrl] = useState<string | null>(null);
   const [videoDataUrl, setVideoDataUrl] = useState<string | null>(null);
   const [insightFiles, setInsightFiles] = useState<File[]>([]);
-  console.log("videoDataUrl", videoDataUrl);
-  console.log("coverDataUrl", coverDataUrl);
+
 
   useEffect(() => {
     const intro = lsGet<any>(ROOM_KEYS.intro, { roomName: "Data Analytics Portfolio", roomSummary: "", role: "" });

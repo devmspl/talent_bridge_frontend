@@ -419,9 +419,30 @@ class SocketService {
   }
 
   // Archive operations
-  createArchive(roomIds: string[]) {
-    if (this.socket) {
-      this.socket.emit('create_archive', { roomIds });
+  // Accept either a single roomId (string) or an array of roomIds.
+  // For compatibility with different server payload shapes, emit { roomId } when a single id
+  // is provided (or an array with one element), otherwise emit { roomIds } for bulk archive.
+  createArchive(roomIds: string | string[], callback?: (data: any) => void) {
+    if (!this.socket) return;
+
+    let payload: any;
+    if (typeof roomIds === 'string') {
+      payload = { roomId: roomIds };
+    } else if (Array.isArray(roomIds)) {
+      if (roomIds.length === 1) {
+        payload = { roomId: roomIds[0] };
+      } else {
+        payload = { roomIds };
+      }
+    } else {
+      // Fallback: treat as empty
+      payload = {};
+    }
+
+    this.socket.emit('create_archive', payload);
+    if (callback) {
+      // Listen once for confirmation/event from server
+      this.socket.once('archive_created', callback);
     }
   }
 
@@ -439,12 +460,12 @@ class SocketService {
   }
 
   // Legacy archive method
-  archiveRoom(roomId: string, callback: (success: boolean) => void) {
-    if (this.socket) {
-      this.createArchive([roomId]);
-      this.socket.once('archive_created', callback);
-    }
-  }
+  // archiveRoom(roomId: string, callback: (success: boolean) => void) {
+  //   if (this.socket) {
+  //     this.createArchive([roomId]);
+  //     this.socket.once('archive_created', callback);
+  //   }
+  // }
 }
 
 // Create singleton instance

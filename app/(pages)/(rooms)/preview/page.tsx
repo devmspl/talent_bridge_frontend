@@ -56,7 +56,6 @@ export default function PreviewPage() {
     return [] as string[];
   }, [data]);
   const insights = useMemo(() => {
-    console.log("Insights data check:", data?.insightsId);
     const list = Array.isArray(data?.insightsId) ? data.insightsId : [];
     if (!list.length) return [] as any[];
     return list.map((it: any, i: number) => ({

@@ -86,7 +86,6 @@ export default function Signup() {
     const registerWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse: any) => {
       const token = tokenResponse?.access_token ?? tokenResponse?.credential;
-      console.log("token", token);
       if (!token) {
         toast.error("Google did not return a token");
         return;

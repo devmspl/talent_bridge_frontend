@@ -34,6 +34,8 @@ import up from '@/public/assets/media/upp.svg';
 import down from '@/public/assets/media/downn.svg';
 import { useSearchParams, useRouter } from "next/navigation";
 import { useGetShowcaseRoomByIdQuery, useDeleteShowcaseRoomMutation } from "@/app/store/api/showcaseApi";
+import { useGetAllUsersQuery } from '@/app/store/api/userApi';
+import { BaseUrl } from '@/app/store/BaseUrl';
 
 
 
@@ -58,27 +60,27 @@ const Page = () => {
     {
       icon: <AiOutlineEye className="w-4 h-4 text-gray-400" />,
       title: "Showcase Views",
-      value: "--",
-       trend: "--",
+      value: "0",
+       trend: "0",
       // trend: "+10% vs last week",
     },
     {
       icon: <AiOutlineClockCircle className="w-4 h-4 text-gray-400" />,
       title: "Conversion Rate",
-      value: "--%",
-      trend: "--",
+      value: "0%",
+      trend: "0",
     },
     {
       icon: <AiOutlineMessage className="w-4 h-4 text-gray-400" />,
       title: "Interactions",
-      value: "--",
-      trend: "--",
+      value: "0",
+      trend: "0",
     },
     {
       icon: <AiOutlineStar className="w-4 h-4 text-gray-400" />,
       title: "Endorsement",
-      value: "--",
-      trend: "--",
+      value: "0",
+      trend: "0",
     },
   ];
   const qualifications = [
@@ -106,6 +108,16 @@ const Page = () => {
   const [showModal, setShowModal] = useState(false);
   const [open, setOpen] = useState(false);
   const [visibility, setVisibility] = useState(false);
+  // Fetch users via RTK Query (no sockets)
+  const { data: usersResp, isLoading: usersLoading } = useGetAllUsersQuery({ page_no: 1, page_size: 100 });
+
+  const recentUsers = (Array.isArray(usersResp) ? usersResp : (usersResp?.users || usersResp?.data || [])).map((u: any) => ({
+    _id: u._id || u.userKey || u.id,
+    image: u.avatar ? `${BaseUrl}/assets/images/${u.avatar}` : user1,
+    name: u.fullname || u.name || u.email || 'Unknown',
+    action: u.lastAction || 'interacted',
+    time: u.lastActive ? new Date(u.lastActive).toLocaleString() : (u.createdAt ? new Date(u.createdAt).toLocaleString() : '')
+  }));
 
   const handleDelete = async () => {
     try {
@@ -280,32 +292,30 @@ const Page = () => {
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">Recent activity</h2>
             <p className="text-xs text-gray-500 mb-4">Based on room interaction</p>
             <div className="space-y-4 sm:space-y-6">
-              {[
-                { image: you, name: "You", action: "updated Pets World case study", time: "11:30 AM" },
-                { image: user1, name: "Breanna Butler", action: "viewed your profile", time: "2:00 PM" },
-                { image: user2, name: "Lana Ray", action: "viewed your profile", time: "12:45 PM" },
-                { image: user3, name: "Deanna T.", action: "sent a message", time: "12:45 PM" },
-                { image: you, name: "Anthony S.", action: "viewed your profile", time: "11:30 AM" },
-                { image: user4, name: "Michele C.", action: "sent a message", time: "9:30 AM" },
-                { image: user5, name: "Scott M.", action: "viewed your profile", time: "5 days ago" },
-                { image: user6, name: "Michel L.", action: "viewed your profile", time: "5 days ago" },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <Image 
-                    src={activity.image} 
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
-                    alt="profile" 
-                    onClick={() => router.push(`/message`)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-gray-800 leading-tight text-sm">{activity.name}</div>
-                    <div className="text-gray-500 text-xs truncate">{activity.action}</div>
-                  </div>
-                  <div className="text-xs text-gray-400 whitespace-nowrap pt-1 flex-shrink-0">
-                    {activity.time}
-                  </div>
-                </div>
-              ))}
+              {recentUsers && recentUsers.length > 0 ? (
+                recentUsers.slice(0, 5).map((activity: any, index: number) => (
+                 
+                  <Link key={activity._id || index} href={`/profile/${activity._id}`}  className="flex items-start gap-3" >
+                    <Image 
+                      src={activity.image}
+                      width={40}
+                      height={40}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex-shrink-0" 
+                      alt={activity.name}
+                      onClick={() => router.push(`/profile/${activity._id}`)}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-800 leading-tight text-sm">{activity.name}</div>
+                      <div className="text-gray-500 text-xs truncate">{activity.action}</div>
+                    </div>
+                    <div className="text-xs text-gray-400 whitespace-nowrap pt-1 flex-shrink-0">
+                      {activity.time}
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="text-xs text-gray-400">No recent activity found</div>
+              )}
             </div>
           </div>
         </div>

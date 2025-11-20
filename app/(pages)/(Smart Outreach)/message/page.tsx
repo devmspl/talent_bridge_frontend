@@ -25,16 +25,32 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BaseUrl } from "@/app/store/BaseUrl";
+import { log } from "console";
+
+  // Helper to format contact ISO timestamps safely
+  const formatContactDate = (iso?: string) => {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString("en-US", { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  };
 
 type Contact = {
   id: string;
   profile: any;
   name: string;
-  time: string;
+  // store canonical ISO timestamp for the last activity
+  time?: string; // keep for backwards compatibility but ensure it's an ISO string
+  timeIso?: string;
   message: string;
   online: boolean;
   img: any;
   unread: boolean;
+  unreadCount?: number;
   archived: boolean;
   roomId?: string;
   email?: string;
@@ -56,7 +72,10 @@ export default function ChatPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [archivedRooms, setArchivedRooms] = useState<ChatRoom[]>([]);
+  const [suppressInitialUnread, setSuppressInitialUnread] = useState<boolean>(true);
   const [messages, setMessages] = useState<MessageType[]>([]);
+  const [archivedOpen, setArchivedOpen] = useState<boolean>(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [socketInstance, setSocketInstance] = useState<any>(null);
@@ -64,6 +83,36 @@ export default function ChatPage() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Normalize archived rooms payloads from server
+  const normalizeArchivedPayload = (payload: any): ChatRoom[] => {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.rooms)) return payload.rooms;
+    if (Array.isArray(payload.data)) return payload.data;
+    // If payload has a nested structure like { archivedRooms: [...] }
+    if (Array.isArray(payload.archivedRooms)) return payload.archivedRooms;
+    // If server returns object keyed by id -> room, convert to array
+    if (typeof payload === 'object') {
+      try {
+        return Object.values(payload).filter((v: any) => v && v._id) as ChatRoom[];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Deduplicate ChatRoom array by _id
+  const dedupeChatRooms = (rooms: ChatRoom[] = []) => {
+    const map = new Map<string, ChatRoom>();
+    rooms.forEach(r => {
+      if (r && r._id) {
+        if (!map.has(r._id)) map.set(r._id, r);
+      }
+    });
+    return Array.from(map.values());
+  };
 
 // Function to scroll to bottom of chat
 const scrollToBottom = useCallback((force = false) => {
@@ -145,8 +194,10 @@ const scrollToBottom = useCallback((force = false) => {
               return {
                 ...contact,
                 message: formattedMessage.message,
-                time: new Date(formattedMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                unread: true
+                  time: new Date(formattedMessage.timestamp).toISOString(),
+                  timeIso: new Date(formattedMessage.timestamp).toISOString(),
+                unread: true,
+                unreadCount: (contact.unreadCount || 0) + 1
               };
             }
             return contact;
@@ -170,6 +221,10 @@ const scrollToBottom = useCallback((force = false) => {
             msg._id === data.messageId ? { ...msg, status: 'read' } : msg
           ));
         }
+        // Clear unread count for the room when server notifies messages were read
+        if (data && data.roomId) {
+          setContacts(prev => prev.map(c => c.roomId === data.roomId ? { ...c, unread: false, unreadCount: 0 } : c));
+        }
       });
 
       socket.on('massage_readed', (data: any) => {
@@ -177,6 +232,9 @@ const scrollToBottom = useCallback((force = false) => {
           setMessages(prev => prev.map(msg => 
             msg._id === data.messageId ? { ...msg, status: 'read' } : msg
           ));
+        }
+        if (data && data.roomId) {
+          setContacts(prev => prev.map(c => c.roomId === data.roomId ? { ...c, unread: false, unreadCount: 0 } : c));
         }
       });
 
@@ -232,17 +290,27 @@ const scrollToBottom = useCallback((force = false) => {
 
       // Listen for archive events
       socket.on('archive_created', (data: any) => {
-        // Refresh rooms list
+        // Refresh rooms list and archived rooms
         socketService.getMyRooms((roomsList: ChatRoom[]) => {
           setRooms(roomsList);
+        });
+        socketService.getArchiveRooms((archived: ChatRoom[]) => {
+          setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived)));
         });
       });
 
       socket.on('room_unarchived', (data: any) => {
-        // Refresh rooms list
+        // Refresh rooms list and archived rooms
         socketService.getMyRooms((roomsList: ChatRoom[]) => {
           setRooms(roomsList);
         });
+        socketService.getArchiveRooms((archived: ChatRoom[]) => {
+          setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived)));
+        });
+      });
+
+      socket.on('all_archived_rooms', (archived: ChatRoom[]) => {
+        setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived)));
       });
 
       // Listen for user connection events
@@ -331,23 +399,9 @@ const scrollToBottom = useCallback((force = false) => {
               messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
             }, 100);
           } else {
-            // Message is for another room - update the contact's last message
-            setContacts(prev => prev.map(contact => {
-              if (contact.roomId === message.room) {
-                return {
-                  ...contact,
-                  message: message.msg,
-                  time: message.createdAt,
-                  unread: true,
-                  // Update contact's last message info
-                  lastMessage: message.msg,
-                  lastMessageTime: message.createdAt,
-                  lastMessageSender: message.msgFrom?.fullname || 'Unknown'
-                };
-              }
-              setMessages((prevMessages :any) => [...prevMessages, message]);
-              return contact;
-            }));
+                // Message is for another room - update messages list only here.
+                // Contact unread handling is done in the primary socket 'new_message' handler to avoid duplicate increments.
+                setMessages((prevMessages :any) => [...prevMessages, message]);
           }
         }
       });
@@ -371,6 +425,13 @@ const scrollToBottom = useCallback((force = false) => {
           });
         });
       }
+
+      // Get archived rooms on initial connect
+      setTimeout(() => {
+        socketService.getArchiveRooms((archived: ChatRoom[]) => {
+          setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived)));
+        });
+      }, 1200);
 
       // Add event listeners for debugging
       if (socket) {
@@ -410,7 +471,9 @@ const scrollToBottom = useCallback((force = false) => {
           
           setTimeout(() => {
             socketService.getMyRooms((roomsList: ChatRoom[]) => {
-              setRooms(roomsList);
+              setRooms(roomsList || []);
+              // suppress server-provided unread counts on initial load
+              setTimeout(() => setSuppressInitialUnread(false), 50);
             });
           }, 1000);
         });
@@ -466,6 +529,33 @@ const scrollToBottom = useCallback((force = false) => {
       };
     }
   }, [userId]);
+
+  // Listen to socketService convenience listeners (cleanup-safe)
+  useEffect(() => {
+    if (!isSocketConnected) return;
+
+    const onArchiveCreated = (data: any) => {
+      socketService.getMyRooms((roomsList: ChatRoom[]) => setRooms(roomsList));
+  socketService.getArchiveRooms((archived: ChatRoom[]) => setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived))));
+    };
+
+  const onAllArchived = (rooms: ChatRoom[]) => setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(rooms)));
+
+    const onRoomUnarchived = (data: any) => {
+      socketService.getMyRooms((roomsList: ChatRoom[]) => setRooms(roomsList));
+  socketService.getArchiveRooms((archived: ChatRoom[]) => setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(archived))));
+    };
+
+    socketService.onArchiveCreated(onArchiveCreated);
+    socketService.onAllArchivedRooms(onAllArchived);
+    socketService.onRoomUnarchived(onRoomUnarchived);
+
+    return () => {
+      socketService.removeListener('archive_created', onArchiveCreated);
+      socketService.removeListener('all_archived_rooms', onAllArchived);
+      socketService.removeListener('room_unarchived', onRoomUnarchived);
+    };
+  }, [isSocketConnected]);
 
   // Get room messages when room is selected
   useEffect(() => {
@@ -528,7 +618,6 @@ const scrollToBottom = useCallback((force = false) => {
       
       // Also try to get rooms after a short delay
       setTimeout(() => {
-        console.log("🔄 Second attempt to get rooms...");
         socketInstance.emit('get_my_rooms');
       }, 2000);
     }
@@ -543,11 +632,13 @@ const scrollToBottom = useCallback((force = false) => {
         id: apiUser._id,
         profile: apiUser?.avatar ? `${BaseUrl}/assets/images/${apiUser?.avatar}` : user1, // Use full URL for profile image
         name: apiUser.fullname || 'Unknown User',
-        time: new Date(apiUser.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(apiUser.createdAt || Date.now()).toISOString(),
+        timeIso: new Date(apiUser.createdAt || Date.now()).toISOString(),
         message: "Available for chat",
         online: Math.random() > 0.5, // Random online status for demo
         img: user,
         unread: Math.random() > 0.7, // Random unread status
+        unreadCount: 0,
         archived: false,
         email: apiUser.email,
         roomId: undefined // Will be set when room is created
@@ -573,10 +664,12 @@ const scrollToBottom = useCallback((force = false) => {
                 email: otherUser.email || '',
                 profile: otherUser.avatar || null,
                 time: room.lastActive || new Date().toISOString(),
+                timeIso: room.lastActive || new Date().toISOString(),
                 message: '',
                 online: false,
                 img: null,
-                unread: room.unreadCount > 0,
+                unread: !suppressInitialUnread && room.unreadCount > 0,
+                unreadCount: suppressInitialUnread ? 0 : (room.unreadCount || 0),
                 archived: room.is_archived || false
               };
               newContacts.push(newContact);
@@ -662,6 +755,17 @@ const scrollToBottom = useCallback((force = false) => {
     setSelectedContact(contact);
     if (contact.roomId) {
       setSelectedRoomId(contact.roomId);
+      // Mark messages as read in UI for this contact
+      setContacts(prev => prev.map(c => c.roomId === contact.roomId ? { ...c, unread: false, unreadCount: 0 } : c));
+
+      // Inform server that messages in this room are read (best-effort)
+      if (socketInstance) {
+        try {
+          socketInstance.emit('mark_as_read', { roomId: contact.roomId });
+        } catch (e) {
+          // ignore
+        }
+      }
     }
   };
 
@@ -797,21 +901,74 @@ const scrollToBottom = useCallback((force = false) => {
     }
   };
 
-  // Function to create archive
-  const createArchive = (roomIds: string[]) => {
-    socketService.createArchive(roomIds);
+  // Function to create archive (uses socketService callback)
+  const createArchive = (roomIds: string[], callback?: (data: any) => void) => {
+    socketService.createArchive(roomIds, (data: any) => {
+      // Server confirmed archive; refresh lists
+      socketService.getArchiveRooms((rooms: ChatRoom[]) => {
+        setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(rooms)));
+      });
+      socketService.getMyRooms((roomsList: ChatRoom[]) => {
+        setRooms(roomsList || []);
+      });
+      // Show archived tab and open archived list
+      setFilter('archived');
+      setArchivedOpen(true);
+      if (callback) callback(data);
+    });
+    // optimistic refresh in case server doesn't immediately respond
+    setTimeout(() => {
+      socketService.getArchiveRooms((rooms: ChatRoom[]) => setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(rooms))));
+    }, 800);
   };
 
-  // Function to unarchive room
+  // Function to unarchive room (optimistic)
   const unarchiveRoom = (roomId: string) => {
+    // Optimistic remove
+    setArchivedRooms(prev => prev.filter(r => r._id !== roomId));
     socketService.unarchiveRoom(roomId);
+    // Refresh lists after a short delay
+    setTimeout(() => {
+      socketService.getArchiveRooms((rooms: ChatRoom[]) => {
+        setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(rooms)));
+      });
+      socketService.getMyRooms((roomsList: ChatRoom[]) => {
+        setRooms(roomsList || []);
+      });
+    }, 600);
   };
 
   // Function to get archived rooms
   const getArchivedRooms = () => {
     socketService.getArchiveRooms((rooms: ChatRoom[]) => {
-      // Handle archived rooms as needed
+      setArchivedRooms(dedupeChatRooms(normalizeArchivedPayload(rooms)));
     });
+  };
+
+  const handleArchive = () => {
+    const roomToArchive = selectedRoomId || selectedContact?.roomId;
+    if (!roomToArchive) {
+      console.warn('No room selected to archive');
+      return;
+    }
+    // Use socketService with callback to wait for server confirmation
+    createArchive([roomToArchive], (data: any) => {
+      if (selectedRoomId === roomToArchive) {
+        setSelectedRoomId(null);
+        setMessages([]);
+        setSelectedContact(null);
+      }
+    });
+  };
+
+  const handleUnarchive = (roomId: string) => {
+    if (!roomId) return;
+    unarchiveRoom(roomId);
+  };
+
+  const isRoomArchived = (roomId?: string | null) => {
+    if (!roomId) return false;
+    return archivedRooms && Array.isArray(archivedRooms) && archivedRooms.some(r => r._id === roomId);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -836,11 +993,29 @@ const scrollToBottom = useCallback((force = false) => {
 
 
 
-  const filteredContacts = contacts.filter((c) => {
-    if (filter === "unread") return c.unread;
-    if (filter === "archived") return c.archived;
-    return true;
-  });
+  const filteredContacts = (filter === 'archived')
+    ? archivedRooms.map((room) => {
+        const other = room.users?.find((u: any) => u._id !== userId) || room.users?.[0] || {};
+        return {
+          id: other._id || room._id,
+          profile: other.avatar || null,
+          name: other.fullname || other.email || 'Unknown',
+          time: room.lastActive || room.createdAt || new Date().toISOString(),
+          timeIso: room.lastActive || room.createdAt || new Date().toISOString(),
+          message: '',
+          online: false,
+          img: null,
+            unread: !suppressInitialUnread && room.unreadCount > 0,
+            unreadCount: suppressInitialUnread ? 0 : (room.unreadCount || 0),
+          archived: true,
+          roomId: room._id,
+          email: other.email || ''
+        } as Contact;
+      })
+    : contacts.filter((c) => {
+        if (filter === "unread") return c.unread;
+        return true;
+      });
 
 
   // Get messages for the selected room from socket state
@@ -894,27 +1069,6 @@ const scrollToBottom = useCallback((force = false) => {
         </div>
         
       </div>
-
-      {/* Debug Section */}
-      {/* <div className="mb-4 p-2 bg-gray-50 rounded text-xs">
-        <div className="font-semibold mb-1">Debug Info:</div>
-        <div>Socket Connected: {isSocketConnected ? '✅' : '❌'}</div>
-        <div>User ID: {userId}</div>
-        <div>Rooms Count: {rooms.length}</div>
-        <div>Contacts Count: {contacts.length}</div>
-        {rooms.length > 0 && (
-          <div className="mt-2">
-            <div className="font-semibold">Current Rooms:</div>
-            {rooms.map((room, index) => (
-              <div key={index} className="ml-2">
-                Room {index + 1}: {room._id} - {room.users?.find((u: any) => u._id !== userId)?.fullname}
-              </div>
-            ))}
-          </div>
-        )}
-      </div> */}
-
-      {/* Mobile Layout (xs to md) */}
       <div className="block md:hidden">
         {!selectedContact ? (
           /* Mobile Contact List */
@@ -973,7 +1127,22 @@ const scrollToBottom = useCallback((force = false) => {
                           <div className="text-gray-500 text-xs sm:text-sm truncate">{contact.message}</div>
                         </div>
                       </div>
-                      <div className="text-gray-400 text-xs flex-shrink-0 ml-2">{contact.time}</div>
+                      <div className="text-gray-400 text-xs flex-shrink-0 ml-2 flex items-center gap-2">
+                        <div>{formatContactDate(contact.timeIso || contact.time)}</div>
+                        {(contact.unreadCount || 0) > 0 && (
+                          <div className="inline-flex items-center justify-center bg-teal-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {contact.unreadCount || 0}
+                          </div>
+                        )}
+                        {/* Archive button for quick archiving without selecting */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); if (contact.roomId) createArchive([contact.roomId]); }}
+                          className="ml-2 text-xs text-gray-500 hover:text-teal-600 px-2 py-1 rounded"
+                          title="Archive"
+                        >
+                          Archive
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -1032,9 +1201,16 @@ const scrollToBottom = useCallback((force = false) => {
                     <ul className="py-1 text-sm text-gray-700">
                       <li
                         className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => setModalOpen(true)}
+                        onClick={() => {
+                          const rid = selectedContact?.roomId || selectedRoomId;
+                          if (rid && isRoomArchived(rid)) {
+                            handleUnarchive(rid);
+                          } else {
+                            handleArchive();
+                          }
+                        }}
                       >
-                        Archive
+                        { (selectedContact?.roomId && isRoomArchived(selectedContact.roomId)) || (selectedRoomId && isRoomArchived(selectedRoomId)) ? 'Unarchive' : 'Archive' }
                       </li>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Share</li>
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-500">Block</li>
@@ -1220,12 +1396,20 @@ const scrollToBottom = useCallback((force = false) => {
                         <div className="text-gray-500 text-sm truncate">{contact.message}</div>
                       </div>
                     </div>
-                    <div className="text-gray-400 text-xs flex-shrink-0 ml-2">
-                     {new Date(contact.time).toLocaleDateString("en-US", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric"
-                        })} 
+                      <div className="text-gray-400 text-xs flex-shrink-0 ml-2 flex items-center gap-2">
+                     <div>{formatContactDate(contact.timeIso || contact.time)}</div>
+                        {(contact.unreadCount || 0) > 0 && (
+                          <div className="inline-flex items-center justify-center bg-teal-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                            {contact.unreadCount || 0}
+                          </div>
+                        )}
+                        {/* <button
+                          onClick={(e) => { e.stopPropagation(); if (contact.roomId) createArchive([contact.roomId]); }}
+                          className="ml-2 text-xs text-gray-500 hover:text-teal-600 px-2 py-1 rounded"
+                          title="Archive"
+                        >
+                          Archive
+                        </button> */}
                     </div>
 
                   </div>
@@ -1264,19 +1448,26 @@ const scrollToBottom = useCallback((force = false) => {
                 </div>
 
                 <div className="relative" ref={dropdownRef}>
-                  <div className="flex items-center gap-3 text-gray-500">
+                    <div className="flex items-center gap-3 text-gray-500">
                     <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
                       <Image src={call} alt="Call" width={20} />
                     </button>
                     <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
                       <Image src={mail} alt="Mail" width={20} />
                     </button>
-                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => setModalOpen(true)}>
+                    <button className="p-2 border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => {
+                      const rid = selectedContact?.roomId || selectedRoomId;
+                      if (rid && isRoomArchived(rid)) {
+                        handleUnarchive(rid);
+                      } else {
+                        handleArchive();
+                      }
+                    }}>
                       <Image src={deleteIcon} alt="Delete" width={20} />
                     </button>
                     <button
                       onClick={() => setDropdownOpen(!dropdownOpen)}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                     >
                       {/* <BsThreeDotsVertical /> */}
                       <span>⋮</span>
@@ -1287,9 +1478,16 @@ const scrollToBottom = useCallback((force = false) => {
                       <ul className="py-1 text-sm text-gray-700">
                         <li
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => setModalOpen(true)}
+                          onClick={() => {
+                            const rid = selectedContact?.roomId || selectedRoomId;
+                            if (rid && isRoomArchived(rid)) {
+                              handleUnarchive(rid);
+                            } else {
+                              handleArchive();
+                            }
+                          }}
                         >
-                          Archive
+                          { (selectedContact?.roomId && isRoomArchived(selectedContact.roomId)) || (selectedRoomId && isRoomArchived(selectedRoomId)) ? 'Unarchive' : 'Archive' }
                         </li>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer">Share</li>
                         <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-red-500">Block</li>

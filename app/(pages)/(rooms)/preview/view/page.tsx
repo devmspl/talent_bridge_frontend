@@ -34,7 +34,6 @@ export default function CaseStudyView() {
 
   const insight = useMemo(() => {
     const list = Array.isArray(data?.insightsId) ? data?.insightsId : [];
-    console.log(list,"list");
     return list?.[insIndex] || null;
   }, [data, insIndex]);
 

@@ -11,6 +11,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/app/store/store";
 import { clearRoomData } from "@/app/utils/roomStorage";
 import { BaseUrl } from "@/app/store/BaseUrl";
+import Cookies from 'js-cookie';
 
 const ShowcasePage = () => {
   const routes = useRouter();
@@ -19,7 +20,7 @@ const ShowcasePage = () => {
   const pageFromUrl = Number(searchParams.get("page") || 1);
   const limitFromUrl = Number(searchParams.get("limit") || 10);
 
-  const { userId } = useSelector((state: RootState) => state.user);
+  const userId = Cookies.get('tb_userId') || '';
   
   const { data, isLoading, isError, refetch } = useGetShowcaseRoomsQuery({
     userId: userId || '',

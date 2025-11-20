@@ -6,12 +6,55 @@ import edit from "@/public/assets/icons/pencil.svg";
 import deleteI from "@/public/assets/icons/archive.svg";
 import up_down from "@/public/assets/icons/updown.svg";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import socketService from '@/app/store/api/socket';
+import Cookies from 'js-cookie';
 import EmailModal from "@/app/component/modals/network/EmailModal";
 import Link from "next/link";
+import { BaseUrl } from "@/app/store/BaseUrl";
 
 export default function page() {
     const [showEmail, setShowEmail] = useState(false);
+    const [rooms, setRooms] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Ensure socket connection and fetch rooms when component mounts
+        try {
+          const uid = Cookies.get('tb_userId') || '';
+
+          // Connect if not already connected
+          if (uid && !socketService.isConnected()) {
+            socketService.connect(uid);
+          }
+
+          // Fetch rooms immediately (will noop if socket not ready)
+          socketService.getMyRooms((roomsList: any[]) => {
+            console.debug('[socket] getMyRooms -> roomsList', roomsList);
+            setRooms(Array.isArray(roomsList) ? roomsList : []);
+          });
+
+          // Also listen for rooms_list updates
+          const onRooms = (roomsList: any[]) => {
+            console.debug('[socket] rooms_list event ->', roomsList);
+            setRooms(Array.isArray(roomsList) ? roomsList : []);
+          };
+          socketService.onRoomsList(onRooms);
+
+          // As a fallback, request rooms again after a short delay in case connect wasn't ready yet
+          const retry = setTimeout(() => {
+            socketService.getMyRooms((roomsList: any[]) => {
+              setRooms(Array.isArray(roomsList) ? roomsList : []);
+            });
+          }, 1200);
+
+          return () => {
+            clearTimeout(retry);
+            socketService.removeListener('rooms_list', onRooms);
+          };
+        } catch (e) {
+          console.warn('Failed to fetch rooms', e);
+        }
+    }, []);
 
   const messages = [
     {
@@ -56,6 +99,30 @@ export default function page() {
     },
   ];
 
+  const userId = Cookies.get('tb_userId') || '';
+
+  const transformRoomToItem = (room: any) => {
+    const other = room.users?.find((u: any) => u._id !== userId) || room.users?.[0] || {};
+
+    // Derive the last message from multiple possible server fields
+    const lastMsg = room.lastMessage?.message || room.lastMessage?.msg || room.lastMessageText || room.last_message || room.lastMessage || (room.messages && room.messages[room.messages.length - 1]?.message) || '';
+
+    // Derive last interaction time
+    const lastInteraction = room.lastActive || room.lastMessage?.createdAt || room.lastMessage?.timestamp || room.last_message_time || '';
+
+    return {
+      name: other.fullname || other.email || 'Unknown',
+      company: other.company || (other.role ? `${other.role}` : ''),
+      avatar: other.avatar || `https://i.pravatar.cc/40?img=${Math.floor(Math.random() * 70)}`,
+      message: lastMsg,
+      status: room.is_archived ? 'Archived' : (room.unreadCount > 0 ? 'Unread' : 'Responded'),
+      lastInteraction: lastInteraction ? new Date(lastInteraction).toLocaleString() : '' ,
+      roomId: room._id,
+    };
+  };
+
+  const displayItems = (rooms && rooms.length > 0) ? rooms.map(transformRoomToItem) : messages;
+
   const getStatusStyle = (status : any) => {
     if (status === "Awaiting Response")
       return "bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A] ";
@@ -84,7 +151,7 @@ export default function page() {
       <div className="overflow-hidden">
         {/* Mobile Layout (xs to md) */}
         <div className="block md:hidden space-y-3">
-          {messages.map((msg, i) => (
+          {displayItems.map((msg, i) => (
             <div key={i} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
               <div className="flex items-start justify-between mb-3">
                 <Link href={"/message"} className="flex items-center gap-3 flex-1 min-w-0">
@@ -124,7 +191,7 @@ export default function page() {
         <div className="hidden md:block lg:hidden">
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
             <div className="grid grid-cols-1 gap-4">
-              {messages.map((msg, i) => (
+              {displayItems.map((msg, i) => (
                 <div key={i} className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="flex items-center justify-between mb-3">
                     <Link href={"/message"} className="flex items-center gap-4 flex-1">
@@ -191,11 +258,12 @@ export default function page() {
                   </tr>
                 </thead>
                 <tbody>
-                  {messages.map((msg, i) => (
+                  {displayItems.map((msg, i) => (
+                    <> 
                     <tr key={i} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-6">
                         <Link href={"/message"} className="flex items-center gap-3">
-                          <img src={msg.avatar} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
+                          <img src={`${BaseUrl}/assets/images/${msg.avatar}`} alt="avatar" className="w-10 h-10 rounded-full object-cover" />
                           <div>
                             <div className="font-medium text-gray-900 text-sm">{msg.name}</div>
                             <div className="text-xs text-gray-500">{msg.company}</div>
@@ -228,6 +296,7 @@ export default function page() {
                         </div>
                       </td>
                     </tr>
+                    </>
                   ))}
                 </tbody>
               </table>

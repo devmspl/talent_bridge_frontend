@@ -228,8 +228,6 @@ export default function PublishModal({
     const response = await createShowcaseRoom(payload).unwrap();
     const createdId = response?._id || response?.id || response?.data?._id || response?.data?.id;
     const createdInsights = response?.insightsId || response?.data?.insightsId || [];
-    console.log("response====>", response);
-    console.log("createdInsights====>", createdInsights);
 
     try {
       const createdInsightsArr = createdInsights || [];
@@ -289,8 +287,8 @@ export default function PublishModal({
     onClose();
     router.push(`/room-details?id=${createdId ?? ""}`);
   } catch (error: any) {
-    console.error("Failed to publish showcase room:", error);
-    console.error("Error details:", error?.data || error?.message || error);
+    // console.error("Failed to publish showcase room:", error);
+    // console.error("Error details:", error?.data || error?.message || error);
   } finally {
     setIsPublishing(false);
   }
