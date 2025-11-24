@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { RootState, AppDispatch } from "@/app/store/store";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "@/app/store/slices/userSlice";
+import { useGetUserByIdQuery } from "@/app/store/api/userApi";
+import Cookies from "js-cookie";
 import {
   FiEye,
   FiUsers,
@@ -13,6 +18,8 @@ import drop from '@/public/assets/icons/Dropdown.svg'
 import Image from "next/image";
 import ups from "@/public/assets/icons/green up.svg"
 import avatar from "@/public/assets/profile/Avatar.svg"
+
+// import { RootState } from "@reduxjs/toolkit/query";
 //data  
 const data = [
   { date: 'Jan 11', analyst: 10, pianist: 50 },
@@ -117,10 +124,35 @@ const activities1 = [
 const Dashboard = () => {
   const [open, setOpen] = useState(false);
   const [activityFilter, setActivityFilter] = useState<'All' | 'Unread'>('All');
+  const { user, userId } = useSelector<RootState, RootState['user']>((state) => state.user);
+  const dispatch = useDispatch<AppDispatch>();
+  
+  // Use the getUserById query
+  const { data: userData, isLoading, isError } = useGetUserByIdQuery(userId || '', {
+    skip: !userId, // Skip if no userId
+    refetchOnMountOrArgChange: true,
+  });
+
+  // Update user in Redux store when userData changes
+  useEffect(() => {
+    if (userData && !user) {
+      dispatch(setUser(userData));
+    }
+  }, [userData, user, dispatch]);
+
+  console.log('User:', user);
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error loading user data</div>;
+  }
   return (
     <div className="min-h-screen bg-white">
       <div className="bg-white p-6 rounded-xl shadow mb-3 ">
-        <h2 className="text-2xl leading-8 tracking-normal font-inter font-semibold text-gray-900">Welcome back, John!</h2>
+      <h2 className="text-2xl leading-8 tracking-normal font-inter font-semibold text-gray-900">Welcome back, {user?.fullName || 'User'}!</h2>
         <p className="text-sm font-inter font-normal leading-5 tracking-normal text-gray-600">Here's what's happening with your profile</p>
       </div>
 

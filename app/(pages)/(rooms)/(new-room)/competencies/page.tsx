@@ -155,75 +155,80 @@ export default function page() {
 
             {/* Competencies List */}
             <div className="space-y-3">
-              {competencies.map((skill, i) => (
-                <div
-                  key={i}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, i)}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, i)}
-                  className={"group flex justify-between items-center bg-white px-4 py-3 rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all cursor-move"}
-                >
-                  <span 
-                    className="text-gray-800 text-sm font-medium flex gap-2 items-center cursor-pointer flex-1 min-w-0"
-                    onDoubleClick={() => handleDoubleClick(skill)}
-                    onClick={() => toggleSelect(skill)}
+              {competencies.map((skill, i) => {
+                const isSelected = selected.includes(skill);
+                return (
+                  <div
+                    key={i}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, i)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, i)}
+                    className={`group flex justify-between items-center px-4 py-3 rounded-lg border transition-all cursor-move ${isSelected ? 'bg-teal-50 border-teal-500 shadow-md' : 'bg-white border-gray-200 hover:border-teal-300 hover:shadow-md'}`}
                   >
-                    {editingSkill === skill ? (
-                      <input
-                        type="text"
-                        value={editingValue}
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onBlur={handleSaveEdit}
-                        onKeyDown={handleKeyPress}
-                        className="bg-white border-2 border-teal-500 rounded-md px-3 py-1.5 text-sm focus:outline-none w-full max-w-md"
-                        autoFocus
-                      />
-                    ) : (
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="flex-1 truncate">{skill}</span>
-                        {skill === "Statistical & Predictive Analysis" && (
-                          <button
-                            className="flex-shrink-0 p-1 hover:bg-gray-100 rounded transition"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDoubleClick(skill);
-                            }}
-                          >
-                            <Image 
-                              src={TextIcon} 
-                              alt="Edit" 
-                              width={16} 
-                              height={16} 
-                              className="opacity-60 hover:opacity-100 transition"
-                            />
-                          </button>
+                    <div className="flex-1">
+                      <span
+                        className="text-gray-800 text-sm font-medium flex gap-2 items-center cursor-pointer flex-1 min-w-0"
+                        onDoubleClick={() => handleDoubleClick(skill)}
+                        onClick={() => toggleSelect(skill)}
+                      >
+                        {editingSkill === skill ? (
+                          <input
+                            type="text"
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={handleSaveEdit}
+                            onKeyDown={handleKeyPress}
+                            className="bg-white border-2 border-teal-500 rounded-md px-3 py-1.5 text-sm focus:outline-none w-full max-w-md"
+                            autoFocus
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="flex-1 truncate">{skill}</span>
+                            {skill === "Statistical & Predictive Analysis" && (
+                              <button
+                                className="flex-shrink-0 p-1 hover:bg-gray-100 rounded transition"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDoubleClick(skill);
+                                }}
+                              >
+                                <Image
+                                  src={TextIcon}
+                                  alt="Edit"
+                                  width={16}
+                                  height={16}
+                                  className="opacity-60 hover:opacity-100 transition"
+                                />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Drag Handle */}
+                    <div className="flex items-center ml-3 flex-shrink-0">
+                      <div className="relative">
+                        <button
+                          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition"
+                          onMouseEnter={() => setHoveredSkill(skill)}
+                          onMouseLeave={() => setHoveredSkill(null)}
+                        >
+                          <Image src={Tool} alt="Drag handle" className="w-4 h-4" />
+                        </button>
+                        {hoveredSkill === skill && (
+                          <div className="absolute top-1/2 left-full ml-3 -translate-y-1/2 w-64 p-3 text-sm bg-gray-900 text-white shadow-xl rounded-lg z-50">
+                            <div className="absolute top-1/2 -left-1.5 w-3 h-3 bg-gray-900 transform rotate-45 -translate-y-1/2"></div>
+                            <p className="font-medium mb-1">Drag to reorder</p>
+                            <p className="text-gray-300 text-xs leading-relaxed">Move the skills in the order you want and feel free to adjust the skill</p>
+                          </div>
                         )}
                       </div>
-                    )}
-                  </span>
-                  
-                  {/* Drag Handle */}
-                  <div className="flex items-center ml-3 flex-shrink-0">
-                    <div className="relative">
-                      <button 
-                        className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition"
-                        onMouseEnter={() => setHoveredSkill(skill)}
-                        onMouseLeave={() => setHoveredSkill(null)}
-                      >
-                        <Image src={Tool} alt="Drag handle" className="w-4 h-4" />
-                      </button>
-                      {hoveredSkill === skill && (
-                        <div className="absolute top-1/2 left-full ml-3 -translate-y-1/2 w-64 p-3 text-sm bg-gray-900 text-white shadow-xl rounded-lg z-50">
-                          <div className="absolute top-1/2 -left-1.5 w-3 h-3 bg-gray-900 transform rotate-45 -translate-y-1/2"></div>
-                          <p className="font-medium mb-1">Drag to reorder</p>
-                          <p className="text-gray-300 text-xs leading-relaxed">Move the skills in the order you want and feel free to adjust the skill</p>
-                        </div>
-                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Action Buttons - Responsive */}

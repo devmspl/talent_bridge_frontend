@@ -9,6 +9,7 @@ export interface UserState {
   userId: string | null;
 }
 
+
 const initialState: UserState = {
   user: null,
   currentStep: 1,

@@ -103,7 +103,7 @@ export default function page() {
             </div>
             <div>
               <h2 className="text-xl text-[#111827] font-semibold">
-                {user?.fullname}
+                {user?.fullName}
               </h2>
               <div className="flex gap-2 text-sm text-gray-500 mt-1">
                 <span className="bg-gray-100 text-[#374151] px-2 py-1 rounded-full text-xs">

@@ -84,7 +84,7 @@ const Personal_info = () => {
   useEffect(() => {
     if (storedUser) {
       setFormData({
-        fullName: storedUser?.fullname || "",
+        fullName: storedUser?.fullName || "",
         phone: storedUser?.contact_number || "",
         email: storedUser?.email || "",
         country: storedUser?.country || "",

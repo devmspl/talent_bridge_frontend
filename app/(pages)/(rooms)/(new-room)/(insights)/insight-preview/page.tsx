@@ -217,11 +217,9 @@ const PortfolioPage = () => {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={coverDataUrl} alt="Cover Image" className="w-full h-full object-cover rounded-lg" />
               ) : (
-                <Image
-                  src={cover}
-                  alt="Cover Image"
-                  className="w-full h-full object-cover rounded-lg"
-                />
+                <div className="flex items-center justify-center h-full">
+                  <p>No Cover Image</p>
+                </div>
               )}
             </div>
           </div>
@@ -241,11 +239,9 @@ const PortfolioPage = () => {
               {videoDataUrl ? (
                 <video src={videoDataUrl} controls className="w-full h-full rounded-lg" />
               ) : (
-                <Image
-                  src={introvid}
-                  alt="Intro Video"
-                  className="w-full h-full object-cover rounded-lg"
-                />
+                <div className="flex items-center justify-center h-full">
+                  <p>No Cover Video</p>
+                </div>
               )}
             </div>
           </div>
@@ -264,7 +260,7 @@ const PortfolioPage = () => {
             </div>
             <div className="border-b border-gray-200 mb-4"></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {coreSkills.map((skill, index) => (
+              {coreSkills.length > 0 ? coreSkills.map((skill, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between bg-gray-50 px-3 sm:px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
@@ -289,7 +285,11 @@ const PortfolioPage = () => {
                     </button>
                   </div>
                 </div>
-              ))}
+              )) :
+              <div>
+                <p>No Technical Skills</p>
+              </div>
+              }
             </div>
           </div>
 
@@ -302,7 +302,7 @@ const PortfolioPage = () => {
               </span>
             </div>
             <div className="border-b border-gray-200 mb-4"></div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {transferableSkills.map((skill, index) => (
                 <div
                   key={index}
@@ -329,7 +329,42 @@ const PortfolioPage = () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  {transferableSkills.length > 0 ? transferableSkills.map((skill, index) => (
+    <div
+      key={index}
+      className="flex items-center justify-between bg-gray-50 px-3 sm:px-4 py-2.5 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+    >
+      <div className="text-gray-800 text-sm font-medium flex items-center gap-2 flex-1 min-w-0">
+        <span className="truncate">{skill}</span>
+
+        {index === 0 && (
+          <button className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition">
+            <Image
+              src="/assets/icons/Tect.svg"
+              alt="Edit"
+              width={14}
+              height={14}
+              className="opacity-60 hover:opacity-100 transition"
+            />
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center ml-2 flex-shrink-0">
+        <button className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded transition">
+          <Image src={Tool} alt="Drag handle" className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )) : (
+    <div>
+      <p>No Technical Skills</p>
+    </div>
+  )}
+</div>
+
           </div>
         </div>
 

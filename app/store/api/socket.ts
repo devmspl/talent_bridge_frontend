@@ -99,31 +99,31 @@ class SocketService {
       this.socket.disconnect();
     }
 
-    this.userId = userId;
-    
-    this.socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "https://backend.webridgetalent.com", {
-      secure: true,
-      transports: ["polling"],
-      query: {
-        token: this.token,
-        userId: this.userId
-      }
-    });
+            this.userId = userId;
+            
+            this.socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "https://backend.webridgetalent.com", {
+              secure: true,
+              transports: ["polling"],
+              query: {
+                token: this.token,
+                userId: this.userId
+              }
+            });
 
-    this.socket.on("connect", () => {
-      console.log("✔ Connected: " + this.socket?.id);
-    });
+            this.socket.on("connect", () => {
+              console.log("✔ Connected: " + this.socket?.id);
+            });
 
-    this.socket.on("connect_error", (err) => {
-      console.error("❌ Connect Error: " + err.message);
-    });
+            this.socket.on("connect_error", (err) => {
+              console.error("❌ Connect Error: " + err.message);
+            });
 
-    this.socket.on("disconnect", (reason) => {
-      console.log("❌ Disconnected: " + reason);
-    });
+            this.socket.on("disconnect", (reason) => {
+              console.log("❌ Disconnected: " + reason);
+            });
 
-    return this.socket;
-  }
+            return this.socket;
+          }
 
   disconnect() {
     if (this.socket) {

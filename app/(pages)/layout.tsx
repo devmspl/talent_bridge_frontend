@@ -259,7 +259,7 @@ export default function RootLayout({
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {user?.fullname || "John Doe"}
+                        {user?.fullName || "John Doe"}
                       </p>
                       <p className="text-xs text-gray-500">
                         {user?.email || "jhdoe@tbridge.com"}

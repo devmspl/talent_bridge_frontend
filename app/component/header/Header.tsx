@@ -51,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, isMobileMenuOpen = false 
       {/* Left side - Greeting */}
       <div className="flex items-center">
         <Link href="/" className="text-lg font-semibold text-gray-800">
-          Hello {user?.fullname?.split(' ')[0] || 'User'}, 👋
+          Hello {user?.fullName?.split(' ')[0] || 'User'}, 👋
         </Link>
       </div>
 

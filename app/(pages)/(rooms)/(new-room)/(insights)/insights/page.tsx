@@ -1,8 +1,9 @@
   "use client"
   import Image from "next/image";
   import { useRouter } from "next/navigation";
-  import { useEffect, useMemo, useState } from "react";
+  import { useEffect, useMemo, useState, useRef } from "react";
   import { AiOutlineAccountBook, AiOutlineCheck, AiOutlineCloudUpload, AiOutlineEdit } from "react-icons/ai";
+  import Edit from "@/public/assets/icons/editskill.svg"
   import { BsGripVertical } from "react-icons/bs";
   import Tool from "@/public/assets/icons/Tooltip.svg"
   import check from "@/public/assets/icons/Vector (1).svg"
@@ -144,6 +145,87 @@
       setSelectedTransferable((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
     };
 
+    // Drag & drop + inline edit support for skills lists
+    const [editingSkill, setEditingSkill] = useState<string | null>(null);
+    const [editingList, setEditingList] = useState<'technical' | 'transferable' | null>(null);
+    const [editingValue, setEditingValue] = useState("");
+    const lastTapRef = useRef<number | null>(null);
+
+    // handle double-tap (mobile) to edit
+    const handleTouch = (skill: string, list: 'technical' | 'transferable') => {
+      const now = Date.now();
+      const last = lastTapRef.current || 0;
+      const diff = now - last;
+      // 300ms threshold for double-tap
+      if (diff > 0 && diff < 350) {
+        // double-tap detected
+        handleDoubleClick(skill, list);
+        lastTapRef.current = null;
+      } else {
+        lastTapRef.current = now;
+        // clear after threshold to avoid memory lingering
+        setTimeout(() => {
+          if (lastTapRef.current && Date.now() - (lastTapRef.current || 0) >= 350) {
+            lastTapRef.current = null;
+          }
+        }, 360);
+      }
+    };
+
+    const handleDragStart = (e: React.DragEvent, index: number, listName: 'technical' | 'transferable') => {
+      e.dataTransfer.setData('text/plain', JSON.stringify({ index, listName }));
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIndex: number, listName: 'technical' | 'transferable') => {
+      e.preventDefault();
+      try {
+        const raw = e.dataTransfer.getData('text/plain');
+        const { index: dragIndex, listName: sourceList } = JSON.parse(raw);
+        if (sourceList !== listName) return; // only re-order within same list for now
+
+        const setter = listName === 'technical' ? setSkills : setSkills2;
+        const listRef = listName === 'technical' ? skills : skills2;
+        const newList = [...listRef];
+        const [dragged] = newList.splice(dragIndex, 1);
+        newList.splice(dropIndex, 0, dragged);
+        setter(newList);
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    const handleDoubleClick = (skill: string, list: 'technical' | 'transferable') => {
+      setEditingSkill(skill);
+      setEditingList(list);
+      setEditingValue(skill);
+    };
+
+    const handleSaveEdit = () => {
+      if (!editingList) {
+        setEditingSkill(null);
+        setEditingValue("");
+        return;
+      }
+      if (!editingValue.trim()) {
+        setEditingSkill(null);
+        setEditingList(null);
+        setEditingValue("");
+        return;
+      }
+      if (editingList === 'technical') {
+        setSkills((prev) => prev.map((s) => (s === editingSkill ? editingValue.trim() : s)));
+      } else if (editingList === 'transferable') {
+        setSkills2((prev) => prev.map((s) => (s === editingSkill ? editingValue.trim() : s)));
+      }
+      setEditingSkill(null);
+      setEditingList(null);
+      setEditingValue("");
+    };
+
     // Save current form files to localStorage when files change (for publishing later)
     useEffect(() => {
       const saveCurrentFiles = async () => {
@@ -263,37 +345,7 @@
       lsSet(ROOM_KEYS.insights, { ...saved, insights: next });
     };
 
-    const handleDragStart = (e: React.DragEvent, index: number) => {
-      e.dataTransfer.setData("text/plain", index.toString());
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-      e.preventDefault();
-    };
-
-    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-      e.preventDefault();
-      const dragIndex = parseInt(e.dataTransfer.getData("text/plain"));
-      const newSkills = [...skills];
-      const draggedItem = newSkills[dragIndex];
-      newSkills.splice(dragIndex, 1);
-      newSkills.splice(dropIndex, 0, draggedItem);
-      setSkills(newSkills);
-    };
-
-    const handleDragStart2 = (e: React.DragEvent, index: number) => {
-      e.dataTransfer.setData("text/plain", index.toString());
-    };
-
-    const handleDrop2 = (e: React.DragEvent, dropIndex: number) => {
-      e.preventDefault();
-      const dragIndex = parseInt(e.dataTransfer.getData("text/plain"));
-      const newSkills2 = [...skills2];
-      const draggedItem = newSkills2[dragIndex];
-      newSkills2.splice(dragIndex, 1);
-      newSkills2.splice(dropIndex, 0, draggedItem);
-      setSkills2(newSkills2);
-    };
+    
     return (
       <>
         <div className="mb-4 sm:mb-6 px-4 sm:px-6 md:px-8">
@@ -525,25 +577,44 @@
                   <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 border border-gray-300">AI Generated</span>
                 </div>
                 <div className="space-y-2">
-                  {skills.map((skill) => {
+                  {skills.map((skill, i) => {
                     const selected = selectedTech.includes(skill);
+                    const isEditing = editingSkill === skill && editingList === 'technical';
                     return (
-                      <button
+                      <div
                         key={skill}
-                        type="button"
-                        onClick={() => toggleTech(skill)}
-                        className={`w-full text-left flex items-center justify-between text-sm px-4 py-2 rounded-md border ${
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, i, 'technical')}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, i, 'technical')}
+                        onTouchStart={() => handleTouch(skill, 'technical')}
+                        className={`w-full flex items-center justify-between text-sm px-4 py-2 rounded-md border ${
                           selected ? "bg-teal-50 border-teal-300" : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                         }`}
                       >
-                        <div className="text-gray-800 flex items-center">
-                          <span>{skill}</span>
-                          {selected}
+                        <div className="text-gray-800 flex items-center flex-1 min-w-0">
+                          {isEditing ? (
+                            <input
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setEditingSkill(null); setEditingList(null); setEditingValue(""); } }}
+                              className="w-full bg-white border border-teal-300 rounded px-2 py-1 text-sm"
+                              autoFocus
+                            />
+                          ) : (
+                            <button type="button" onClick={() => toggleTech(skill)} onDoubleClick={() => handleDoubleClick(skill, 'technical')} className="text-left w-full truncate">
+                              {skill}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 ml-3">
+                          <button className="p-1" onClick={() => handleDoubleClick(skill, 'technical')} title="Edit">
+                            <Image src={Edit} alt="" className="text-gray-500" />
+                          </button>
                           <span className=" text-dark-400"><Image src={Tool} alt="" /></span>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -556,25 +627,44 @@
                   <span className="ml-2 text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600 border border-gray-300">AI Generated</span>
                 </div>
                 <div className="space-y-2">
-                  {skills2.map((skill) => {
+                  {skills2.map((skill, i) => {
                     const selected = selectedTransferable.includes(skill);
+                    const isEditing = editingSkill === skill && editingList === 'transferable';
                     return (
-                      <button
+                      <div
                         key={skill}
-                        type="button"
-                        onClick={() => toggleTransferable(skill)}
-                        className={`w-full text-left flex items-center justify-between text-sm px-4 py-2 rounded-md border ${
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, i, 'transferable')}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, i, 'transferable')}
+                        onTouchStart={() => handleTouch(skill, 'transferable')}
+                        className={`w-full flex items-center justify-between text-sm px-4 py-2 rounded-md border ${
                           selected ? "bg-teal-50 border-teal-300" : "bg-gray-50 border-gray-200 hover:bg-gray-100"
                         }`}
                       >
-                        <div className="text-gray-800 flex items-center">
-                          <span>{skill}</span>
-                          {selected}
+                        <div className="text-gray-800 flex items-center flex-1 min-w-0">
+                          {isEditing ? (
+                            <input
+                              value={editingValue}
+                              onChange={(e) => setEditingValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(); if (e.key === 'Escape') { setEditingSkill(null); setEditingList(null); setEditingValue(""); } }}
+                              className="w-full bg-white border border-teal-300 rounded px-2 py-1 text-sm"
+                              autoFocus
+                            />
+                          ) : (
+                            <button type="button" onClick={() => toggleTransferable(skill)} onDoubleClick={() => handleDoubleClick(skill, 'transferable')} className="text-left w-full truncate">
+                              {skill}
+                            </button>
+                          )}
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-2 ml-3">
+                          <button className="p-1" onClick={() => handleDoubleClick(skill, 'transferable')} title="Edit">
+                            <Image src={Edit} alt="" className="text-gray-500" />
+                          </button>
                           <span className=" text-dark-400"><Image src={Tool} alt="" /></span>
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

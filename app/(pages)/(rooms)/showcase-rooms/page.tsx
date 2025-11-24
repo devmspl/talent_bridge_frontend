@@ -79,7 +79,7 @@ const ShowcasePage = () => {
         </div>
       </div>
 
-      <div className="flex gap-2 mb-6 bg-[#F9FAFB] w-[320px] rounded-[20px]">
+      <div className="flex  mb-6 bg-[#F9FAFB] w-[310px] p-[4px] rounded-[20px]">
         <button 
           onClick={() => setActiveTab("active")}
           className={`px-4 py-1 rounded-full font-medium transition-colors cursor-pointer ${

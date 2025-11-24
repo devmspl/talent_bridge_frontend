@@ -155,7 +155,34 @@ export const userApi = createApi({
     method: "GET",
   }),
   providesTags: (result, error, userId) => [{ type: "User", id: userId }],
-   transformResponse: (response: any) => response?.data?.[0] || null,
+   transformResponse: (response: any) => {
+    const raw = response?.data?.[0] || null;
+    if (!raw) return null;
+
+    // Normalize backend fields (which use `fullname`, `contact_number`, etc.)
+    // to the frontend `UserData` shape (which expects `fullName`, `phone`, ...)
+    const mapped = {
+      _id: raw._id,
+      fullName: raw.fullname || raw.fullName || "",
+      email: raw.email || "",
+      phone: raw.contact_number || raw.contactNumber || raw.phone || "",
+      country: raw.country || "",
+      city: raw.city || "",
+      password: raw.password || "",
+      dob: raw.dob || raw.DOB || undefined,
+      industry: Array.isArray(raw.industryType) ? raw.industryType[0] : raw.industryType || raw.industry || undefined,
+      employmentType: Array.isArray(raw.employmentType) ? raw.employmentType[0] : raw.employmentType || undefined,
+      selfEmployed: raw.selfEmployed ?? raw.openForWork ?? false,
+      profileImage: raw.profile_image || raw.avatar || raw.profileImage || undefined,
+      qualification: raw.qualification || undefined,
+      // include raw fields that might be used elsewhere
+      avatar: raw.avatar,
+      avatarSvg: raw.avatarSvg,
+      fullname: raw.fullname,
+    };
+
+    return mapped;
+  },
 }),
 
 

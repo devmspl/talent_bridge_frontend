@@ -20,7 +20,7 @@ export default function ProfileSetup() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user } = useSelector((state: RootState) => state.user);
-  const [selectedTypes, setSelectedTypes] = useState(["Permanent", "Contract", "N/A"]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selfEmployed, setSelfEmployed] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -219,7 +219,7 @@ export default function ProfileSetup() {
           {/* Form */}
           <div className="mt-6 sm:mt-8 space-y-3 sm:space-y-4">
             {/* Industry */}
-            <div>
+            {/* <div>
               <label className="text-sm sm:text-base font-medium text-gray-700">Industry</label>
               <select 
                 className={`w-full mt-1 sm:mt-2 rounded-md border text-sm sm:text-base p-2 sm:p-3 focus:ring-teal-500 focus:border-teal-500 ${
@@ -241,54 +241,122 @@ export default function ProfileSetup() {
                 <option value="Marketing">Marketing</option>
               </select>
               {errors.industry && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.industry}</p>}
-            </div>
+            </div> */}
 
-            <div>
-              <label className="text-sm sm:text-base font-medium text-gray-700">Preferred Employment Type</label>
-              
-              <select
-                className={`w-full mt-1 sm:mt-2 rounded-md border text-sm sm:text-base p-2 sm:p-3 focus:ring-teal-500 focus:border-teal-500 ${
-                  errors.employmentType ? 'border-red-500' : 'border-gray-300'
-                }`}
-                style={{
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }}
-                value={user?.employmentType || ''}
-                onChange={(e) => {
-                  handleEmploymentTypeChange(e);
-                  if (!selectedTypes.includes(e.target.value) && e.target.value) {
-                    setSelectedTypes([...selectedTypes, e.target.value]); 
-                  }
-                }}
-              >
-                <option value="">Select preferred job type</option>
-                <option value="Permanent">Permanent</option>
-                <option value="Contract">Contract</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Freelance">Freelance</option>
-              </select>
+            <div className="relative w-full">
+  <label className="text-sm sm:text-base font-medium text-gray-700">Industry</label>
 
-              {errors.employmentType && <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.employmentType}</p>}
+  <div className="relative mt-1 sm:mt-2">
+    {/* Left-side custom arrow */}
+    <svg 
+      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      viewBox="0 0 24 24"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
 
-              {/* <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
-                {selectedTypes.map((type) => (
-                  <span
-                    key={type}
-                    className="bg-gray-100 text-gray-700 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2"
-                  >
-                    {type}
-                    <button
-                      onClick={() => handleRemoveType(type)}
-                      className="text-gray-400 hover:text-gray-600 text-xs sm:text-sm"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-              </div> */}
-            </div>
+    <select
+      className={`w-full rounded-md border text-sm sm:text-base p-2 sm:p-3 pl-10
+        focus:ring-teal-500 focus:border-teal-500 appearance-none
+        ${errors.industry ? 'border-red-500' : 'border-gray-300'}
+      `}
+      style={{
+        maxWidth: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}
+      value={user?.industry || ''}
+      onChange={handleIndustryChange}
+    >
+      <option value="">Select your industry</option>
+      <option value="IT">IT</option>
+      <option value="Finance">Finance</option>
+      <option value="Education">Education</option>
+      <option value="Healthcare">Healthcare</option>
+      <option value="Marketing">Marketing</option>
+    </select>
+  </div>
+
+  {errors.industry && (
+    <p className="text-red-500 text-xs sm:text-sm mt-1">{errors.industry}</p>
+  )}
+</div>
+
+
+         <div className="relative w-full">
+  <label className="text-sm sm:text-base font-medium text-gray-700">
+    Preferred Employment Type
+  </label>
+
+  <div className="relative mt-1 sm:mt-2">
+    {/* Left-side custom arrow SVG */}
+    <svg
+      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      viewBox="0 0 24 24"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+
+    <select
+      className={`w-full rounded-md border text-sm sm:text-base p-2 sm:p-3 pl-10 
+        focus:ring-teal-500 focus:border-teal-500 appearance-none 
+        ${errors.employmentType ? 'border-red-500' : 'border-gray-300'}
+      `}
+      style={{
+        maxWidth: '100%',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}
+      value={user?.employmentType || ''}
+      onChange={(e) => {
+        handleEmploymentTypeChange(e);
+        if (!selectedTypes.includes(e.target.value) && e.target.value) {
+          setSelectedTypes([...selectedTypes, e.target.value]);
+        }
+      }}
+    >
+      <option value="">Select preferred job type</option>
+      <option value="Permanent">Permanent</option>
+      <option value="Contract">Contract</option>
+      <option value="Part-time">Part-time</option>
+      <option value="Freelance">Freelance</option>
+    </select>
+  </div>
+
+  {errors.employmentType && (
+    <p className="text-red-500 text-xs sm:text-sm mt-1">
+      {errors.employmentType}
+    </p>
+  )}
+
+  <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
+    {selectedTypes.map((type) => (
+      <span 
+        key={type} 
+        className="bg-gray-100 text-gray-700 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1 sm:gap-2"
+      >
+        {type}
+        <button 
+          onClick={() => handleRemoveType(type)} 
+          className="text-gray-400 hover:text-gray-600 text-xs sm:text-sm"
+        >
+          ✕
+        </button>
+      </span>
+    ))}
+  </div>
+</div>
+
+
+
+
+
 
 
             {/* Date of Birth */}
