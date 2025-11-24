@@ -189,15 +189,26 @@ const scrollToBottom = useCallback((force = false) => {
           }
         } else {
           // Message is for another room - update the contact's last message
+          // Determine sender id from multiple possible shapes
+          const possibleSender = message.msgFrom ?? data.msgFrom ?? data.sender ?? message.sender ?? data.userId ?? message.from;
+          let senderId = '';
+          if (typeof possibleSender === 'string') {
+            senderId = possibleSender;
+          } else if (typeof possibleSender === 'object' && possibleSender) {
+            senderId = possibleSender._id || possibleSender.id || '';
+          }
+          const isFromCurrentUser = String(senderId) === String(userId);
+
           setContacts(prev => prev.map(contact => {
             if (contact.roomId === roomId) {
               return {
                 ...contact,
                 message: formattedMessage.message,
-                  time: new Date(formattedMessage.timestamp).toISOString(),
-                  timeIso: new Date(formattedMessage.timestamp).toISOString(),
-                unread: true,
-                unreadCount: (contact.unreadCount || 0) + 1
+                time: new Date(formattedMessage.timestamp).toISOString(),
+                timeIso: new Date(formattedMessage.timestamp).toISOString(),
+                // Only mark unread/increment count if the message is NOT from current user
+                unread: isFromCurrentUser ? contact.unread : true,
+                unreadCount: isFromCurrentUser ? (contact.unreadCount || 0) : ((contact.unreadCount || 0) + 1)
               };
             }
             return contact;

@@ -34,7 +34,12 @@ export default function RootLayout({
   const userId = Cookies.get("tb_userId");
   const { data: user } = useGetUserByIdQuery(userId!, {
     skip: !userId,
-    pollingInterval: 10000,
+    // Disable polling and automatic refetches to avoid repeated API hits
+    // Polling was causing the backend to be hit repeatedly and slowing the app.
+    // Only fetch on mount (or when `userId` changes) unless you explicitly refetch.
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
   });
 
 

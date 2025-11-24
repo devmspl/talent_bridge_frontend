@@ -35,6 +35,7 @@ const Personal_info = () => {
     dob: "",
     openForWork: false,
   });
+  
 
   // Normalize various date representations to YYYY-MM-DD (ISO date without time)
   const toYYYYMMDD = (raw: string): string => {
@@ -212,6 +213,7 @@ const Personal_info = () => {
   };
 
   const handleDropdownSelect = (dropdownName: string, value: string) => {
+   
     setFormData((prev) => ({
       ...prev,
       [dropdownName]: value,
@@ -377,42 +379,27 @@ const Personal_info = () => {
           </div>
 
           {/* Country */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Country</label>
-            <div className="relative" ref={dropdownRefs.country}>
-              <button
-                type="button"
-                onClick={() => handleDropdownToggle('country')}
-                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
-              >
-                <span className={formData.country ? "text-gray-900" : "text-gray-500"}>
-                  {getSelectedLabel('country')}
-                </span>
-                <FiChevronDown 
-                  className={`text-gray-400 transition-transform duration-200 ${
-                    openDropdown === 'country' ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {openDropdown === 'country' && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {dropdownOptions.country.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleDropdownSelect('country', option.value)}
-                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
-                        formData.country === option.value 
-                          ? 'bg-teal-50 text-teal-700 font-medium' 
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div className="relative">
+            <label htmlFor="country" className="block text-sm font-medium mb-1">Country</label>
+            <select
+              id="country"
+              name="country"
+              value={formData.country}
+              onChange={handleInputChange}
+              className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer appearance-none"
+            >
+              {dropdownOptions.country.map((option) => (
+                <option 
+                  key={option.value} 
+                  value={option.value}
+                  className="text-gray-900"
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 mt-6">
+              <FiChevronDown className="text-gray-400" />
             </div>
           </div>
 
@@ -430,84 +417,52 @@ const Personal_info = () => {
           </div>
 
           {/* Industry */}
-          <div>
-            <label className="block text-sm font-medium mb-1">Industry</label>
-            <div className="relative" ref={dropdownRefs.industry}>
-              <button
-                type="button"
-                onClick={() => handleDropdownToggle('industry')}
-                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
-              >
-                <span className={formData.industry ? "text-gray-900" : "text-gray-500"}>
-                  {getSelectedLabel('industry')}
-                </span>
-                <FiChevronDown 
-                  className={`text-gray-400 transition-transform duration-200 ${
-                    openDropdown === 'industry' ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {openDropdown === 'industry' && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {dropdownOptions.industry.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleDropdownSelect('industry', option.value)}
-                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
-                        formData.industry === option.value 
-                          ? 'bg-teal-50 text-teal-700 font-medium' 
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div className="relative">
+            <label htmlFor="industry" className="block text-sm font-medium mb-1">Industry</label>
+            <select
+              id="industry"
+              name="industry"
+              value={formData.industry}
+              onChange={handleInputChange}
+              className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer appearance-none"
+            >
+              {dropdownOptions.industry.map((option) => (
+                <option 
+                  key={option.value} 
+                  value={option.value}
+                  className="text-gray-900"
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 mt-6">
+              <FiChevronDown className="text-gray-400" />
             </div>
           </div>
 
           {/* Employment Type */}
-          <div className="md:mb-3">
-            <label className="block text-sm font-medium mb-1">
-              Preferred Employment Type
-            </label>
-            <div className="relative" ref={dropdownRefs.employmentType}>
-              <button
-                type="button"
-                onClick={() => handleDropdownToggle('employmentType')}
-                className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left flex items-center justify-between hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer"
-              >
-                <span className={formData.employmentType ? "text-gray-900" : "text-gray-500"}>
-                  {getSelectedLabel('employmentType')}
-                </span>
-                <FiChevronDown 
-                  className={`text-gray-400 transition-transform duration-200 ${
-                    openDropdown === 'employmentType' ? 'rotate-180' : ''
-                  }`} 
-                />
-              </button>
-              
-              {openDropdown === 'employmentType' && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {dropdownOptions.employmentType.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleDropdownSelect('employmentType', option.value)}
-                      className={`w-full px-3 sm:px-4 py-3 sm:py-2 text-left text-sm sm:text-base hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors cursor-pointer ${
-                        formData.employmentType === option.value 
-                          ? 'bg-teal-50 text-teal-700 font-medium' 
-                          : 'text-gray-900'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div className="relative">
+            <label htmlFor="employmentType" className="block text-sm font-medium mb-1">Preferred Employment Type</label>
+            <select
+              id="employmentType"
+              name="employmentType"
+              value={formData.employmentType}
+              onChange={handleInputChange}
+              className="w-full px-3 sm:px-4 py-3 sm:py-2 border border-gray-200 rounded text-sm sm:text-base bg-white text-left hover:border-gray-300 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none transition-colors cursor-pointer appearance-none"
+            >
+              {dropdownOptions.employmentType.map((option) => (
+                <option 
+                  key={option.value} 
+                  value={option.value}
+                  className="text-gray-900"
+                >
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 mt-6">
+              <FiChevronDown className="text-gray-400" />
             </div>
           </div>
 

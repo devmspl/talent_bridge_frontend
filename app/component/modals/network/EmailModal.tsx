@@ -10,17 +10,67 @@ import {
 } from "react-icons/pi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import { useGetUserByIdQuery } from "@/app/store/api/userApi";
+import { useGetShowcaseRoomsQuery } from "@/app/store/api/showcaseApi";
+import { BaseUrl } from "@/app/store/BaseUrl";
+import linkIcon from "@/public/assets/media/link-icon.svg"
 
 export default function EmailModal({ onClose }: any) {
   const [emailBody, setEmailBody] = useState("");
   const [showRoomPicker, setShowRoomPicker] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const router = useRouter()
+  const userId = Cookies.get("tb_userId");
+  const { data: user } = useGetUserByIdQuery(userId ?? '', {
+    skip: !userId,
+    refetchOnMountOrArgChange: false,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  // Prefer backend profile_image/profileImage/avatar, handle absolute URLs and relative paths
+
+
+  // Role text: qualification > non-empty industryType/industry > default
+  const roleText = (() => {
+    if (!user) return 'BloomSoft | Senior UX Designer Role';
+    if (user.qualification) return user.qualification;
+    const industry = user.industryType ?? user.industry;
+    if (Array.isArray(industry)) {
+      return industry.length > 0 ? industry.join(', ') : 'BloomSoft | Senior UX Designer Role';
+    }
+    if (industry) return String(industry);
+    return 'BloomSoft | Senior UX Designer Role';
+  })();
+
+  // Employment type: join if non-empty array
+  const employmentText = (() => {
+    const emp = user?.employmentType ?? user?.employmentType;
+    if (!emp) return '';
+    if (Array.isArray(emp)) return emp.length ? emp.join(', ') : '';
+    return String(emp);
+  })();
   const showcaseRooms = [
+    // fallback static options (used if API not available)
     { id: "", name: "List of Showcase Rooms" },
     { id: "data-bi-analyst", name: "Data/BI Analyst" },
     { id: "professional-pianist", name: "Professional Pianist" },
   ];
+
+  const { data: roomsData, isLoading: roomsLoading, isError: roomsError, refetch } = useGetShowcaseRoomsQuery({
+    userId: userId || '',
+    page: 1,
+    limit: 100,
+  });
+
+  const roomsList = Array.isArray(roomsData) ? roomsData : [];
+  // Reset selected room when opening the picker
+  useEffect(() => {
+    if (showRoomPicker) {
+      setSelectedRoom("");
+    }
+  }, [showRoomPicker]);
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -40,10 +90,19 @@ export default function EmailModal({ onClose }: any) {
           {/* Header */}
           <div className="flex justify-between items-center mb-4 sm:mb-6 p-4 sm:p-6">
             <div className="flex items-center space-x-4">
-              <Image src={userProfile} alt="User" className=" rounded-full" width={40} height={40} />
+              <Image
+                src={`${BaseUrl}/assets/images/${user?.avatar || userProfile}`}
+                alt={user?.fullname ?? user?.fullName ?? "User"}
+                className=" rounded-full"
+                width={40}
+                height={40}
+              />
               <div>
-                <h4 className="font-semibold text-sm sm:text-base">Michael Thompson</h4>
-                <p className="text-xs sm:text-sm text-gray-500">BloomSoft | Senior UX Designer Role</p>
+                <h4 className="font-semibold text-sm sm:text-base">{user?.fullname ?? user?.fullName ?? 'Michael Thompson'}</h4>
+                <p className="text-xs sm:text-sm text-gray-500">{roleText}</p>
+                {employmentText ? (
+                  <p className="text-xs sm:text-sm text-gray-400">{employmentText}</p>
+                ) : null}
               </div>
             </div>
             <p className="text-xs sm:text-sm text-gray-400">9:00 AM (11 hours ago)</p>
@@ -53,20 +112,33 @@ export default function EmailModal({ onClose }: any) {
           <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
             <input type="text" placeholder="To" className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" />
             <input type="text" placeholder="Subject" className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" />
-            <button
-              className="text-teal-600 text-sm border-b border-gray-200 p-3 sm:p-4 text-left cursor-pointer"
-              onClick={() => setShowRoomPicker(true)}
-            >
-              + Link showcase room
-            </button>
-          </div>
-
-          {/* Compose with AI Button */}
-
-          <div className="mb-3 px-4 sm:px-6">
-            <button className="flex items-center px-3 py-1.5 text-xs sm:text-sm border rounded-md hover:bg-gray-50 gap-2 cursor-pointer">
-              <Image src={star} alt="" /> Compose with AI
-            </button>
+            <div className="flex items-center justify-between border-b border-gray-200 p-3 sm:p-4">
+              <div
+                className="text-teal-600 text-sm cursor-pointer hover:bg-gray-50 flex-1"
+                onClick={() => setShowRoomPicker(true)}
+              >
+                {!selectedRoom ? (
+                  '+ Link showcase room'
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Image src={linkIcon} alt={user?.fullname ?? user?.fullName ?? "User"} className=" rounded-full" width={18} height={8} />
+                    <span>{roomsList.find((r: any) => String(r._id ?? r.id) === selectedRoom)?.showcaseRoomName || 'Selected Room'}</span>
+                  </div>
+                )}
+              </div>
+              {selectedRoom && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedRoom('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-sm ml-2"
+                  aria-label="Remove room"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
           <div className="py-3 px-4 sm:px-6">
             {/* Toolbar */}
@@ -103,7 +175,7 @@ export default function EmailModal({ onClose }: any) {
                 Back
               </button>
               <button className="px-4 py-2 w-full sm:w-1/2 review text-white rounded-md hover:bg-teal-700 cursor-pointer"
-              onClick={sendEmail}
+                onClick={sendEmail}
               >
                 Send Email
               </button>
@@ -132,15 +204,37 @@ export default function EmailModal({ onClose }: any) {
             {/* Body */}
             <div className="p-4 sm:p-6">
               <div className="relative">
+                <svg
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
                 <select
-                  className="w-full border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
+                  className="w-full border appearance-none border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500"
                   value={selectedRoom}
                   onChange={(e) => setSelectedRoom(e.target.value)}
                 >
-                  {showcaseRooms.map((room) => (
-                    <option key={room.id} value={room.id}>{room.name}</option>
-                  ))}
+                  <option value="">Select showcase room</option>
+                  {roomsLoading ? (
+                    <option>Loading rooms...</option>
+                  ) : roomsList.length === 0 ? (
+                    <option>No rooms found</option>
+                  ) : (
+                    roomsList.map((room: any) => (
+                      <option
+                        key={String(room._id ?? room.id ?? room.showcaseRoomName)}
+                        value={String(room._id ?? room.id)}
+                      >
+                        {room.showcaseRoomName || room.name || room.title || `Room ${room._id ?? ''}`}
+                      </option>
+                    ))
+                  )}
                 </select>
+
               </div>
             </div>
 
@@ -156,8 +250,6 @@ export default function EmailModal({ onClose }: any) {
                 className="px-4 py-2 w-full sm:w-1/2 review text-white rounded-md hover:bg-teal-700 cursor-pointer disabled:opacity-50"
                 onClick={() => {
                   if (selectedRoom) {
-                    const roomName = showcaseRooms.find((r) => r.id === selectedRoom)?.name || "";
-                    setEmailBody((prev) => `${prev}${prev ? "\n\n" : ""}Linked room: ${roomName}`);
                     setShowRoomPicker(false);
                   }
                 }}
