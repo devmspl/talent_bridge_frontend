@@ -17,6 +17,7 @@ import { useGetAllUsersQuery } from "@/app/store/api/userApi";
 import left from "@/public/assets/icons/left icon.svg"
 import right from "@/public/assets/icons/right icon.svg"
 import Cookies from "js-cookie";
+import not_found from "@/public/assets/media/Searching.svg" 
 
 export default function RecruiterGrid() {
   const [showModal, setShowModal] = useState(false);
@@ -148,90 +149,133 @@ export default function RecruiterGrid() {
           </div>
 
           {/* Recruiter Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredUsers.map((card: any, i: number) => (
-              <div
-                key={i}
-                className="border border-gray-200 rounded-md shadow-sm p-4 bg-white hover:shadow-md transition"
-              >
-                <div className="mb-3">
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-medium capitalize ${card.type === "Recruiter"
-                          ? "bg-gray-100 text-gray-700"
-                          : "bg-pink-100 text-pink-700"
-                        }`}
-                    >
-                      {card.type || "Industry Professional"}
-                    </span>
-                    <div className="flex items-center gap-1 text-yellow-500">
-                      <FaStar className="text-xs" />
-                      <span className="text-[12px] font-medium text-[#4B5563]">
-                        {card.rating || "4.7"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 border-b border-gray-200 p-2">
-                    <Avatar
-                      avatar={card.avatar}
-                      avatarSvg={card.avatarSvg}
-                      alt={card.fullname}
-                      width={64}
-                      height={64}
-                      className="rounded-full object-cover"
-                      style={{ width: "64px", height: "64px" }}
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 leading-tight mb-1">
-                        {card.fullname}
-                      </p>
-                      <p className="text-xs text-gray-500 leading-tight mb-1">
-                        {card.industryType?.[0] || "Technology"}
-                      </p>
-                      <p className="text-xs text-gray-400 leading-tight flex gap-1 mb-1">
-                        <Image src={amazone} alt="" width={16} height={16} />{" "}
-                        {card.company || "Google"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="text-[12px] font-medium text-[#4B5563] mt-3 space-y-0.5">
-                    <div className="flex items-center gap-1 mb-3">
-                      <Image src={location} alt="" height={16} />
-                      {card.location || "UK"}
-                    </div>
-                    <div className="flex mb-3 gap-2 text-[12px] font-medium text-[#4B5563]">
-                      <Image src={bag} alt=" " height={16} />
-                      {card.industryType?.[0] || "Tech"}
-                    </div>
-                    <div className="flex mb-3 text-[12px] font-medium text-[#4B5563]">
-                      <Image src={building} alt="" height={16} />
-                      {card.placements || "18"} Placements •{" "}
-                      {card.responseRate || "90%"} response rate
-                    </div>
-                  </div>
+          {filteredUsers.length === 0 ? (
+            <div className="w-full flex flex-col items-center justify-center py-12 px-4">
+              <div className="max-w-md text-center">
+                <div className="flex justify-center mb-4">
+                 <Image src={not_found} alt="Filters" width={477.7142333984375} height={303.9999694824219} />
                 </div>
-                <button
-                  className="w-full text-xs text-center py-1.5 border border-gray-300 rounded-md font-medium text-gray-800 hover:bg-gray-100 transition cursor-pointer"
-                  onClick={() => handleClick(card._id)}
-                >
-                  View Profile
-                </button>
+                <h3 className="text-lg font-semibold text-[#111827] mb-2">No results found</h3>
+                <p className="text-sm text-[#4B5563] font-normal mb-6">Sorry, no results match your search. Please try again with a different query.</p>
+                <div className="flex gap-3 justify-center">
+                  <button 
+                    onClick={() => setFilters({
+                      location: "",
+                      industry: "",
+                      companyName: "",
+                      experience: ""
+                    })}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  >
+                    Clear filters
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setFilters({
+                        location: "",
+                        industry: "",
+                        companyName: "",
+                        experience: ""
+                      });
+                      const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+                      input?.focus();
+                    }}
+                    className="px-4 py-2 bg-[#02ABAC] rounded-md text-sm font-medium text-white hover:bg-teal-600"
+                  >
+                    Start a new search
+                  </button>
+                </div>
               </div>
-            ))}
-          </div>
-          <div className="border border-gray-200 mt-8 rounded-lg px-6 py-5  flex justify-between items-center text-xs text-gray-500 ">
-            <p>Showing 1 to 5 of 20 results</p>
-            <div className="flex gap-2">
-              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
-                <Image src={left} alt="" />
-              </button>
-              <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
-                <Image src={right} alt="" />
-              </button>
             </div>
-          </div>
+          ) : (
+            <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+                {filteredUsers.map((card: any, i: number) => (
+                  <div
+                    key={i}
+                    className="border border-gray-200 rounded-md shadow-sm p-4 bg-white hover:shadow-md transition"
+                  >
+                    <div className="mb-3">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span
+                          className={`px-2 py-0.5 rounded-full font-medium capitalize ${card.type === "Recruiter"
+                              ? "bg-gray-100 text-gray-700"
+                              : "bg-pink-100 text-pink-700"
+                            }`}
+                        >
+                          {card.type || "Industry Professional"}
+                        </span>
+                        <div className="flex items-center gap-1 text-yellow-500">
+                          <FaStar className="text-xs" />
+                          <span className="text-[12px] font-medium text-[#4B5563]">
+                            {card.rating || "4.7"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 border-b border-gray-200 p-2">
+                        <Avatar
+                          avatar={card.avatar}
+                          avatarSvg={card.avatarSvg}
+                          alt={card.fullname}
+                          width={64}
+                          height={64}
+                          className="rounded-full object-cover"
+                          style={{ width: "64px", height: "64px" }}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 leading-tight mb-1">
+                            {card.fullname}
+                          </p>
+                          <p className="text-xs text-gray-500 leading-tight mb-1">
+                            {card.industryType?.[0] || "Technology"}
+                          </p>
+                          <p className="text-xs text-gray-400 leading-tight flex gap-1 mb-1">
+                            <Image src={amazone} alt="" width={16} height={16} />{" "}
+                            {card.company || "Google"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-[12px] font-medium text-[#4B5563] mt-3 space-y-0.5">
+                        <div className="flex items-center gap-1 mb-3">
+                          <Image src={location} alt="" height={16} />
+                          {card.location || "UK"}
+                        </div>
+                        <div className="flex mb-3 gap-2 text-[12px] font-medium text-[#4B5563]">
+                          <Image src={bag} alt=" " height={16} />
+                          {card.industryType?.[0] || "Tech"}
+                        </div>
+                        <div className="flex mb-3 text-[12px] font-medium text-[#4B5563]">
+                          <Image src={building} alt="" height={16} />
+                          {card.placements || "18"} Placements •{" "}
+                          {card.responseRate || "90%"} response rate
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      className="w-full text-xs text-center py-1.5 border border-gray-300 rounded-md font-medium text-gray-800 hover:bg-gray-100 transition cursor-pointer"
+                      onClick={() => handleClick(card._id)}
+                    >
+                      View Profile
+                    </button>
+                  </div>
+                ))}
+              </div>
+           
+            </div>
+          )}
+             <div className="border border-gray-200 mt-8 rounded-lg px-6 py-5 flex justify-between items-center text-xs text-gray-500 w-full">
+                <p>Showing 1 to {Math.min(filteredUsers.length, 5)} of {filteredUsers.length} results</p>
+                <div className="flex gap-2">
+                  <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                    <Image src={left} alt="Previous page" />
+                  </button>
+                  <button className="w-7 h-7 border border-gray-300 rounded hover:bg-gray-100 p-2">
+                    <Image src={right} alt="Next page" />
+                  </button>
+                </div>
+              </div>
         </div>
       </div>
 

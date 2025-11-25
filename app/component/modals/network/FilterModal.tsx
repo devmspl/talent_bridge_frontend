@@ -12,10 +12,10 @@ export default function FilterModal({
   setFilters: React.Dispatch<React.SetStateAction<any>>;
   onClose: () => void;
 }) {
-   useEffect(() => {
-    document.body.style.overflow = "hidden"; 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "auto"; 
+      document.body.style.overflow = "auto";
     };
   }, []);
   return (
@@ -30,41 +30,76 @@ export default function FilterModal({
 
         <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Filter</h2>
 
-        <div className="mb-3 sm:mb-4">
+        <div className="mb-3 sm:mb-4 relative">
           <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">
             Location
           </label>
-          <select
-            value={filters.location}
-            onChange={(e) =>
-              setFilters({ ...filters, location: e.target.value })
-            }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
-          >
-            <option value="">Select location</option>
-            <option value="USA">USA</option>
-            <option value="India">India</option>
-            <option value="UK">UK</option>
-          </select>
+
+          <div className="relative">
+            <select
+              value={filters.location}
+              onChange={(e) =>
+                setFilters({ ...filters, location: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm
+                 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500
+                 bg-white shadow-sm appearance-none"
+            >
+              <option value="">Select location</option>
+              <option value="USA">USA</option>
+              <option value="India">India</option>
+              <option value="UK">UK</option>
+            </select>
+
+            {/* Your SVG Icon */}
+            <svg
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
 
-        <div className="mb-3 sm:mb-4">
+
+
+        <div className="mb-3 sm:mb-4 relative">
           <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">
             Industry
           </label>
-          <select
-            value={filters.industry}
-            onChange={(e) =>
-              setFilters({ ...filters, industry: e.target.value })
-            }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
-          >
-            <option value="">Select your industry</option>
-            <option value="Tech">Tech</option>
-            <option value="Finance">Finance</option>
-            <option value="Healthcare">Healthcare</option>
-          </select>
+
+          <div className="relative">
+            <select
+              value={filters.industry}
+              onChange={(e) =>
+                setFilters({ ...filters, industry: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm
+                 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500
+                 bg-white shadow-sm appearance-none"
+            >
+              <option value="">Select your industry</option>
+              <option value="Tech">Tech</option>
+              <option value="Finance">Finance</option>
+              <option value="Healthcare">Healthcare</option>
+            </select>
+
+            {/* Custom SVG Dropdown Icon */}
+            <svg
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
+
 
         <div className="mb-3 sm:mb-4">
           <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">
@@ -81,23 +116,40 @@ export default function FilterModal({
           />
         </div>
 
-        <div className="mb-4 sm:mb-6">
+        <div className="mb-4 sm:mb-6 relative">
           <label className="text-xs sm:text-sm font-medium text-gray-700 mb-1 block">
             Experience Level
           </label>
-          <select
-            value={filters.experience}
-            onChange={(e) =>
-              setFilters({ ...filters, experience: e.target.value })
-            }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500 bg-white shadow-sm"
-          >
-            <option value="">Select experience level</option>
-            <option value="Mid-Level">Mid-Level</option>
-            <option value="Senior">Senior</option>
-            <option value="Executive">Executive</option>
-          </select>
+
+          <div className="relative">
+            <select
+              value={filters.experience}
+              onChange={(e) =>
+                setFilters({ ...filters, experience: e.target.value })
+              }
+              className="w-full border border-gray-300 rounded-md px-3 py-2 sm:px-4 text-gray-700 text-sm
+                 focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500
+                 bg-white shadow-sm appearance-none"
+            >
+              <option value="">Select experience level</option>
+              <option value="Mid-Level">Mid-Level</option>
+              <option value="Senior">Senior</option>
+              <option value="Executive">Executive</option>
+            </select>
+
+            {/* Custom SVG Dropdown Icon */}
+            <svg
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-gray-500"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </div>
         </div>
+
 
         <div className="flex flex-col sm:flex-row gap-2">
           <button
