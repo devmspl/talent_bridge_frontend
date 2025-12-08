@@ -15,11 +15,16 @@ import { useGetUserByIdQuery } from "@/app/store/api/userApi";
 import { useGetShowcaseRoomsQuery } from "@/app/store/api/showcaseApi";
 import { BaseUrl } from "@/app/store/BaseUrl";
 import linkIcon from "@/public/assets/media/link-icon.svg"
+import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function EmailModal({ onClose }: any) {
   const [emailBody, setEmailBody] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
   const [showRoomPicker, setShowRoomPicker] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter()
   const userId = Cookies.get("tb_userId");
   const { data: user } = useGetUserByIdQuery(userId ?? '', {
@@ -77,10 +82,77 @@ export default function EmailModal({ onClose }: any) {
       document.body.style.overflow = "auto";
     };
   }, []);
-  const sendEmail = (e: any) => {
+  
+  const sendEmail = async (e: any) => {
     e.preventDefault();
-    onClose();
-    router.push("/smart-outreach");
+    
+    // Validation
+    if (!email.trim()) {
+      toast.error("Please enter recipient email address");
+      return;
+    }
+    if (!subject.trim()) {
+      toast.error("Please enter email subject");
+      return;
+    }
+    if (!emailBody.trim()) {
+      toast.error("Please enter email content");
+      return;
+    }
+    if (!selectedRoom) {
+      toast.error("Please select a showcase room to link");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Construct the preview link
+      const baseUrl = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin)
+        : 'http://localhost:3000';
+      const link = `${baseUrl}/preview?id=${selectedRoom}`;
+      
+      // Get auth token
+      const token = Cookies.get("tb_token");
+      
+      // Prepare headers
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
+      // Call API
+      const response = await axios.post(
+        `${BaseUrl}User/sendEmail`,
+        {
+          email: email.trim(),
+          subject: subject.trim(),
+          content: emailBody.trim(),
+          link: link,
+        },
+        { headers }
+      );
+      
+      if (response.data) {
+        toast.success("Email sent successfully!");
+        onClose();
+        router.push("/smart-outreach");
+      } else {
+        toast.error("Failed to send email");
+      }
+    } catch (error: any) {
+      console.error("Error sending email:", error);
+      toast.error(
+        error?.response?.data?.message || 
+        error?.message || 
+        "Failed to send email. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,8 +182,22 @@ export default function EmailModal({ onClose }: any) {
 
           {/* Fields */}
           <div className="space-y-3 sm:space-y-4 mb-3 sm:mb-4">
-            <input type="text" placeholder="To" className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" />
-            <input type="text" placeholder="Subject" className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" />
+            <input 
+              type="email" 
+              placeholder="To" 
+              className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input 
+              type="text" 
+              placeholder="Subject" 
+              className="w-full border-b border-gray-200 outline-none p-3 sm:p-4 text-sm" 
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+            />
             <div className="flex items-center justify-between border-b border-gray-200 p-3 sm:p-4">
               <div
                 className="text-teal-600 text-sm cursor-pointer hover:bg-gray-50 flex-1"
@@ -174,10 +260,12 @@ export default function EmailModal({ onClose }: any) {
               >
                 Back
               </button>
-              <button className="px-4 py-2 w-full sm:w-1/2 review text-white rounded-md hover:bg-teal-700 cursor-pointer"
+              <button 
+                className="px-4 py-2 w-full sm:w-1/2 review text-white rounded-md hover:bg-teal-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={sendEmail}
+                disabled={isLoading}
               >
-                Send Email
+                {isLoading ? "Sending..." : "Send Email"}
               </button>
             </div>
           </div>

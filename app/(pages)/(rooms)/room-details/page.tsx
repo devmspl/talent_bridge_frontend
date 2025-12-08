@@ -330,7 +330,8 @@ const Page = () => {
       <ShareRoom
         isOpen={open}
         onClose={() => setOpen(false)}
-        link="https://tbridge.com/{name-of-showcase-room}"
+        roomId={id}
+        roomName={roomName}
       />
       <ChangeVisibilityModal
         isOpen={visibility}

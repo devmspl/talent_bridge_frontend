@@ -12,6 +12,7 @@ import { RootState } from "@/app/store/store";
 import { clearRoomData } from "@/app/utils/roomStorage";
 import { BaseUrl } from "@/app/store/BaseUrl";
 import Cookies from 'js-cookie';
+import ShareRoom from "@/app/component/modals/room/ShareRoom";
 
 const ShowcasePage = () => {
   const routes = useRouter();
@@ -19,6 +20,9 @@ const ShowcasePage = () => {
   const [activeTab, setActiveTab] = useState("active");
   const pageFromUrl = Number(searchParams.get("page") || 1);
   const limitFromUrl = Number(searchParams.get("limit") || 10);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [selectedRoomName, setSelectedRoomName] = useState<string>("");
 
   const userId = Cookies.get('tb_userId') || '';
   
@@ -48,6 +52,7 @@ const ShowcasePage = () => {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-white ">
     <div className="">
       <div className="bg-white rounded-xl shadow mb-5 overflow-hidden">
@@ -249,7 +254,18 @@ const ShowcasePage = () => {
               <FiEdit />
               Edit
             </button>
-            <button className="flex items-center gap-1 hover:text-gray-700">
+            <button 
+              className="flex items-center gap-1 hover:text-gray-700 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (room._id) {
+                  setSelectedRoomId(room._id);
+                  setSelectedRoomName(room.showcaseRoomName || "Showcase Room");
+                  setIsShareModalOpen(true);
+                }
+              }}
+            >
               <FiShare2 />
               Share
             </button>
@@ -263,6 +279,19 @@ const ShowcasePage = () => {
       </div>
     </div>
     </div>
+
+    {/* Share Room Modal */}
+    <ShareRoom
+      isOpen={isShareModalOpen}
+      onClose={() => {
+        setIsShareModalOpen(false);
+        setSelectedRoomId(null);
+        setSelectedRoomName("");
+      }}
+      roomId={selectedRoomId || undefined}
+      roomName={selectedRoomName}
+    />
+    </>
   );
 };
 

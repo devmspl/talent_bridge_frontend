@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import call from "@/public/assets/icons/call.svg";
 import msg from "@/public/assets/icons/msgg.svg";
 import share from "@/public/assets/icons/share.svg";
@@ -10,11 +10,14 @@ import logo from "@/public/assets/icons/logo.svg";
 import Link from "next/link";
 import { useGetShowcaseRoomByIdQuery } from "@/app/store/api/showcaseApi";
 import { BaseUrl } from "@/app/store/BaseUrl";
+import EmailModal from "@/app/component/modals/network/EmailModal";
+import ShareRoom from "@/app/component/modals/room/ShareRoom";
 
 export default function PreviewPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id") || "";
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   
   const { data } = useGetShowcaseRoomByIdQuery(id, { skip: !id });
 
@@ -96,9 +99,26 @@ export default function PreviewPage() {
               </div>
               
               <div className="flex gap-2 sm:gap-3">
-                <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7" src={call} alt="" />
-                <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7" src={msg} alt="" />
-                <Image className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7" src={share} alt="" />
+                <div
+                  className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center"
+                  aria-label="Call"
+                >
+                  <Image className="w-4 h-4 sm:w-5 sm:h-5" src={call} alt="Call" />
+                </div>
+                <button
+                  onClick={() => setShowEmailModal(true)}
+                  className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center cursor-pointer"
+                  aria-label="Open email modal"
+                >
+                  <Image className="w-4 h-4 sm:w-5 sm:h-5" src={msg} alt="Email" />
+                </button>
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="border border-[#D1D5DB] rounded-md p-[6px] w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center cursor-pointer"
+                  aria-label="Open share modal"
+                >
+                  <Image className="w-4 h-4 sm:w-5 sm:h-5" src={share} alt="Share" />
+                </button>
               </div>
             </div>
           </div>
@@ -203,6 +223,13 @@ export default function PreviewPage() {
 
         </div>
       </div>
+      {showEmailModal && <EmailModal onClose={() => setShowEmailModal(false)} />}
+      <ShareRoom
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        roomId={id}
+        roomName={data?.showcaseRoomName || "Showcase Room"}
+      />
     </>
   );
 }

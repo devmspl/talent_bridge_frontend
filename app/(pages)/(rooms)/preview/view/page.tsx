@@ -233,7 +233,8 @@ export default function CaseStudyView() {
     <ShareRoom
         isOpen={open}
         onClose={() => setOpen(false)}
-        link="https://tbridge.com/{name-of-showcase-room}"
+        roomId={id}
+        roomName={data?.showcaseRoomName || "Showcase Room"}
       />
 
     </>

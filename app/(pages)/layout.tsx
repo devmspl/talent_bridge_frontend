@@ -44,14 +44,22 @@ export default function RootLayout({
 
 
 
+  const isPreviewPage = pathname.includes('/preview');
+
   useEffect(() => {
+    // Allow preview pages to be publicly accessible (no auth redirect)
+    if (isPreviewPage) {
+      setIsReady(true);
+      return;
+    }
+
     const token = typeof window !== 'undefined' ? Cookies.get("tb_userId") : null;
     if (!token) {
       router.replace('/login');
     } else {
       setIsReady(true);
     }
-  }, [router]);
+  }, [router, isPreviewPage]);
 
   const handleMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -93,9 +101,6 @@ export default function RootLayout({
 
 
   if (!isReady) return null;
-
-  // Check if current page is preview to hide sidebar
-  const isPreviewPage = pathname.includes('/preview');
 
   return (
     <div className="flex min-h-screen ">
