@@ -48,6 +48,20 @@ export const userApi = createApi({
         body: payload,
       }),
     }),
+    resetPassword: builder.mutation<any, { email: string; newPassword: string }>({
+      query: (payload) => ({
+        url: 'User/resetPassword',
+        method: 'POST',
+        body: payload,
+      }),
+    }),
+    verifyOTP: builder.mutation<any, { otp: string; token: string }>({
+      query: (payload) => ({
+        url: 'User/verifyOTP',
+        method: 'POST',
+        body: payload,
+      }),
+    }),
     uploadProfile: builder.mutation<any, { userKey: string; file: Blob; filename?: string }>({
       query: ({ userKey, file, filename }) => {
         const inferredExt = file.type?.includes('png') ? 'png' : file.type?.includes('jpeg') || file.type?.includes('jpg') ? 'jpg' : 'jpg';
@@ -190,7 +204,7 @@ export const userApi = createApi({
   }),
 });
 
-export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useUploadProfileMutation, useGoogleSigninMutation,
+export const { useCreateUserMutation, useLoginMutation, useForgotPasswordMutation, useResetPasswordMutation, useVerifyOTPMutation, useUploadProfileMutation, useGoogleSigninMutation,
   useLinkedinSigninMutation, useGoogleSignUpMutation, useFacebookRegisterMutation, useGetAllUsersQuery, useChangePasswordMutation,
   useUpdateProfileMutation, useDeleteAccountMutation,  useGetUserByIdQuery
 } = userApi; 

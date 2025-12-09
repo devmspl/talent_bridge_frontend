@@ -26,6 +26,16 @@ const Page = () => {
 
     try {
       const res = await forgotPassword({ email }).unwrap();
+      // Store email in sessionStorage for the reset password page
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('resetPasswordEmail', email);
+        // Store token if returned from the API response
+        if (res?.token) {
+          sessionStorage.setItem('resetPasswordToken', res.token);
+        } else if (res?.data?.token) {
+          sessionStorage.setItem('resetPasswordToken', res.data.token);
+        }
+      }
       toast.success('Reset link sent to your email', { toastId: 'forgot-success' });
       router.push('/verify-email');
     } catch (err: any) {
